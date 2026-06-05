@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --gold2:rgba(245,200,66,.15);
+  --red:#e63946;
+  --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.95);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-badge{width:42px;height:42px;background:var(--teal);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 22px rgba(46,196,182,.3)}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:-.01em;line-height:1}
+.logo-name,.logo-name *{color:var(--text)}
+.logo-name span{color:var(--teal)}
+.header-right{display:flex;align-items:center;gap:10px}
+.points-pill{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border2);border-radius:100px;padding:7px 16px}
+.points-pill .pts-val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);letter-spacing:.05em}
+.points-pill .pts-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#000;cursor:pointer}
+.logout-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:.78rem;cursor:pointer;letter-spacing:.05em;padding:8px 14px;border-radius:8px;transition:all .2s}
+.logout-btn:hover{border-color:var(--border2);color:var(--teal)}
+
+.layout{max-width:1000px;margin:0 auto;padding:24px 24px 60px}
+.welcome{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
+.welcome span{color:var(--teal)}
+.welcome-sub{font-size:.85rem;color:var(--muted);margin-bottom:24px}
+
+.sec-title{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin:8px 0 14px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.boxes{display:flex;flex-direction:column;gap:14px}
+.box-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.box-header{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.box-name{display:flex;align-items:center;gap:9px}
+.box-name-txt{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.92rem}
+.box-time{font-family:'Space Grotesk',sans-serif;font-size:.66rem;color:var(--teal);letter-spacing:.08em}
+.box-status{display:flex;align-items:center;gap:5px;font-size:.64rem;color:var(--muted)}
+.status-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.box-tasks{padding:11px;display:flex;flex-direction:column;gap:7px}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;transition:all .2s}
+.task-row.done{border-color:rgba(46,196,182,.15);background:rgba(46,196,182,.03);opacity:.55}
+.task-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.icon-quiz{background:rgba(46,196,182,.12)}
+.icon-video{background:rgba(230,57,70,.12)}
+.icon-web{background:rgba(100,150,255,.12)}
+.task-info{flex:1;min-width:0}
+.task-name{font-size:.84rem;font-weight:500;margin-bottom:1px}
+.task-desc{font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.task-pts{font-family:'Space Grotesk',sans-serif;font-size:.66rem;color:var(--gold)}
+.task-btn{padding:6px 14px;background:var(--teal3);border:1px solid var(--border2);border-radius:6px;color:var(--teal);font-size:.7rem;font-weight:600;font-family:'Rajdhani',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}
+.task-btn:hover{background:rgba(46,196,182,.2)}
+.task-btn.done-btn{background:transparent;border-color:rgba(46,196,182,.2);color:var(--teal2);cursor:default}
+
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">
+      <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+  </div>
+  <div class="header-right">
+    <div class="points-pill">
+      <span class="pts-val" id="userPoints">0</span>
+      <span class="pts-lbl">pts</span>
+    </div>
+    <div class="avatar" id="userAvatar">?</div>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="welcome">Welcome, <span id="userName">...</span>!</div>
+  <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
+
+  <div class="sec-title">Today's Boxes</div>
+  <div id="boxesContainer">
+    <div class="loading">Loading boxes... ⏳</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let myProfile = null;
+
+// ---- check login ----
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){
+    window.location.href = 'index.html';
+    return;
+  }
+  currentUser = session.user;
+
+  // load profile
+  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  myProfile = profile;
+  if(profile){
+    document.getElementById('userName').textContent = profile.username;
+    document.getElementById('userPoints').textContent = profile.total_points || 0;
+    document.getElementById('userAvatar').textContent = (profile.username||'?').charAt(0).toUpperCase();
+  }
+
+  loadBoxes();
+}
+
+// ---- load boxes + tasks ----
+async function loadBoxes(){
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data: boxes, error } = await db
+    .from('boxes')
+    .select('*')
+    .eq('date', today)
+    .order('sort_order');
+
+  const container = document.getElementById('boxesContainer');
+
+  if(error){ container.innerHTML = '<div class="empty">Error loading boxes: '+error.message+'</div>'; return; }
+  if(!boxes || boxes.length===0){ container.innerHTML = '<div class="empty">No boxes scheduled for today yet. 📦</div>'; return; }
+
+  // load my completed tasks today
+  const { data: activity } = await db
+    .from('user_activity')
+    .select('task_id')
+    .eq('user_id', currentUser.id);
+  const doneTaskIds = (activity||[]).map(a=>a.task_id);
+
+  let html = '<div class="boxes">';
+  for(const box of boxes){
+    const { data: tasks } = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
+
+    html += '<div class="box-card"><div class="box-header"><div class="box-name"><span class="box-name-txt">📦 '+box.name+'</span><span class="box-time">'+box.start_time.slice(0,5)+' — '+box.end_time.slice(0,5)+'</span></div><div class="box-status"><span class="status-dot"></span>Active</div></div><div class="box-tasks">';
+
+    for(const task of (tasks||[])){
+      const isDone = doneTaskIds.includes(task.id);
+      const icon = task.type==='quiz'?'❓':task.type==='video'?'📺':'🌐';
+      const iconCls = task.type==='quiz'?'icon-quiz':task.type==='video'?'icon-video':'icon-web';
+      const desc = task.type==='quiz'?'Tap to answer · 20s timer':task.type==='video'?'30 second sponsored video':'Spend 30s on partner site';
+      const btnLabel = task.type==='quiz'?'Answer':task.type==='video'?'Watch':'Start';
+
+      html += '<div class="task-row'+(isDone?' done':'')+'"><div class="task-icon '+iconCls+'">'+icon+'</div><div class="task-info"><div class="task-name">'+task.title+'</div><div class="task-desc">'+desc+'</div></div><div class="task-right"><span class="task-pts">+'+task.points+'</span>';
+      if(isDone){
+        html += '<button class="task-btn done-btn">✓ Done</button>';
+      } else {
+        html += '<button class="task-btn" onclick="startTask(\''+task.id+'\',\''+task.type+'\')">'+btnLabel+'</button>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function startTask(taskId, type){
+  if(type==='quiz'){
+    window.location.href = 'quiz.html?task=' + taskId;
+  } else {
+    alert('Task type "'+type+'" — coming soon in the build!');
+  }
+}
+
+async function logout(){
+  await db.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+init();
+</script>
+</body>
+</html>
