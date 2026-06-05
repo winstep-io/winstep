@@ -113,7 +113,7 @@ let myProfile = null;
 async function init(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){
-    window.location.href = 'index.html';
+    window.location.href = '/index.html';
     return;
   }
   currentUser = session.user;
@@ -181,7 +181,7 @@ async function loadBoxes(){
 
 function startTask(taskId, type){
   if(type==='quiz'){
-    window.location.href = 'quiz.html?task=' + taskId;
+    window.location.href = '/quiz.html?task=' + taskId;
   } else {
     alert('Task type "'+type+'" — coming soon in the build!');
   }
@@ -189,7 +189,7 @@ function startTask(taskId, type){
 
 async function logout(){
   await db.auth.signOut();
-  window.location.href = 'index.html';
+  window.location.href = '/index.html';
 }
 
 init();
