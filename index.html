@@ -136,7 +136,7 @@ const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 // ============================================
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let mode = 'signin';
 
@@ -177,7 +177,7 @@ async function handleSubmit(){
     if(password !== confirm){ showMsg('Passwords do not match.', 'error'); btn.disabled=false; return; }
 
     btn.textContent = 'Creating account...';
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await db.auth.signUp({
       email, password,
       options: { data: { username: username } }
     });
@@ -189,7 +189,7 @@ async function handleSubmit(){
 
   } else {
     btn.textContent = 'Signing in...';
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
 
     if(error){ showMsg(error.message, 'error'); btn.disabled=false; btn.textContent='Sign In'; return; }
     showMsg('Welcome back! Redirecting... ✅', 'success');
@@ -201,14 +201,14 @@ async function handleSubmit(){
 async function forgotPassword(){
   const email = document.getElementById('emailInput').value.trim();
   if(!email){ showMsg('Enter your email first, then tap "Forgot password".', 'error'); return; }
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await db.auth.resetPasswordForEmail(email);
   if(error){ showMsg(error.message, 'error'); return; }
   showMsg('Password reset link sent to your email. 📧', 'success');
 }
 
 // check if already logged in
 (async ()=>{
-  const { data } = await supabase.auth.getSession();
+  const { data } = await db.auth.getSession();
   if(data.session){
     // already logged in — could redirect to main
     // window.location.href = 'index.html';
