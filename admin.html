@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --green:#2ec47a; --red:#e63946;
+  --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+.gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999;flex-direction:column;gap:14px;color:var(--muted)}
+.gate.hide{display:none}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-badge{width:36px;height:36px;background:var(--teal);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem}
+.logo-name span{color:var(--teal)}
+.admin-tag{font-size:.62rem;letter-spacing:.15em;color:var(--gold);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:100px;text-transform:uppercase}
+.header-actions{display:flex;gap:9px}
+.h-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;text-decoration:none;transition:all .2s}
+.h-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+.admin-layout{display:flex;min-height:calc(100vh - 60px)}
+.sidebar{width:210px;background:var(--bg2);border-right:1px solid var(--border);padding:16px 12px;flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:9px;cursor:pointer;transition:all .15s;color:var(--muted);font-size:.88rem;font-weight:500;margin-bottom:2px}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--teal3);color:var(--teal)}
+.main{flex:1;padding:24px 28px;overflow-y:auto;max-width:900px}
+.page-title{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px}
+
+.section{display:none}
+.section.active{display:block}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+
+.field{margin-bottom:12px}
+.field-label{display:block;font-size:.72rem;color:var(--soft);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.field-input,.field-select{width:100%;padding:11px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem}
+.field-input:focus,.field-select:focus{outline:none;border-color:var(--teal2)}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+
+.btn{padding:11px 18px;border:none;border-radius:9px;font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;letter-spacing:.03em;transition:all .2s}
+.btn-primary{background:var(--teal);color:#000}
+.btn-primary:hover{background:#44ffe8}
+.btn-sm{padding:7px 13px;font-size:.78rem}
+.btn-danger{background:rgba(230,57,70,.12);color:var(--red);border:1px solid rgba(230,57,70,.3)}
+.btn-danger:hover{background:rgba(230,57,70,.2)}
+.btn-ghost{background:var(--bg3);color:var(--soft);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.li-info{flex:1;min-width:0}
+.li-title{font-size:.9rem;font-weight:600}
+.li-sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.li-actions{display:flex;gap:6px}
+
+.msg{padding:10px 14px;border-radius:9px;font-size:.82rem;margin-bottom:12px;display:none}
+.msg.show{display:block}
+.msg.ok{background:rgba(46,196,122,.12);border:1px solid rgba(46,196,122,.3);color:var(--green)}
+.msg.err{background:rgba(230,57,70,.12);border:1px solid rgba(230,57,70,.3);color:#ff6b78}
+
+.empty{text-align:center;padding:24px;color:var(--muted);font-size:.85rem}
+.loading{text-align:center;padding:24px;color:var(--muted)}
+.badge{font-size:.64rem;padding:2px 8px;border-radius:100px;background:var(--teal3);color:var(--teal);letter-spacing:.05em}
+.badge.quiz{background:var(--teal3);color:var(--teal)}
+.badge.video{background:rgba(230,57,70,.12);color:#ff8a93}
+.badge.website{background:rgba(100,150,255,.12);color:#8ab4ff}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div id="gateChecking" style="text-align:center">
+    <div style="font-size:2rem;margin-bottom:10px">🔒</div>
+    <div id="gateMsg" style="color:var(--muted)">Checking access...</div>
+  </div>
+
+  <div id="gateLogin" style="display:none;width:100%;max-width:360px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:54px;height:54px;background:var(--teal);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:0 0 26px rgba(46,196,182,.35)">
+        <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+          <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+          <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+          <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+        </svg>
+      </div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;color:var(--text)">win<span style="color:var(--teal)">step</span> <span style="font-size:.62rem;letter-spacing:.15em;color:var(--gold);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:100px;text-transform:uppercase;vertical-align:middle;margin-left:4px">Admin</span></div>
+      <div style="font-size:.8rem;color:var(--muted);margin-top:6px">Sign in to the admin panel</div>
+    </div>
+    <div class="msg" id="loginMsg"></div>
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com">
+    </div>
+    <div class="field">
+      <label class="field-label">Password</label>
+      <input class="field-input" type="password" id="loginPassword" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;margin-top:6px" id="loginBtn">Admin Login</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">
+      <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+    <span class="admin-tag">Admin</span>
+  </div>
+  <div class="header-actions">
+    <a class="h-btn" href="/dashboard.html">← Back to Site</a>
+    <button class="h-btn" onclick="logout()">Log Out</button>
+  </div>
+</header>
+
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="nav-item active" onclick="nav('boxes',this)"><span>📦</span><span>Boxes & Tasks</span></div>
+    <div class="nav-item" onclick="nav('rounds',this)"><span>🏁</span><span>Rounds</span></div>
+    <div class="nav-item" onclick="nav('prizes',this)"><span>🏆</span><span>Prizes</span></div>
+    <div class="nav-item" onclick="nav('users',this)"><span>👥</span><span>Users</span></div>
+    <div class="nav-item" onclick="nav('settings',this)"><span>⚙️</span><span>Points Settings</span></div>
+  </div>
+
+  <div class="main">
+    <!-- ============ BOXES & TASKS ============ -->
+    <div class="section active" id="sec-boxes">
+      <div class="page-title">Boxes & Tasks</div>
+      <div class="page-sub">Create time-blocks and add quizzes, videos, or website tasks.</div>
+
+      <div class="msg" id="boxMsg"></div>
+
+      <div class="card">
+        <div class="card-title">➕ Create New Box</div>
+        <div class="field">
+          <label class="field-label">Date</label>
+          <input class="field-input" type="date" id="boxDate">
+          <div style="font-size:.66rem;color:var(--muted);margin-top:4px">Boxes open one-by-one as users complete them. Name & order are automatic.</div>
+        </div>
+        <div id="boxPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">📅 —</div>
+        <button class="btn btn-primary" onclick="createBox()">Create Box</button>
+      </div>
+
+      <div class="card-title" style="margin-top:8px">📦 Existing Boxes</div>
+      <div id="boxesList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- ============ ROUNDS ============ -->
+    <div class="section" id="sec-rounds">
+      <div class="page-title">Rounds</div>
+      <div class="page-sub">Start new rounds and end them to award F1 championship points.</div>
+
+      <div class="msg" id="roundsMsg"></div>
+
+      <!-- Current Round Card -->
+      <div class="card" id="currentRoundCard">
+        <div class="card-title">🏁 Current Round</div>
+        <div id="currentRoundInfo"><div class="loading">Loading...</div></div>
+      </div>
+
+      <!-- Start New Round -->
+      <div class="card" id="startRoundCard" style="display:none">
+        <div class="card-title">➕ Start New Round</div>
+        <div style="font-size:.83rem;color:var(--muted);margin-bottom:14px">Starting a new round resets all players' round points to 0. Championship points are cumulative.</div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">Round Name</label>
+            <input class="field-input" id="newRoundName" placeholder="e.g. Round 3 — Bahrain">
+          </div>
+          <div class="field" style="max-width:180px">
+            <label class="field-label">End Date (UTC)</label>
+            <input class="field-input" type="date" id="newRoundEnd">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="startRound()">🚦 Start Round</button>
+      </div>
+
+      <!-- F1 Points Table -->
+      <div class="card">
+        <div class="card-title">🏆 F1 Points Distribution</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P1</div><div style="font-weight:700;color:var(--gold)">25</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P2</div><div style="font-weight:700;color:var(--soft)">18</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P3</div><div style="font-weight:700;color:#cd7f32">15</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P4</div><div style="font-weight:700">12</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P5</div><div style="font-weight:700">10</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P6</div><div style="font-weight:700">8</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P7</div><div style="font-weight:700">6</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P8</div><div style="font-weight:700">4</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P9</div><div style="font-weight:700">2</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;min-width:54px">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px">P10</div><div style="font-weight:700">1</div>
+          </div>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:10px">P11+ get 0 points. Points add to Championship total.</div>
+      </div>
+
+      <!-- Past Rounds -->
+      <div class="card-title" style="margin-top:4px">📋 Round History</div>
+      <div id="roundHistoryList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- ============ PRIZES ============ -->
+    <div class="section" id="sec-prizes">
+      <div class="page-title">Prizes</div>
+      <div class="page-sub">Set championship prizes — single places (From=To) or zones (From not equal To).</div>
+
+      <div class="msg" id="prizesMsg"></div>
+
+      <div class="card">
+        <div class="card-title">➕ Add Prize Zone</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">
+          From <strong style="color:var(--teal)">1</strong> To <strong style="color:var(--teal)">1</strong> = 1st place winner only.
+          From <strong style="color:var(--teal)">2</strong> To <strong style="color:var(--teal)">10</strong> = everyone in P2–P10 gets this prize.
+        </div>
+        <div class="field-row">
+          <div class="field" style="max-width:130px">
+            <label class="field-label">From (place)</label>
+            <input class="field-input" type="number" id="prizeFrom" min="1" placeholder="1">
+          </div>
+          <div class="field" style="max-width:130px">
+            <label class="field-label">To (place)</label>
+            <input class="field-input" type="number" id="prizeTo" min="1" placeholder="1">
+          </div>
+          <div class="field">
+            <label class="field-label">Prize Amount / Description</label>
+            <input class="field-input" id="prizeAmount" placeholder="e.g. $500 or Gift Card">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Giveaway Link (optional)</label>
+          <select class="field-select" id="prizeGiveaway">
+            <option value="">— No giveaway link —</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="addPrize()">Add Prize</button>
+      </div>
+
+      <div class="card-title" style="margin-top:4px">🏆 Current Prize Zones</div>
+      <div id="prizesList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- ============ USERS ============ -->
+    <div class="section" id="sec-users">
+      <div class="page-title">Users</div>
+      <div class="page-sub">View and manage registered players.</div>
+      <div class="empty"><!-- --></div>
+
+      <div class="msg" id="usersMsg"></div>
+      <div class="card">
+        <div class="card-title">
+          <span>👥 Registered Players</span>
+          <span id="usersCount" style="font-size:.75rem;color:var(--muted)"></span>
+        </div>
+        <div class="field-row" style="margin-bottom:14px">
+          <div class="field">
+            <input class="field-input" id="usersSearch" placeholder="Search by username or email..." oninput="filterUsers()" autocomplete="off">
+          </div>
+          <div style="flex-shrink:0;display:flex;align-items:center">
+            <button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Refresh</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="usersTable" style="width:100%;border-collapse:collapse;font-size:.83rem">
+            <thead>
+              <tr style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">
+                <th style="padding:8px 10px;text-align:left;font-weight:600">#</th>
+                <th style="padding:8px 10px;text-align:left;font-weight:600">Username</th>
+                <th style="padding:8px 10px;text-align:left;font-weight:600">Email</th>
+                <th style="padding:8px 10px;text-align:right;font-weight:600">Champ Pts</th>
+                <th style="padding:8px 10px;text-align:right;font-weight:600">Round Pts</th>
+                <th style="padding:8px 10px;text-align:center;font-weight:600">Admin</th>
+                <th style="padding:8px 10px;text-align:center;font-weight:600">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody">
+              <tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ POINTS SETTINGS ============ -->
+    <div class="section" id="sec-settings">
+      <div class="page-title">Points Settings</div>
+      <div class="page-sub">Set point values once — they apply across the whole platform.</div>
+
+      <div class="msg" id="settingsMsg"></div>
+
+      <div class="card">
+        <div class="card-title">📝 Quiz</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Correct Answer</label><input class="field-input" type="number" id="set_quiz_correct"></div>
+          <div class="field"><label class="field-label">Wrong Answer</label><input class="field-input" type="number" id="set_quiz_wrong"></div>
+          <div class="field"><label class="field-label">Timeout</label><input class="field-input" type="number" id="set_quiz_timeout"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌉 Bridge Game</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Per Step</label><input class="field-input" type="number" id="set_bridge_step"></div>
+          <div class="field"><label class="field-label">Finish Bonus</label><input class="field-input" type="number" id="set_bridge_finish"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📺🌐 Other Tasks</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Video Task</label><input class="field-input" type="number" id="set_video_points"></div>
+          <div class="field"><label class="field-label">Website Task</label><input class="field-input" type="number" id="set_website_points"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD TASK MODAL ============ -->
+<div class="gate" id="taskModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
+  <div class="card" style="width:100%;max-width:440px;margin:0">
+    <div class="card-title">➕ Add Task <span style="cursor:pointer" onclick="closeTaskModal()">✕</span></div>
+    <div class="msg" id="taskMsg"></div>
+    <input type="hidden" id="taskBoxId">
+    <div class="field">
+      <label class="field-label">Task Type</label>
+      <select class="field-select" id="taskType" onchange="onTaskTypeChange()">
+        <option value="quiz">Quiz</option>
+        <option value="video">Video Ad</option>
+        <option value="website">Website Visit</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Title</label>
+      <input class="field-input" id="taskTitle" placeholder="e.g. Quiz 1" autocomplete="off">
+    </div>
+    <div id="quizFields">
+      <div class="field">
+        <label class="field-label">Question</label>
+        <input class="field-input" id="qText" placeholder="What is...?" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Answer A</label><input class="field-input" id="qA" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Answer B</label><input class="field-input" id="qB" autocomplete="off"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Answer C</label><input class="field-input" id="qC" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Answer D</label><input class="field-input" id="qD" autocomplete="off"></div>
+      </div>
+      <div class="field">
+        <label class="field-label">Correct Answer</label>
+        <select class="field-select" id="qCorrect"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
+      </div>
+    </div>
+    <div id="urlField" style="display:none">
+      <div class="field">
+        <label class="field-label">URL</label>
+        <input class="field-input" id="taskUrl" placeholder="https://..." autocomplete="off">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveTask()" style="width:100%">Add Task</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// ---- access gate ----
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){
+    // not logged in → show admin login form
+    showLoginForm();
+    return;
+  }
+  await checkAdmin(session.user);
+}
+
+function showLoginForm(){
+  document.getElementById('gateChecking').style.display = 'none';
+  document.getElementById('gateLogin').style.display = 'block';
+}
+
+async function checkAdmin(user){
+  currentUser = user;
+  const { data: profile } = await db.from('profiles').select('is_admin').eq('id', user.id).single();
+  if(!profile || !profile.is_admin){
+    // logged in but NOT admin
+    document.getElementById('gateChecking').style.display = 'none';
+    document.getElementById('gateLogin').style.display = 'none';
+    document.getElementById('gate').innerHTML = '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:10px">⛔</div><div style="color:var(--red);font-size:.95rem;margin-bottom:8px">Access Denied</div><div style="color:var(--muted);font-size:.82rem">This account is not an admin.</div><a href="/dashboard.html" style="color:var(--teal);font-size:.85rem;display:inline-block;margin-top:14px">← Back to site</a> · <span onclick="logout()" style="color:var(--muted);font-size:.85rem;cursor:pointer">Log out</span></div>';
+    return;
+  }
+  // is admin → open panel
+  document.getElementById('gate').classList.add('hide');
+  document.getElementById('boxDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('boxDate').addEventListener('input', updateBoxPreview);
+  updateBoxPreview();
+  loadBoxes();
+  loadSettings();
+}
+
+// ---- SETTINGS ----
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','bridge_step','bridge_finish','video_points','website_points'];
+async function loadSettings(){
+  const { data: rows } = await db.from('settings').select('*');
+  if(!rows) return;
+  for(const r of rows){
+    const el = document.getElementById('set_'+r.key);
+    if(el) el.value = r.value;
+  }
+}
+async function saveSettings(){
+  for(const key of SETTING_KEYS){
+    const el = document.getElementById('set_'+key);
+    const val = parseInt(el.value);
+    if(isNaN(val)){ showMsg('settingsMsg','Please fill all fields with numbers.','err'); return; }
+    const { error } = await db.from('settings').update({ value: val }).eq('key', key);
+    if(error){ showMsg('settingsMsg', error.message, 'err'); return; }
+  }
+  showMsg('settingsMsg','Settings saved! ✅','ok');
+}
+
+async function updateBoxPreview(){
+  const date = document.getElementById('boxDate').value;
+  const prev = document.getElementById('boxPreview');
+  if(!date){ prev.textContent = '📅 —'; return; }
+  const dt = new Date(date+'T00:00:00');
+  const nice = dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const { data: sameDay } = await db.from('boxes').select('id').eq('date', date);
+  const nextOrder = (sameDay ? sameDay.length : 0) + 1;
+  prev.textContent = '📅 ' + nice + '  ·  will create "Box ' + nextOrder + '"';
+}
+
+async function adminLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  if(!email || !password){ showMsg('loginMsg','Please fill in all fields.','err'); return; }
+
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  if(error){ showMsg('loginMsg', error.message, 'err'); btn.disabled=false; btn.textContent='Admin Login'; return; }
+
+  // logged in → now verify admin
+  await checkAdmin(data.user);
+  btn.disabled=false; btn.textContent='Admin Login';
+}
+
+function nav(section, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+section).classList.add('active');
+}
+
+function showMsg(id, text, type){
+  const m = document.getElementById(id);
+  m.textContent = text; m.className = 'msg show ' + type;
+  setTimeout(()=>{ m.className='msg'; }, 3000);
+}
+
+// ---- BOXES ----
+async function createBox(){
+  const date = document.getElementById('boxDate').value;
+  if(!date){ showMsg('boxMsg','Please pick a date.','err'); return; }
+
+  // auto sequence_order + auto name "Box N"
+  const { data: sameDay } = await db.from('boxes').select('id').eq('date', date);
+  const nextOrder = (sameDay ? sameDay.length : 0) + 1;
+  const autoName = 'Box ' + nextOrder;
+
+  const { error } = await db.from('boxes').insert({
+    name: autoName, date, start_time: '00:00:00', end_time: '23:59:00', sort_order: nextOrder, sequence_order: nextOrder
+  });
+  if(error){ showMsg('boxMsg', error.message, 'err'); return; }
+  showMsg('boxMsg', autoName + ' created! ✅','ok');
+  loadBoxes();
+}
+
+async function loadBoxes(){
+  const { data: boxes } = await db.from('boxes').select('*').order('date',{ascending:false}).order('sequence_order');
+  const list = document.getElementById('boxesList');
+  if(!boxes || boxes.length===0){ list.innerHTML = '<div class="empty">No boxes yet.</div>'; return; }
+
+  let html = '';
+  for(const box of boxes){
+    const { data: tasks } = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
+    let tasksHtml = '';
+    for(const t of (tasks||[])){
+      tasksHtml += '<div class="list-item" style="margin-left:20px;background:var(--bg2)"><span class="badge '+t.type+'">'+t.type+'</span><div class="li-info"><div class="li-title">'+escapeHtml(t.title)+'</div><div class="li-sub">+'+t.points+' points</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deleteTask(\''+t.id+'\')">Delete</button></div></div>';
+    }
+    const niceDate = new Date(box.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div></div><div class="li-actions"><button class="btn btn-ghost btn-sm" onclick="openTaskModal(\''+box.id+'\')">+ Task</button><button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
+    if(tasksHtml) html += tasksHtml;
+  }
+  list.innerHTML = html;
+}
+
+async function deleteBox(id){
+  if(!confirm('Delete this box and all its tasks?')) return;
+  await db.from('boxes').delete().eq('id', id);
+  loadBoxes();
+}
+
+// ---- TASKS ----
+function openTaskModal(boxId){
+  document.getElementById('taskBoxId').value = boxId;
+  document.getElementById('taskModal').style.display = 'flex';
+  document.getElementById('taskType').value = 'quiz';
+  onTaskTypeChange();
+  ['taskTitle','qText','qA','qB','qC','qD','taskUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('qCorrect').value = 'A';
+  document.getElementById('taskMsg').className = 'msg';
+}
+function closeTaskModal(){ document.getElementById('taskModal').style.display = 'none'; }
+
+function onTaskTypeChange(){
+  const type = document.getElementById('taskType').value;
+  document.getElementById('quizFields').style.display = type==='quiz' ? 'block' : 'none';
+  document.getElementById('urlField').style.display = (type==='video'||type==='website') ? 'block' : 'none';
+}
+
+async function saveTask(){
+  const boxId = document.getElementById('taskBoxId').value;
+  const type = document.getElementById('taskType').value;
+  const title = document.getElementById('taskTitle').value.trim();
+  if(!title){ showMsg('taskMsg','Please enter a title.','err'); return; }
+
+  // points come from global settings
+  const settingKey = type==='quiz' ? 'quiz_correct' : type==='video' ? 'video_points' : 'website_points';
+  const { data: setting } = await db.from('settings').select('value').eq('key', settingKey).single();
+  const points = setting ? setting.value : 10;
+
+  const url = document.getElementById('taskUrl').value.trim();
+  const { data: newTask, error } = await db.from('tasks').insert({
+    box_id: boxId, type, title, points, url: url||null, sort_order: 0
+  }).select().single();
+
+  if(error){ showMsg('taskMsg', error.message, 'err'); return; }
+
+  if(type==='quiz'){
+    const q = document.getElementById('qText').value.trim();
+    const a = document.getElementById('qA').value.trim();
+    const b = document.getElementById('qB').value.trim();
+    const c = document.getElementById('qC').value.trim();
+    const d = document.getElementById('qD').value.trim();
+    const correct = document.getElementById('qCorrect').value;
+    if(!q||!a||!b||!c||!d){ showMsg('taskMsg','Please fill the question and all answers.','err'); return; }
+    const { error: qErr } = await db.from('quiz_questions').insert({
+      task_id: newTask.id, question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
+    });
+    if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
+  }
+
+  closeTaskModal();
+  loadBoxes();
+}
+
+async function deleteTask(id){
+  if(!confirm('Delete this task?')) return;
+  await db.from('tasks').delete().eq('id', id);
+  loadBoxes();
+}
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function logout(){ await db.auth.signOut(); window.location.href='/index.html'; }
+
+// ========== ROUNDS ==========
+const F1_POINTS = [25,18,15,12,10,8,6,4,2,1];
+
+async function loadRounds(){
+  // Load active round
+  const { data: activeRounds } = await db.from('rounds').select('*').eq('status','active').order('created_at',{ascending:false}).limit(1);
+  const active = activeRounds && activeRounds[0];
+  const info = document.getElementById('currentRoundInfo');
+  const startCard = document.getElementById('startRoundCard');
+
+  if(active){
+    const end = active.end_date ? new Date(active.end_date+'T23:59:59Z').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open-ended';
+    info.innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="background:var(--teal3);border:1px solid var(--border2);border-radius:10px;padding:10px 18px;text-align:center">
+          <div style="font-size:.62rem;color:var(--muted);margin-bottom:2px">ROUND</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:var(--teal)">${active.round_number}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:1rem;font-weight:600;margin-bottom:4px">${escapeHtml(active.name||'Round '+active.round_number)}</div>
+          <div style="font-size:.78rem;color:var(--muted)">Ends: ${end}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-danger btn-sm" onclick="confirmEndRound('${active.id}',${active.round_number})">🏁 End Round</button>
+        </div>
+      </div>`;
+    startCard.style.display = 'none';
+  } else {
+    info.innerHTML = '<div style="color:var(--muted);font-size:.85rem">No active round. Start one below.</div>';
+    startCard.style.display = 'block';
+    // pre-fill round number
+    const { count } = await db.from('rounds').select('*',{count:'exact',head:true});
+    const nextNum = (count||0)+1;
+    const nameEl = document.getElementById('newRoundName');
+    if(nameEl && !nameEl.value) nameEl.value = 'Round '+nextNum;
+  }
+
+  // Load history
+  const { data: pastRounds } = await db.from('rounds').select('*').eq('status','finished').order('round_number',{ascending:false});
+  const histList = document.getElementById('roundHistoryList');
+  if(!pastRounds || pastRounds.length===0){
+    histList.innerHTML = '<div class="empty">No finished rounds yet.</div>';
+    return;
+  }
+  let html = '';
+  for(const r of pastRounds){
+    const endedAt = r.ended_at ? new Date(r.ended_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    html += `<div class="list-item">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;text-align:center;min-width:44px">
+        <div style="font-size:.6rem;color:var(--muted)">R</div>
+        <div style="font-weight:700;color:var(--soft)">${r.round_number}</div>
+      </div>
+      <div class="li-info">
+        <div class="li-title">${escapeHtml(r.name||'Round '+r.round_number)}</div>
+        <div class="li-sub">Ended ${endedAt}</div>
+      </div>
+      <span class="badge" style="background:rgba(46,196,122,.12);color:var(--green)">Finished</span>
+    </div>`;
+  }
+  histList.innerHTML = html;
+}
+
+async function startRound(){
+  const name = document.getElementById('newRoundName').value.trim();
+  const endDate = document.getElementById('newRoundEnd').value;
+  if(!name){ showMsg('roundsMsg','Please enter a round name.','err'); return; }
+
+  const { count } = await db.from('rounds').select('*',{count:'exact',head:true});
+  const roundNumber = (count||0)+1;
+
+  const { error } = await db.from('rounds').insert({
+    name, round_number: roundNumber, status:'active', end_date: endDate||null
+  });
+  if(error){ showMsg('roundsMsg', error.message,'err'); return; }
+  showMsg('roundsMsg','Round '+roundNumber+' started! 🚦','ok');
+  loadRounds();
+}
+
+async function confirmEndRound(roundId, roundNum){
+  if(!confirm('End Round '+roundNum+' and distribute F1 championship points to top-10 players?\n\nThis cannot be undone.')) return;
+  await endRound(roundId, roundNum);
+}
+
+async function endRound(roundId, roundNum){
+  showMsg('roundsMsg','Calculating standings...','ok');
+
+  // Get top players sorted by race_points (round points) descending
+  const { data: players, error: pErr } = await db.from('profiles')
+    .select('id, username, race_points, championship_points')
+    .order('race_points',{ascending:false})
+    .limit(10);
+
+  if(pErr){ showMsg('roundsMsg', pErr.message,'err'); return; }
+
+  // Award F1 points to top-10
+  const results = [];
+  for(let i=0; i<(players||[]).length && i<10; i++){
+    const p = players[i];
+    const pts = F1_POINTS[i];
+    if(!pts) break;
+    const newChamp = (p.championship_points||0) + pts;
+    const { error } = await db.from('profiles').update({ championship_points: newChamp }).eq('id', p.id);
+    if(error){ showMsg('roundsMsg','Error updating '+p.username+': '+error.message,'err'); return; }
+    results.push({ profile_id: p.id, round_id: roundId, position: i+1, race_points_earned: p.race_points||0, championship_points_awarded: pts });
+  }
+
+  // Save round_results
+  if(results.length > 0){
+    await db.from('round_results').insert(results);
+  }
+
+  // Reset all race_points to 0
+  await db.from('profiles').update({ race_points: 0 }).gt('race_points',-999999);
+
+  // Mark round finished
+  const { error: rErr } = await db.from('rounds').update({ status:'finished', ended_at: new Date().toISOString() }).eq('id', roundId);
+  if(rErr){ showMsg('roundsMsg', rErr.message,'err'); return; }
+
+  showMsg('roundsMsg','Round '+roundNum+' ended! Championship points awarded to top-'+results.length+'. 🏆','ok');
+  loadRounds();
+}
+
+// ========== PRIZES ==========
+async function loadPrizes(){
+  // Load giveaways for dropdown
+  const { data: giveaways } = await db.from('giveaways').select('id,title').order('created_at',{ascending:false});
+  const sel = document.getElementById('prizeGiveaway');
+  if(sel && giveaways){
+    giveaways.forEach(g=>{
+      const opt = document.createElement('option');
+      opt.value = g.id; opt.textContent = g.title;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Load prizes
+  const { data: prizes } = await db.from('giveaway_prizes').select('*').order('place_from');
+  const list = document.getElementById('prizesList');
+  if(!prizes || prizes.length===0){ list.innerHTML = '<div class="empty">No prize zones yet.</div>'; return; }
+
+  let html = '';
+  for(const p of prizes){
+    const isZone = p.place_from !== p.place_to;
+    const placeLabel = isZone ? `P${p.place_from} – P${p.place_to}` : `P${p.place_from}`;
+    const badgeColor = p.place_from===1 ? 'var(--gold)' : p.place_from<=3 ? '#cd7f32' : 'var(--soft)';
+    html += `<div class="list-item">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;text-align:center;min-width:64px">
+        <div style="font-size:.62rem;color:var(--muted);margin-bottom:2px">${isZone?'ZONE':'PLACE'}</div>
+        <div style="font-weight:700;color:${badgeColor};font-size:.88rem">${placeLabel}</div>
+      </div>
+      <div class="li-info">
+        <div class="li-title">${escapeHtml(p.prize_amount||p.amount||'')}</div>
+        <div class="li-sub">${isZone ? 'Zone: places '+p.place_from+' to '+p.place_to : 'Individual: place '+p.place_from}</div>
+      </div>
+      <div class="li-actions">
+        <button class="btn btn-danger btn-sm" onclick="deletePrize('${p.id}')">Delete</button>
+      </div>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+async function addPrize(){
+  const from = parseInt(document.getElementById('prizeFrom').value);
+  const to = parseInt(document.getElementById('prizeTo').value);
+  const amount = document.getElementById('prizeAmount').value.trim();
+  const giveawayId = document.getElementById('prizeGiveaway').value;
+
+  if(!from||!to||!amount){ showMsg('prizesMsg','Please fill in From, To, and Amount.','err'); return; }
+  if(from>to){ showMsg('prizesMsg','"From" cannot be greater than "To".','err'); return; }
+
+  const insertData = { place_from:from, place_to:to, prize_amount:amount };
+  if(giveawayId) insertData.giveaway_id = giveawayId;
+
+  const { error } = await db.from('giveaway_prizes').insert(insertData);
+  if(error){ showMsg('prizesMsg', error.message,'err'); return; }
+
+  showMsg('prizesMsg','Prize zone added! ✅','ok');
+  document.getElementById('prizeFrom').value='';
+  document.getElementById('prizeTo').value='';
+  document.getElementById('prizeAmount').value='';
+  document.getElementById('prizeGiveaway').value='';
+  loadPrizes();
+}
+
+async function deletePrize(id){
+  if(!confirm('Delete this prize zone?')) return;
+  await db.from('giveaway_prizes').delete().eq('id',id);
+  loadPrizes();
+}
+
+// ========== USERS ==========
+let allUsers = [];
+
+async function loadUsers(){
+  document.getElementById('usersBody').innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">Loading...</td></tr>';
+  const { data: users, error } = await db.from('profiles')
+    .select('id, username, email, championship_points, race_points, is_admin, created_at')
+    .order('championship_points',{ascending:false});
+
+  if(error){ showMsg('usersMsg', error.message,'err'); return; }
+  allUsers = users || [];
+  const countEl = document.getElementById('usersCount');
+  if(countEl) countEl.textContent = allUsers.length+' players';
+  renderUsers(allUsers);
+}
+
+function renderUsers(users){
+  const tbody = document.getElementById('usersBody');
+  if(!users || users.length===0){
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">No users found.</td></tr>';
+    return;
+  }
+  let html = '';
+  users.forEach((u,i)=>{
+    const adminBadge = u.is_admin
+      ? `<span class="badge" style="background:rgba(245,200,66,.12);color:var(--gold)">ADMIN</span>`
+      : `<span style="color:var(--muted);font-size:.75rem">—</span>`;
+    const joined = new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    html += `<tr style="border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      <td style="padding:10px 10px;color:var(--muted);font-size:.78rem">${i+1}</td>
+      <td style="padding:10px 10px;font-weight:600">${escapeHtml(u.username||'—')}</td>
+      <td style="padding:10px 10px;color:var(--soft);font-size:.8rem">${escapeHtml(u.email||'—')}</td>
+      <td style="padding:10px 10px;text-align:right;font-weight:700;color:var(--teal)">${u.championship_points||0}</td>
+      <td style="padding:10px 10px;text-align:right;color:var(--soft)">${u.race_points||0}</td>
+      <td style="padding:10px 10px;text-align:center">${adminBadge}</td>
+      <td style="padding:10px 10px;text-align:center">
+        <button class="btn btn-ghost btn-sm" onclick="toggleAdmin('${u.id}','${escapeHtml(u.username||u.email)}',${u.is_admin?'true':'false'})">${u.is_admin?'Remove Admin':'Make Admin'}</button>
+      </td>
+    </tr>`;
+  });
+  document.getElementById('usersBody').innerHTML = html;
+}
+
+function filterUsers(){
+  const q = (document.getElementById('usersSearch').value||'').toLowerCase();
+  if(!q){ renderUsers(allUsers); return; }
+  renderUsers(allUsers.filter(u=>(u.username||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)));
+}
+
+async function toggleAdmin(userId, userName, currentlyAdmin){
+  const action = currentlyAdmin ? 'remove admin from' : 'make admin';
+  if(!confirm('Are you sure you want to '+action+' "'+userName+'"?')) return;
+  const { error } = await db.from('profiles').update({ is_admin: !currentlyAdmin }).eq('id', userId);
+  if(error){ showMsg('usersMsg', error.message,'err'); return; }
+  showMsg('usersMsg', userName+' admin status updated! ✅','ok');
+  loadUsers();
+}
+
+// ========== NAV LOADER ==========
+// Override nav to load data on first visit
+const _navLoaded = {};
+const _origNav = nav;
+function nav(section, el){
+  _origNav(section, el);
+  if(_navLoaded[section]) return;
+  _navLoaded[section] = true;
+  if(section==='rounds') loadRounds();
+  if(section==='prizes') loadPrizes();
+  if(section==='users') loadUsers();
+}
+
+init();
+</script>
+</body>
+</html>
