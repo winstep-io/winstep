@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep.io — Giveaway Results</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --gold2:rgba(245,200,66,.15);
+  --silver:#c0c0c8; --bronze:#cd7f32;
+  --green:#2ec47a;
+  --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.95);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none}
+.logo-badge{width:42px;height:42px;background:var(--teal);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 22px rgba(46,196,182,.3)}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:-.01em;line-height:1}
+.logo-name,.logo-name *{color:var(--text)}
+.logo-name span{color:var(--teal)}
+.back-btn{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.05em;padding:9px 16px;border-radius:8px;transition:all .2s}
+.back-btn:hover{border-color:var(--border2);color:var(--teal)}
+
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px 60px}
+
+/* HERO */
+.results-hero{text-align:center;margin-bottom:36px;position:relative}
+.results-hero::after{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:400px;height:300px;background:radial-gradient(ellipse,rgba(245,200,66,.07),transparent 70%);pointer-events:none;z-index:-1}
+.rh-tag{display:inline-flex;align-items:center;gap:7px;background:var(--gold2);border:1px solid rgba(245,200,66,.3);border-radius:100px;padding:6px 16px;font-family:'Space Grotesk',sans-serif;font-size:.64rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px}
+.rh-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:.04em;line-height:1;margin-bottom:8px}
+.rh-title span{color:var(--gold)}
+.rh-sub{font-size:.9rem;color:var(--soft)}
+.rh-month{color:var(--teal);font-weight:600}
+
+/* PODIUM */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:40px}
+.podium-spot{display:flex;flex-direction:column;align-items:center;flex:1;max-width:200px}
+.podium-avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;color:#000;font-weight:700;position:relative;margin-bottom:10px}
+.podium-medal{position:absolute;bottom:-6px;right:-4px;font-size:1.3rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.p1 .podium-avatar{width:88px;height:88px;font-size:2.4rem;background:linear-gradient(135deg,var(--gold),#e0a830);box-shadow:0 0 40px rgba(245,200,66,.4)}
+.p2 .podium-avatar{width:70px;height:70px;font-size:1.9rem;background:linear-gradient(135deg,var(--silver),#9a9aa5)}
+.p3 .podium-avatar{width:70px;height:70px;font-size:1.9rem;background:linear-gradient(135deg,var(--bronze),#a8682a)}
+.podium-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.92rem;margin-bottom:3px;text-align:center}
+.podium-pts{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--teal);letter-spacing:.05em}
+.podium-prize{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;margin-top:6px;padding:4px 14px;border-radius:100px}
+.p1 .podium-prize{color:var(--gold);background:var(--gold2);border:1px solid rgba(245,200,66,.3)}
+.p2 .podium-prize{color:var(--silver);background:rgba(192,192,200,.1);border:1px solid rgba(192,192,200,.2)}
+.p3 .podium-prize{color:var(--bronze);background:rgba(205,127,50,.1);border:1px solid rgba(205,127,50,.25)}
+.podium-bar{width:100%;border-radius:10px 10px 0 0;margin-top:12px;display:flex;align-items:flex-start;justify-content:center;padding-top:10px;font-family:'Bebas Neue',sans-serif;font-size:1.4rem}
+.p1 .podium-bar{height:70px;background:linear-gradient(180deg,var(--gold2),transparent);color:var(--gold)}
+.p2 .podium-bar{height:50px;background:linear-gradient(180deg,rgba(192,192,200,.12),transparent);color:var(--silver)}
+.p3 .podium-bar{height:38px;background:linear-gradient(180deg,rgba(205,127,50,.12),transparent);color:var(--bronze)}
+
+/* prize note */
+.prize-note{text-align:center;font-size:.78rem;color:var(--soft);margin-bottom:32px;display:flex;align-items:center;justify-content:center;gap:7px}
+
+/* full standings */
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.lb-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.03)}
+.lb-row.prize-zone{background:rgba(245,200,66,.04)}
+.lb-row:last-child{border-bottom:none}
+.lb-row.me{background:var(--gold2);border-left:2px solid var(--gold)}
+.lb-row.winner{background:rgba(245,200,66,.04)}
+.lb-rank{font-family:'Space Grotesk',sans-serif;font-size:.8rem;color:var(--muted);width:28px;flex-shrink:0;text-align:center}
+.lb-rank.medal{font-size:1.05rem}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:.88rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row.me .lb-name{color:var(--gold);font-weight:600}
+.lb-stats{font-size:.62rem;color:var(--soft);margin-top:1px}
+.lb-prize{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.78rem;color:var(--gold);flex-shrink:0}
+.lb-pts{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.82rem;color:var(--teal);flex-shrink:0;min-width:42px;text-align:right}
+.lb-row.me .lb-pts{color:var(--gold)}
+.lb-dots{text-align:center;padding:6px;color:var(--muted);font-size:.7rem;border-bottom:1px solid rgba(255,255,255,.03)}
+
+/* next giveaway cta */
+.next-cta{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:16px;padding:24px;text-align:center;margin-top:28px}
+.next-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.05em;margin-bottom:6px}
+.next-title span{color:var(--teal)}
+.next-sub{font-size:.84rem;color:var(--soft);margin-bottom:16px}
+.next-btn{padding:13px 32px;background:var(--teal);border:none;border-radius:11px;color:#000;font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;letter-spacing:.05em;transition:all .2s}
+.next-btn:hover{background:#44ffe8;box-shadow:0 4px 20px rgba(46,196,182,.3);transform:translateY(-1px)}
+
+@media(max-width:600px){
+  .podium{gap:6px}
+  .rh-title{font-size:2.1rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="window.location.href='/dashboard.html'" style="cursor:pointer">
+    <div class="logo-badge">
+      <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+  </div>
+  <button class="back-btn" onclick="window.location.href='/dashboard.html'">◀ Back to Dashboard</button>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="results-hero">
+    <div class="rh-tag">🏆 Live Standings</div>
+    <div class="rh-title">Championship <span id="rhRound">Standings</span></div>
+    <div class="rh-sub" id="rhSub">Current championship standings — prizes paid at season's end.</div>
+  </div>
+
+  <!-- PODIUM -->
+  <div class="podium" id="podium"></div>
+
+  <div class="prize-note">🎁 All prizes paid as Amazon Gift Cards</div>
+
+  <!-- FULL STANDINGS -->
+  <div class="section-title">Full Standings</div>
+  <div class="card" id="standingsCard">
+    <div style="text-align:center;padding:24px;color:var(--muted)">Loading standings...</div>
+  </div>
+
+  <!-- PAST CHAMPIONSHIPS -->
+  <div id="pastSection" style="display:none">
+    <div class="section-title" style="margin-top:36px">🏆 Past Championships</div>
+    <div class="card" id="pastChampsList"></div>
+    <div id="pastResultsBox"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let me = null;
+let prizeZones = [];
+
+function ordinal(n){ const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function fmtAmount(a){ a=(a||'').toString().trim(); if(!a) return a; if(/[$€£]/.test(a)) return a; if(/^\d+(\.\d+)?$/.test(a)) return '$'+a; return a; }
+
+// find prize for a given place using zones
+function prizeForPlace(place){
+  for(const z of prizeZones){
+    const from = z.place_from || z.place;
+    const to = z.place_to || z.place;
+    if(place >= from && place <= to) return fmtAmount(z.amount);
+  }
+  return null;
+}
+
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+  if(session) me = session.user;
+
+  // current round (for header label)
+  const { data: round } = await db.from('rounds').select('*').eq('status','active').maybeSingle();
+  if(round){
+    document.getElementById('rhRound').textContent = 'Round ' + round.round_number + '/' + round.total_rounds;
+    document.getElementById('rhSub').textContent = 'Standings through Round ' + round.round_number + ' — championship points decide the winners.';
+  }
+
+  // prize zones (active giveaway)
+  const { data: giveaway } = await db.from('giveaways').select('id').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  if(giveaway){
+    const { data: zones } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', giveaway.id).order('place_from');
+    prizeZones = zones || [];
+  }
+
+  // standings — by championship_points, with tie-breakers (NO email — public safe)
+  const { data: players } = await db.from('profiles')
+    .select('id, username, championship_points, total_points, total_activity, correct_answers')
+    .order('championship_points',{ascending:false})
+    .order('total_activity',{ascending:false})
+    .order('correct_answers',{ascending:false})
+    .limit(100);
+
+  renderPodium(players||[]);
+  renderStandings(players||[]);
+  loadPastChampionships();
+}
+
+async function loadPastChampionships(){
+  const { data: champs } = await db.from('championships').select('*').eq('status','finished').order('number',{ascending:false});
+  if(!champs || champs.length===0) return; // no past championships → section stays hidden
+
+  document.getElementById('pastSection').style.display = 'block';
+
+  let html = '';
+  for(const c of champs){
+    let winnerName = '—';
+    if(c.winner_user_id){
+      const { data: w } = await db.from('profiles').select('username').eq('id', c.winner_user_id).maybeSingle();
+      if(w) winnerName = w.username;
+    }
+    const period = (c.start_date||'') + (c.end_date?(' → '+c.end_date):'');
+    html += '<div class="lb-row" style="cursor:pointer" onclick="viewPastResults(\''+c.id+'\','+c.number+')">'
+      + '<span class="lb-rank">🏆</span>'
+      + '<div class="lb-info"><div class="lb-name">Championship '+c.number+'</div><div class="lb-stats">'+period+' · winner: '+escapeHtml(winnerName)+'</div></div>'
+      + '<span class="lb-pts" style="font-size:.8rem">View ▾</span>'
+      + '</div>';
+  }
+  document.getElementById('pastChampsList').innerHTML = html;
+}
+
+let openPastId = null;
+async function viewPastResults(champId, champNum){
+  const box = document.getElementById('pastResultsBox');
+  // toggle: if already open, close
+  if(openPastId === champId){ box.innerHTML=''; openPastId=null; return; }
+  openPastId = champId;
+
+  box.innerHTML = '<div style="text-align:center;padding:18px;color:var(--muted)">Loading...</div>';
+
+  // aggregate final standings from round_results of this championship
+  const { data: results } = await db.from('round_results').select('user_id, championship_points_awarded').eq('championship_id', champId);
+  if(!results || results.length===0){ box.innerHTML = '<div class="card" style="margin-top:10px"><div style="text-align:center;padding:18px;color:var(--muted)">No results recorded for this championship.</div></div>'; return; }
+
+  // sum championship points per user
+  const totals = {};
+  results.forEach(r=>{ totals[r.user_id] = (totals[r.user_id]||0) + (r.championship_points_awarded||0); });
+
+  // get usernames + tie-break stats
+  const userIds = Object.keys(totals);
+  const { data: profiles } = await db.from('profiles').select('id, username, total_activity, correct_answers').in('id', userIds);
+  const profById = {}; (profiles||[]).forEach(p=>{ profById[p.id]=p; });
+
+  // sort by total championship points
+  const ranked = userIds.map(id=>({ id, points: totals[id], prof: profById[id]||{} }))
+    .sort((a,b)=> b.points-a.points || (b.prof.total_activity||0)-(a.prof.total_activity||0) || (b.prof.correct_answers||0)-(a.prof.correct_answers||0));
+
+  let html = '<div class="card" style="margin-top:10px"><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:.9rem;padding:6px 4px 12px">Championship '+champNum+' — Final Results</div>';
+  ranked.forEach((r, i)=>{
+    const place = i+1;
+    const medal = place===1?'🥇':place===2?'🥈':place===3?'🥉':place;
+    const prize = prizeForPlace(place);
+    const isWinner = place<=3;
+    html += '<div class="lb-row'+(isWinner?' winner':'')+'">'
+      + '<span class="lb-rank'+(isWinner?' medal':'')+'">'+medal+'</span>'
+      + '<div class="lb-info"><div class="lb-name">'+escapeHtml(r.prof.username||'—')+'</div>'
+      + '<div class="lb-stats">🎯 '+(r.prof.total_activity||0)+' · ✅ '+(r.prof.correct_answers||0)+'</div></div>'
+      + (prize ? '<span class="lb-prize">'+prize+'</span>' : '')
+      + '<span class="lb-pts">'+r.points+' <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
+      + '</div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+function renderPodium(players){
+  const podium = document.getElementById('podium');
+  if(players.length===0){ podium.innerHTML=''; return; }
+  const order = [1,0,2]; // 2nd, 1st, 3rd visual order
+  const cls = {0:'p1',1:'p2',2:'p3'};
+  const medals = {0:'🥇',1:'🥈',2:'🥉'};
+  let html = '';
+  for(const idx of order){
+    if(!players[idx]) continue;
+    const p = players[idx];
+    const prize = prizeForPlace(idx+1);
+    const initial = (p.username||'?').charAt(0).toUpperCase();
+    html += '<div class="podium-spot '+cls[idx]+'">'
+      + '<div class="podium-avatar">'+initial+'<div class="podium-medal">'+medals[idx]+'</div></div>'
+      + '<div class="podium-name">'+escapeHtml(p.username||'—')+'</div>'
+      + '<div class="podium-pts">'+(p.championship_points||0)+' pts</div>'
+      + (prize ? '<div class="podium-prize">'+prize+'</div>' : '')
+      + '<div class="podium-bar">'+(idx+1)+'</div>'
+      + '</div>';
+  }
+  podium.innerHTML = html;
+}
+
+// find the lowest place that still gets a prize (e.g. zone 1-50 → 50)
+function maxPrizePlace(){
+  let max = 0;
+  for(const z of prizeZones){
+    const to = z.place_to || z.place;
+    if(to > max) max = to;
+  }
+  return max;
+}
+
+let allPlayers = [];
+let showingAll = false;
+
+function renderStandings(players){
+  allPlayers = players;
+  const card = document.getElementById('standingsCard');
+  if(players.length===0){ card.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted)">No players yet.</div>'; return; }
+
+  const prizeCount = maxPrizePlace(); // how many places get prizes
+  const cutoff = showingAll ? players.length : Math.max(prizeCount, 3); // always show at least top 3
+  const visible = players.slice(0, cutoff);
+
+  let html = '';
+  visible.forEach((p, i)=>{
+    const place = i+1;
+    const isMe = me && p.id===me.id;
+    const isWinner = place<=3;
+    const inPrizeZone = place<=prizeCount;
+    const medal = place===1?'🥇':place===2?'🥈':place===3?'🥉':place;
+    const prize = prizeForPlace(place);
+    const cls = (isMe?'me':'') + (isWinner?' winner':'');
+    html += '<div class="lb-row'+(cls?' '+cls:'')+(inPrizeZone&&!isWinner?' prize-zone':'')+'">'
+      + '<span class="lb-rank'+(isWinner?' medal':'')+'">'+medal+'</span>'
+      + '<div class="lb-info"><div class="lb-name">'+(isMe?'YOU':escapeHtml(p.username||'—'))+'</div>'
+      + '<div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'
+      + (prize ? '<span class="lb-prize">'+prize+'</span>' : '')
+      + '<span class="lb-pts">'+(p.championship_points||0)+' <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
+      + '</div>';
+  });
+
+  // show all / show less toggle
+  if(players.length > Math.max(prizeCount,3)){
+    const remaining = players.length - Math.max(prizeCount,3);
+    html += '<div style="text-align:center;padding:14px"><button onclick="toggleShowAll()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--teal);font-family:Rajdhani,sans-serif;font-weight:600;font-size:.82rem;padding:9px 20px;border-radius:9px;cursor:pointer">'
+      + (showingAll ? '▲ Show prize zone only' : '▼ Show all '+players.length+' players ('+remaining+' more)')
+      + '</button></div>';
+  }
+
+  card.innerHTML = html;
+}
+
+function toggleShowAll(){
+  showingAll = !showingAll;
+  renderStandings(allPlayers);
+}
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+init();
+</script>
+
+</body>
+</html>
