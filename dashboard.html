@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --gold2:rgba(245,200,66,.15);
+  --red:#e63946;
+  --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.95);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+.champ-badge{display:inline-block;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.95rem;color:var(--gold);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.25);padding:9px 20px;border-radius:100px;letter-spacing:.03em;white-space:nowrap;margin-bottom:14px}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-badge{width:42px;height:42px;background:var(--teal);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 22px rgba(46,196,182,.3)}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:-.01em;line-height:1}
+.logo-name,.logo-name *{color:var(--text)}
+.logo-name span{color:var(--teal)}
+.header-right{display:flex;align-items:center;gap:10px}
+.points-pill{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border2);border-radius:100px;padding:7px 16px}
+.points-pill .pts-val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold);letter-spacing:.05em}
+.points-pill .pts-lbl{font-size:.64rem;color:var(--soft);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#000;cursor:pointer;overflow:hidden}
+.avatar svg{width:100%;height:100%}
+.lb-avatar{width:30px;height:30px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg3);font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:var(--teal)}
+.lb-avatar svg{width:100%;height:100%}
+.lb-avatar-initial{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#000}
+.logout-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;letter-spacing:.05em;padding:8px 14px;border-radius:8px;transition:all .2s}
+.logout-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal4)}
+
+.layout{max-width:1000px;margin:0 auto;padding:24px 24px 60px;display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+.main-col{min-width:0}
+.welcome{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
+.welcome span{color:var(--teal)}
+.welcome-sub{font-size:.85rem;color:var(--muted);margin-bottom:24px}
+.sidebar-col{display:flex;flex-direction:column;gap:16px;position:sticky;top:80px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.card-head{padding:13px 18px;border-bottom:1px solid var(--border);font-family:'Space Grotesk',sans-serif;font-size:.65rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
+.live-badge{font-size:.58rem;color:var(--teal);letter-spacing:.1em;display:flex;align-items:center;gap:4px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:blink 1.5s infinite}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid rgba(245,200,66,.1);transition:background .15s;background:var(--gold2);border-left:2px solid var(--gold)}
+.lb-row:last-child{border-bottom:none}
+.lb-row .lb-name{color:var(--gold);font-weight:600}
+.lb-row .lb-pts{color:var(--gold)}
+#leaderboardContainer{border-radius:12px;overflow:hidden}
+.lb-rank{font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:700;color:var(--text);width:26px;flex-shrink:0;text-align:center}
+.lb-rank.medal{font-size:.95rem}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row.me .lb-name{color:var(--gold);font-weight:600}
+.lb-stats{font-size:.7rem;color:#9fb5b0;margin-top:2px}
+.lb-pts{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;color:var(--teal);flex-shrink:0}
+.lb-row.me .lb-pts{color:var(--gold)}
+.lb-dots{text-align:center;padding:5px;color:var(--muted);font-size:.7rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.gold2{--gold2:rgba(245,200,66,.15)}
+.pi-card{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:16px;padding:16px 18px}
+.pi-title{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.2em;color:var(--soft);text-transform:uppercase;margin-bottom:11px}
+.pi-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem}
+.pi-row:last-child{border-bottom:none}
+.pi-place{color:#9fb5b0}
+.pi-amt{color:var(--gold);font-weight:600;font-family:'Space Grotesk',sans-serif}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar-col{position:static}}
+
+/* round banner */
+.round-banner{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px;position:relative;overflow:hidden;flex-wrap:wrap}
+.rb-left{display:flex;align-items:center;gap:14px}
+.rb-num{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--teal);letter-spacing:.08em;line-height:1}
+.rb-info .rb-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.15em}
+.rb-info .rb-dates{font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:600;color:var(--soft);margin-top:5px}
+.rb-countdown{font-family:'Space Grotesk',sans-serif;font-size:.78rem;color:var(--gold);font-weight:600}
+.rb-info-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);background:var(--teal4);color:var(--teal);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;font-style:italic;cursor:pointer;transition:all .2s;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.rb-info-btn:hover{background:var(--teal3);border-color:var(--teal)}
+
+/* round info modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(8,12,11,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px;z-index:1000}
+.modal-overlay.show{display:flex}
+.modal-card{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;transition:color .2s}
+.modal-close:hover{color:var(--teal)}
+.modal-text{font-size:.86rem;color:var(--soft);line-height:1.6;margin-bottom:16px}
+.modal-text b{color:var(--teal)}
+.pts-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(5,auto);grid-auto-flow:column;gap:6px 16px;margin-bottom:8px}
+.pts-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:.82rem}
+.pts-place{color:var(--soft);font-weight:500}
+.pts-val{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.92rem;color:var(--gold)}
+.modal-foot{font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.modal-foot b{color:var(--gold)}
+
+/* leaderboard tabs */
+.lb-tabs{display:flex;gap:3px;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.lb-tab{flex:1;padding:7px 4px;border:none;background:none;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.02em;cursor:pointer;border-radius:7px;transition:all .2s;white-space:nowrap}
+.lb-tab.active{background:var(--teal3);color:var(--teal)}
+.welcome{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
+.welcome span{color:var(--teal)}
+.welcome-sub{font-size:.85rem;color:var(--muted);margin-bottom:24px}
+
+.sec-title{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin:8px 0 14px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.boxes{display:flex;flex-direction:column;gap:14px}
+.box-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.box-card.locked{opacity:.5}
+.box-card.completed{opacity:.6}
+.box-status.locked-status{color:var(--muted)}
+.box-status.done-status{color:var(--teal2)}
+.locked-msg{padding:16px 18px;text-align:center;font-size:.82rem;color:var(--muted)}
+.interval-banner{background:linear-gradient(135deg,rgba(46,196,182,.1),rgba(245,200,66,.08));border:1px solid var(--border2);border-radius:14px;padding:16px 18px;margin-bottom:14px;text-align:center}
+.interval-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.95rem;margin-bottom:6px}
+.interval-count{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--teal);letter-spacing:.05em}
+.bridge-notice{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(46,196,182,.08));border:1px solid rgba(245,200,66,.3);border-radius:12px;padding:14px 16px;margin-top:12px;display:flex;align-items:center;gap:12px}
+.bridge-notice-icon{font-size:1.6rem}
+.bridge-notice-info{flex:1}
+.bridge-notice-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.9rem;color:var(--gold)}
+.bridge-notice-sub{font-size:.72rem;color:var(--soft);margin-top:2px}
+.bridge-play-btn{padding:9px 18px;background:var(--gold);border:none;border-radius:9px;color:#000;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap}
+.day-countdown{display:flex;align-items:center;justify-content:center;gap:7px;font-size:.74rem;color:var(--muted);margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px}
+.day-countdown b{color:var(--soft);font-family:'Space Grotesk',sans-serif}
+.box-header{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.box-name{display:flex;align-items:center;gap:9px}
+.box-name-txt{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.92rem}
+.box-time{font-family:'Space Grotesk',sans-serif;font-size:.66rem;color:var(--teal);letter-spacing:.08em}
+.box-status{display:flex;align-items:center;gap:5px;font-size:.64rem;color:var(--muted)}
+.status-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.box-tasks{padding:11px;display:flex;flex-direction:column;gap:7px}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;transition:all .2s}
+.task-row.done{border-color:rgba(46,196,182,.15);background:rgba(46,196,182,.03);opacity:.55}
+.task-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.icon-quiz{background:rgba(46,196,182,.12)}
+.icon-video{background:rgba(230,57,70,.12)}
+.icon-web{background:rgba(100,150,255,.12)}
+.task-info{flex:1;min-width:0}
+.task-name{font-size:.84rem;font-weight:500;margin-bottom:1px}
+.task-desc{font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.task-pts{font-family:'Space Grotesk',sans-serif;font-size:.66rem;color:var(--gold)}
+.task-btn{padding:6px 14px;background:var(--teal3);border:1px solid var(--border2);border-radius:6px;color:var(--teal);font-size:.7rem;font-weight:600;font-family:'Rajdhani',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}
+.task-btn:hover{background:rgba(46,196,182,.2)}
+.task-btn.done-btn{background:transparent;border-color:rgba(46,196,182,.2);color:var(--teal2);cursor:default}
+
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="window.location.href='/dashboard.html'" style="cursor:pointer">
+    <div class="logo-badge">
+      <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+  </div>
+  <div class="header-right">
+    <div class="points-pill">
+      <span class="pts-val" id="userPoints">0</span>
+      <span class="pts-lbl">pts</span>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='/results.html'" title="Championship standings">🏆 Results</button>
+    <div class="avatar" id="userAvatar" onclick="window.location.href='/profile.html'" style="cursor:pointer" title="View profile">?</div>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="main-col">
+    <div class="welcome">Welcome, <span id="userName">...</span>!</div>
+    <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
+
+    <div class="champ-badge" id="champBadge" style="display:none"></div>
+
+    <div class="round-banner" id="roundBanner" style="display:none">
+      <div class="rb-left">
+        <div class="rb-info">
+          <div class="rb-num" id="rbNum">Round 1 / 10</div>
+          <div class="rb-dates" id="rbDates">—</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="font-size:.74rem;color:var(--soft);font-weight:600;letter-spacing:.03em">How Rounds Work</span>
+        <button class="rb-info-btn" onclick="openRoundInfo()" title="How rounds work">i</button>
+      </div>
+    </div>
+
+    <div class="sec-title">Today's Boxes</div>
+    <div id="boxesContainer">
+      <div class="loading">Loading boxes... ⏳</div>
+    </div>
+  </div>
+
+  <div class="sidebar-col">
+    <div class="card">
+      <div class="card-head">Leaderboard<span class="live-badge"><span class="live-dot"></span>Live</span></div>
+      <div class="lb-tabs">
+        <button class="lb-tab active" id="tabChampionship" onclick="switchLb('championship')">🏆 Championship</button>
+        <button class="lb-tab" id="tabRace" onclick="switchLb('race')">🏁 This Round</button>
+      </div>
+      <div id="leaderboardContainer">
+        <div class="loading" style="padding:20px">Loading... ⏳</div>
+      </div>
+    </div>
+
+    <div class="pi-card" id="prizeCard" style="display:none">
+      <div class="pi-title">Championship Prizes 🎁</div>
+      <div id="prizeRows"></div>
+      <div style="font-size:.72rem;color:var(--soft);font-weight:500;margin-top:11px;line-height:1.4">🎁 All prizes paid as Amazon Gift Cards</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/avatars.js"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let myProfile = null;
+let isPreview = false;   // true when no one is logged in (guest preview)
+
+// ---- check login ----
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+
+  if(!session){
+    // GUEST PREVIEW MODE — show the platform, but actions require sign up
+    isPreview = true;
+    enterPreviewMode();
+    loadBoxes();
+    loadRound();
+    loadLeaderboard();
+    loadPrizes();
+    return;
+  }
+
+  currentUser = session.user;
+
+  // load profile
+  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  myProfile = profile;
+
+  // banned? block access
+  if(profile && profile.is_banned){
+    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:30px;font-family:Rajdhani,sans-serif;color:#e8f0ee;background:#080c0b"><div style="font-size:2.4rem">🚫</div><div style="font-size:1.2rem;font-weight:700">Account Suspended</div><div style="font-size:.9rem;color:#9fb5b0;max-width:340px">Your account has been suspended. If you think this is a mistake, contact support at winstep.team@gmail.com</div><button onclick="signOutBanned()" style="margin-top:10px;padding:10px 22px;background:#162220;border:1px solid rgba(46,196,182,.2);color:#9fb5b0;border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">Log Out</button></div>';
+    window.signOutBanned = async ()=>{ await db.auth.signOut(); window.location.href='/index.html'; };
+    return;
+  }
+
+  if(profile){
+    document.getElementById('userName').textContent = profile.username;
+    document.getElementById('userPoints').textContent = profile.total_points || 0;
+    const av = avatarSVG(profile.avatar_id, 38);
+    const avEl = document.getElementById('userAvatar');
+    if(av){ avEl.innerHTML = av; avEl.style.background='transparent'; }
+    else {
+      avEl.innerHTML = '';
+      avEl.textContent = (profile.username||'?').charAt(0).toUpperCase();
+      avEl.style.background = 'linear-gradient(135deg,var(--teal),var(--teal2))';
+    }
+  }
+
+  loadBoxes();
+  loadRound();
+  loadLeaderboard();
+  loadPrizes();
+}
+
+// ---- guest preview mode setup ----
+function enterPreviewMode(){
+  // hide the whole welcome greeting in preview
+  const wel = document.querySelector('.welcome');
+  if(wel) wel.style.display = 'none';
+  const ws = document.querySelector('.welcome-sub');
+  if(ws) ws.style.display = 'none';
+  const hr = document.querySelector('.header-right');
+  if(hr){
+    hr.innerHTML = '<button class="logout-btn" onclick="window.location.href=\'/index.html\'" style="background:var(--teal);color:#000;border:none;font-weight:600">Log In / Sign Up</button>';
+  }
+}
+
+function requireAuth(){
+  if(isPreview){ showAuthPrompt(); return true; }
+  return false;
+}
+
+function showAuthPrompt(){
+  let m = document.getElementById('authPromptModal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'authPromptModal';
+    m.style = 'position:fixed;inset:0;background:rgba(8,12,11,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px';
+    m.innerHTML = '<div style="background:#0f1614;border:1px solid rgba(46,196,182,.2);border-radius:18px;padding:30px 26px;max-width:360px;text-align:center;font-family:Rajdhani,sans-serif">'
+      + '<div style="font-size:2.2rem;margin-bottom:10px">🔒</div>'
+      + '<div style="font-size:1.15rem;font-weight:700;color:#e8f0ee;margin-bottom:8px">Sign up to start earning</div>'
+      + '<div style="font-size:.88rem;color:#9fb5b0;margin-bottom:20px;line-height:1.5">Create a free account to complete tasks, play games, and climb the leaderboard for real prizes.</div>'
+      + '<button onclick="window.location.href=\'/index.html\'" style="width:100%;padding:13px;background:#2ec4b6;border:none;border-radius:11px;color:#000;font-family:Rajdhani,sans-serif;font-weight:600;font-size:.95rem;cursor:pointer;margin-bottom:10px">Sign Up Free</button>'
+      + '<button onclick="document.getElementById(\'authPromptModal\').style.display=\'none\'" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(46,196,182,.2);border-radius:11px;color:#9fb5b0;font-family:Rajdhani,sans-serif;font-weight:600;font-size:.88rem;cursor:pointer">Keep browsing</button>'
+      + '</div>';
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+}
+
+// ---- round banner ----
+let currentRound = null;
+async function loadRound(){
+  const { data: round } = await db.from('rounds').select('*').eq('status','active').order('created_at',{ascending:false}).limit(1).single();
+  if(!round) return;
+  currentRound = round;
+  document.getElementById('rbNum').textContent = 'Round ' + round.round_number + ' / ' + round.total_rounds;
+  const fmt = (d)=>{ const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+  document.getElementById('rbDates').textContent = fmt(round.start_date) + ' — ' + fmt(round.end_date);
+  document.getElementById('roundBanner').style.display = 'flex';
+
+  // championship badge in header
+  if(round.championship_id){
+    const { data: champ } = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
+    if(champ){
+      const badge = document.getElementById('champBadge');
+      badge.textContent = '🏆 Championship #' + champ.number;
+      badge.style.display = 'inline-block';
+    }
+  }
+}
+
+// ---- round info modal ----
+let ptsLoaded = false;
+async function openRoundInfo(){
+  document.getElementById('roundInfoModal').classList.add('show');
+  if(ptsLoaded) return;
+  const { data: pts } = await db.from('round_points_table').select('*').order('place');
+  if(pts && pts.length){
+    let html = '';
+    for(const row of pts){
+      const medal = row.place===1?'🥇':row.place===2?'🥈':row.place===3?'🥉':'';
+      html += '<div class="pts-item"><span class="pts-place">'+medal+' '+ordinal(row.place)+'</span><span class="pts-val">'+row.points+' pts</span></div>';
+    }
+    document.getElementById('ptsGrid').innerHTML = html;
+    ptsLoaded = true;
+  }
+}
+function closeRoundInfo(){
+  document.getElementById('roundInfoModal').classList.remove('show');
+}
+let lbMode = 'championship';
+function switchLb(mode){
+  lbMode = mode;
+  document.getElementById('tabChampionship').classList.toggle('active', mode==='championship');
+  document.getElementById('tabRace').classList.toggle('active', mode==='race');
+  loadLeaderboard();
+}
+
+async function loadLeaderboard(){
+  const isChamp = lbMode==='championship';
+  const sortCol = isChamp ? 'championship_points' : 'total_points';
+
+  const { data: players } = await db
+    .from('profiles')
+    .select('id, username, avatar_id, total_points, championship_points, total_activity, correct_answers, created_at')
+    .order(sortCol, { ascending: false })
+    .order('total_activity', { ascending: false })
+    .order('correct_answers', { ascending: false })
+    .order('created_at', { ascending: true })
+    .limit(100);
+
+  const container = document.getElementById('leaderboardContainer');
+  if(!players || players.length===0){ container.innerHTML = '<div class="loading" style="padding:20px">No players yet.</div>'; return; }
+
+  const medals = ['🥇','🥈','🥉'];
+  const myId = currentUser ? currentUser.id : null;
+  let myRank = players.findIndex(p=>p.id===myId);
+
+  const ptsOf = (p)=> isChamp ? (p.championship_points||0) : (p.total_points||0);
+  const avOf = (p)=>{
+    const s=avatarSVG(p.avatar_id,30);
+    if(s) return '<div class="lb-avatar">'+s+'</div>';
+    return '<div class="lb-avatar lb-avatar-initial">'+(p.username||'?').charAt(0).toUpperCase()+'</div>';
+  };
+
+  let html = '';
+  const topN = Math.min(players.length, 5);
+  for(let i=0;i<topN;i++){
+    const p = players[i];
+    const isMe = myId && p.id===myId;
+    const rank = '<span class="lb-rank">'+(i+1)+'</span>';
+    html += '<div class="lb-row">'+rank+avOf(p)+'<div class="lb-info"><div class="lb-name">'+(isMe?'YOU':escapeHtml(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div><span class="lb-pts">'+ptsOf(p)+' <span style="font-size:.6rem;color:#9fb5b0;font-weight:400">PTS</span></span></div>';
+  }
+
+  if(myRank >= 5){
+    html += '<div class="lb-dots">· · ·</div>';
+    const p = players[myRank];
+    html += '<div class="lb-row"><span class="lb-rank">'+(myRank+1)+'</span>'+avOf(p)+'<div class="lb-info"><div class="lb-name">YOU</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div><span class="lb-pts">'+ptsOf(p)+' <span style="font-size:.6rem;color:#9fb5b0;font-weight:400">PTS</span></span></div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ---- prizes ----
+async function loadPrizes(){
+  const { data: giveaway } = await db.from('giveaways').select('id').eq('is_active', true).order('created_at',{ascending:false}).limit(1).single();
+  if(!giveaway) return;
+  const { data: prizes } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', giveaway.id).order('place_from');
+  if(!prizes || prizes.length===0) return;
+
+  const medals = {1:'🥇',2:'🥈',3:'🥉'};
+  let html = '';
+  for(const pr of prizes){
+    const from = pr.place_from || pr.place;
+    const to = pr.place_to || pr.place;
+    const m = medals[from] || '🏅';
+    const label = (from===to) ? (ordinal(from)+' Place') : (from+'–'+to);
+    const amt = fmtAmount(pr.amount);
+    html += '<div class="pi-row"><span class="pi-place">'+m+' '+label+'</span><span class="pi-amt">'+amt+'</span></div>';
+  }
+  document.getElementById('prizeRows').innerHTML = html;
+  document.getElementById('prizeCard').style.display = 'block';
+}
+
+function fmtAmount(a){
+  a = (a||'').toString().trim();
+  if(!a) return a;
+  if(/[$€£]/.test(a)) return a;
+  if(/^\d+(\.\d+)?$/.test(a)) return '$'+a;
+  return a;
+}
+
+function ordinal(n){ const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+
+// ---- load boxes + tasks ----
+let pointSettings = { box_interval_minutes: 15, bridge_unlock_correct: 2 };
+
+async function loadBoxes(){
+  const today = new Date().toISOString().split('T')[0];
+  const container = document.getElementById('boxesContainer');
+
+  // load settings (interval + bridge unlock)
+  const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
+  if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
+
+  // today's boxes in order
+  const { data: boxes, error } = await db
+    .from('boxes')
+    .select('*')
+    .eq('date', today)
+    .order('sequence_order');
+
+  if(error){ container.innerHTML = '<div class="empty">Error loading boxes: '+error.message+'</div>'; return; }
+  if(!boxes || boxes.length===0){ container.innerHTML = '<div class="empty">No boxes scheduled for today yet. 📦 Check back soon!</div>'; return; }
+
+  // my completed tasks (none in preview)
+  let doneTaskIds = [];
+  let progressByBox = {};
+  if(currentUser){
+    const { data: activity } = await db.from('user_activity').select('task_id').eq('user_id', currentUser.id);
+    doneTaskIds = (activity||[]).map(a=>a.task_id);
+    const { data: progress } = await db.from('user_box_progress').select('*').eq('user_id', currentUser.id).eq('day', today);
+    (progress||[]).forEach(p=>{ progressByBox[p.box_id] = p; });
+  }
+
+  let html = '';
+
+  // day countdown (until UTC midnight)
+  html += '<div class="day-countdown">🌙 Day ends in <b id="dayCountdown">—</b> (resets 00:00 UTC)</div>';
+  html += '<div class="boxes">';
+
+  // determine state for each box
+  // logic: walk boxes in order. A box is:
+  //  - completed: has progress
+  //  - active: first box without progress, AND previous box's interval (if any) has ended
+  //  - locked: everything after the active one, OR waiting for interval
+  let intervalActive = null;
+  let blockedByInterval = false;
+  let activeAssigned = false;
+
+  const states = [];
+  for(let i=0; i<boxes.length; i++){
+    const box = boxes[i];
+    const prog = progressByBox[box.id];
+
+    if(prog){
+      states[i] = 'completed';
+      // is this box's interval still running? (blocks the NEXT box)
+      if(prog.interval_ends_at && new Date(prog.interval_ends_at) > new Date()){
+        intervalActive = { prog, box, nextBox: boxes[i+1] || null };
+        blockedByInterval = true;
+      } else {
+        blockedByInterval = false;
+      }
+    } else {
+      // first box without progress
+      if(!activeAssigned && !blockedByInterval){
+        states[i] = 'active';
+        activeAssigned = true;
+      } else {
+        states[i] = 'locked';
+      }
+    }
+  }
+
+  for(let i=0; i<boxes.length; i++){
+    const box = boxes[i];
+    const { data: tasks } = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
+    html += renderBox(box, tasks||[], doneTaskIds, states[i], progressByBox[box.id]);
+  }
+  html += '</div>';
+  container.innerHTML = html;
+
+  // if an interval is running, show the interval banner + bridge notice
+  if(intervalActive){
+    renderInterval(intervalActive);
+  }
+
+  startDayCountdown();
+}
+
+function renderBox(box, taskList, doneTaskIds, state, prog){
+  let statusHtml, cardCls='';
+  if(state==='active'){ statusHtml = '<div class="box-status"><span class="status-dot"></span>Active</div>'; }
+  else if(state==='completed'){ statusHtml = '<div class="box-status done-status">✓ Completed</div>'; cardCls=' completed'; }
+  else { statusHtml = '<div class="box-status locked-status">🔒 Locked</div>'; cardCls=' locked'; }
+
+  let html = '<div class="box-card'+cardCls+'"><div class="box-header"><div class="box-name"><span class="box-name-txt">📦 '+escapeHtml(box.name)+'</span></div>'+statusHtml+'</div>';
+
+  if(state==='locked'){
+    html += '<div class="locked-msg">🔒 Complete the previous box to unlock</div></div>';
+    return html;
+  }
+
+  html += '<div class="box-tasks">';
+  for(const task of taskList){
+    const isDone = doneTaskIds.includes(task.id);
+    const icon = task.type==='quiz'?'❓':task.type==='video'?'📺':'🌐';
+    const iconCls = task.type==='quiz'?'icon-quiz':task.type==='video'?'icon-video':'icon-web';
+    const desc = task.type==='quiz'?'Tap to answer · 20s timer':task.type==='video'?'Watch sponsored video':'Visit partner site';
+    const btnLabel = task.type==='quiz'?'Answer':task.type==='video'?'Watch':'Start';
+    html += '<div class="task-row'+(isDone?' done':'')+'"><div class="task-icon '+iconCls+'">'+icon+'</div><div class="task-info"><div class="task-name">'+escapeHtml(task.title)+'</div><div class="task-desc">'+desc+'</div></div><div class="task-right"><span class="task-pts">+'+task.points+'</span>';
+    if(isDone){ html += '<button class="task-btn done-btn">✓ Done</button>'; }
+    else if(state==='active'){ html += '<button class="task-btn" onclick="startTask(\''+task.id+'\',\''+task.type+'\')">'+btnLabel+'</button>'; }
+    else { html += '<button class="task-btn done-btn" style="opacity:.5">—</button>'; }
+    html += '</div></div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function renderInterval(data){
+  // show interval banner above boxes
+  const container = document.getElementById('boxesContainer');
+  let bridgeHtml = '';
+  if(data.prog.bridge_unlocked && !data.prog.bridge_played){
+    bridgeHtml = '<div class="bridge-notice"><div class="bridge-notice-icon">🌉</div><div class="bridge-notice-info"><div class="bridge-notice-title">Bridge unlocked!</div><div class="bridge-notice-sub">Play now for bonus points — available during this break only</div></div><button class="bridge-play-btn" onclick="playBridge()">Play</button></div>';
+  }
+  const banner = '<div class="interval-banner"><div class="interval-title">⏳ Next box unlocks in</div><div class="interval-count" id="intervalCountdown">—</div>'+bridgeHtml+'</div>';
+  container.insertAdjacentHTML('afterbegin', banner);
+  startIntervalCountdown(new Date(data.prog.interval_ends_at));
+}
+
+function startDayCountdown(){
+  const el = document.getElementById('dayCountdown');
+  if(!el) return;
+  function tick(){
+    const now = new Date();
+    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()+1, 0,0,0));
+    let diff = Math.floor((midnight - now)/1000);
+    if(diff<0) diff=0;
+    const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60), s=diff%60;
+    el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+function startIntervalCountdown(endTime){
+  const el = document.getElementById('intervalCountdown');
+  if(!el) return;
+  function tick(){
+    const now = new Date();
+    let diff = Math.floor((endTime - now)/1000);
+    if(diff<=0){ el.textContent='00:00'; location.reload(); return; }
+    const m=Math.floor(diff/60), s=diff%60;
+    el.textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+function playBridge(){
+  if(requireAuth()) return;
+  window.location.href = '/bridge.html';
+}
+
+function startTask(taskId, type){
+  if(requireAuth()) return; // preview mode → prompt sign up
+  if(type==='quiz'){
+    window.location.href = '/quiz.html?task=' + taskId;
+  } else {
+    alert('Task type "'+type+'" — coming soon in the build!');
+  }
+}
+
+async function logout(){
+  await db.auth.signOut();
+  window.location.href = '/dashboard.html';
+}
+
+init();
+</script>
+<div class="modal-overlay" id="roundInfoModal" onclick="if(event.target===this)closeRoundInfo()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">🏁 How Rounds Work</div>
+      <button class="modal-close" onclick="closeRoundInfo()">✕</button>
+    </div>
+    <div class="modal-text">
+      Each round lasts a few days. Earn <b>race points</b> from quizzes, the Bridge game, and daily tasks. At the end of each round, the <b>top 10</b> players earn championship points:
+    </div>
+    <div class="pts-grid" id="ptsGrid">
+      <div class="loading" style="padding:10px">Loading...</div>
+    </div>
+    <div class="modal-foot">
+      Championship points add up across all rounds. The player at the top of the <b>Championship</b> leaderboard when the season ends wins the grand prize! 🏆
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
