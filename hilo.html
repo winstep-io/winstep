@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — Hi-Lo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --green:#2ec47a; --red:#e63946;
+  --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+  --card-red:#d6334a; --card-black:#1a2422;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% -10%, #0f1a18 0%, var(--bg) 55%);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo-badge{width:36px;height:36px;background:var(--teal);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem}
+.logo-name span{color:var(--teal)}
+.h-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;text-decoration:none;transition:all .2s}
+.h-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px 40px;gap:4px}
+.eyebrow{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:600}
+.title{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;letter-spacing:-.01em}
+.subtitle{font-size:.9rem;color:var(--muted);margin-bottom:14px;text-align:center;max-width:340px}
+
+.scoreboard{display:flex;gap:10px;margin-bottom:20px}
+.score-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 22px;text-align:center;min-width:96px}
+.score-box .k{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.score-box .v{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;line-height:1}
+.score-box.current .v{color:var(--teal)}
+
+.card-stage{position:relative;width:170px;height:240px;margin-bottom:6px;perspective:1000px}
+.playing-card{position:absolute;inset:0;border-radius:16px;background:#f4f6f5;box-shadow:0 14px 40px rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:space-between;padding:14px 16px;transition:transform .35s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
+.playing-card.flip{transform:rotateY(90deg)}
+.pc-corner{font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:.9;display:flex;flex-direction:column;align-items:center;width:fit-content}
+.pc-corner.bottom{align-self:flex-end;transform:rotate(180deg)}
+.pc-rank{font-size:1.7rem}
+.pc-suit-sm{font-size:1.3rem;margin-top:-2px}
+.pc-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:4.4rem;line-height:1}
+.red{color:var(--card-red)}
+.black{color:var(--card-black)}
+
+.feedback{min-height:26px;font-size:.95rem;font-weight:600;margin:10px 0 4px;text-align:center;transition:all .2s}
+.feedback.ok{color:var(--green)}
+.feedback.push{color:var(--gold)}
+.feedback.bad{color:#ff6b78}
+
+.guess-row{display:flex;gap:14px;margin-top:6px}
+.guess-btn{flex:1;min-width:130px;padding:16px 20px;border:none;border-radius:14px;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.03em;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px}
+.guess-btn.high{background:var(--teal);color:#04100e;box-shadow:0 6px 18px rgba(46,196,182,.28)}
+.guess-btn.high:hover:not(:disabled){background:#44ffe8;transform:translateY(-2px)}
+.guess-btn.low{background:var(--bg3);color:var(--text);border:1.5px solid var(--border2)}
+.guess-btn.low:hover:not(:disabled){border-color:var(--teal);color:var(--teal);transform:translateY(-2px)}
+.guess-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.arrow{font-size:1.1rem}
+
+.hint{font-size:.74rem;color:var(--muted);margin-top:16px;text-align:center;max-width:330px}
+
+.overlay{position:fixed;inset:0;background:rgba(8,12,11,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.show{display:flex}
+.over-card{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:32px 34px;text-align:center;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.over-emoji{font-size:2.6rem;margin-bottom:6px}
+.over-title{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:6px}
+.over-score{font-family:'Space Grotesk',sans-serif;font-size:3rem;font-weight:700;color:var(--gold);line-height:1;margin:8px 0}
+.over-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px}
+.over-btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--teal);color:#04100e;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s}
+.over-btn:hover{background:#44ffe8}
+
+@media (max-width:420px){ .title{font-size:1.6rem} .card-stage{width:150px;height:212px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="window.location.href='/dashboard.html'">
+    <div class="logo-badge">
+      <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+  </div>
+  <a class="h-btn" href="/dashboard.html">← Back to Dashboard</a>
+</header>
+
+<div class="wrap" id="wrap">
+  <div class="eyebrow">Bonus Game</div>
+  <div class="title">Hi-Lo</div>
+  <div class="subtitle">Will the next card be higher or lower? Guess right to earn points.</div>
+
+  <div class="scoreboard">
+    <div class="score-box current"><div class="k">Points</div><div class="v" id="scoreVal">0</div></div>
+  </div>
+
+  <div class="card-stage">
+    <div class="playing-card" id="card">
+      <div class="pc-corner top"><span class="pc-rank" id="rankTop">A</span><span class="pc-suit-sm" id="suitTop">♠</span></div>
+      <div class="pc-center" id="suitCenter">♠</div>
+      <div class="pc-corner bottom"><span class="pc-rank" id="rankBot">A</span><span class="pc-suit-sm" id="suitBot">♠</span></div>
+    </div>
+  </div>
+
+  <div class="feedback" id="feedback">Make your guess</div>
+
+  <div class="guess-row">
+    <button class="guess-btn high" id="btnHigh" onclick="guess('higher')"><span class="arrow">▲</span> Higher</button>
+    <button class="guess-btn low" id="btnLow" onclick="guess('lower')"><span class="arrow">▼</span> Lower</button>
+  </div>
+
+  <div class="hint">Ace is highest. Same suit or a tie = no points, but you continue.</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="over-card">
+    <div class="over-emoji">🏁</div>
+    <div class="over-title">Game Over</div>
+    <div class="over-score" id="finalScore">0</div>
+    <div class="over-sub" id="finalSub">points earned</div>
+    <button class="over-btn" onclick="window.location.href='/dashboard.html'">← Back to Dashboard</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let hiloUser = null;
+let myProgressId = null;
+let hiloSaved = false;
+let PER_STEP = 5;          // points per correct guess (from admin)
+
+const SUITS = [{sym:'♠',red:false},{sym:'♥',red:true},{sym:'♦',red:true},{sym:'♣',red:false}];
+const RANKS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
+function rankLabel(r){ return r===14?'A':r===13?'K':r===12?'Q':r===11?'J':String(r); }
+
+let deck=[], current=null, score=0, correctCount=0, busy=false;
+
+function buildDeck(){
+  deck=[];
+  for(const s of SUITS) for(const r of RANKS) deck.push({rank:r,suit:s.sym,red:s.red});
+  for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+}
+function drawCard(){ if(deck.length===0) buildDeck(); return deck.pop(); }
+
+function renderCard(card, animate){
+  const el=document.getElementById('card');
+  const apply=()=>{
+    document.getElementById('rankTop').textContent=rankLabel(card.rank);
+    document.getElementById('rankBot').textContent=rankLabel(card.rank);
+    document.getElementById('suitTop').textContent=card.suit;
+    document.getElementById('suitBot').textContent=card.suit;
+    document.getElementById('suitCenter').textContent=card.suit;
+    const cls=card.red?'red':'black';
+    document.getElementById('rankTop').className='pc-rank '+cls;
+    document.getElementById('rankBot').className='pc-rank '+cls;
+    document.getElementById('suitTop').className='pc-suit-sm '+cls;
+    document.getElementById('suitBot').className='pc-suit-sm '+cls;
+    document.getElementById('suitCenter').className='pc-center '+cls;
+  };
+  if(animate){ el.classList.add('flip'); setTimeout(()=>{ apply(); el.classList.remove('flip'); },180); }
+  else apply();
+}
+function setFeedback(t,type){ const f=document.getElementById('feedback'); f.textContent=t; f.className='feedback'+(type?' '+type:''); }
+function setButtons(en){ document.getElementById('btnHigh').disabled=!en; document.getElementById('btnLow').disabled=!en; }
+
+function guess(direction){
+  if(busy) return;
+  busy=true; setButtons(false);
+  const next=drawCard();
+  renderCard(next,true);
+  setTimeout(()=>{
+    const prev=current;
+    current=next;
+    if(next.rank===prev.rank){ setFeedback('Tie — no points. Keep going!','push'); finishTurn(true); return; }
+    if(next.suit===prev.suit){ setFeedback('Same suit ('+next.suit+') — no points. Keep going!','push'); finishTurn(true); return; }
+    const isHigher=next.rank>prev.rank;
+    const correct=(direction==='higher'&&isHigher)||(direction==='lower'&&!isHigher);
+    if(correct){
+      correctCount++;
+      score = correctCount * PER_STEP;
+      document.getElementById('scoreVal').textContent=score;
+      setFeedback('Correct! +'+PER_STEP+' points','ok');
+      finishTurn(true);
+    } else {
+      setFeedback('Wrong! It was '+(isHigher?'higher':'lower')+'.','bad');
+      finishTurn(false);
+    }
+  },220);
+}
+
+function finishTurn(continues){
+  if(continues){ setTimeout(()=>{ busy=false; setButtons(true); },350); }
+  else { setTimeout(gameOver,700); }
+}
+
+function gameOver(){
+  document.getElementById('finalScore').textContent=score;
+  document.getElementById('finalSub').textContent = score===1?'point earned':'points earned';
+  document.getElementById('overlay').classList.add('show');
+  saveHiloResult(score);
+}
+
+async function saveHiloResult(points){
+  if(hiloSaved) return;
+  hiloSaved=true;
+  if(myProgressId){
+    await db.from('user_box_progress').update({ hilo_played:true }).eq('id', myProgressId);
+  }
+  await db.from('user_activity').insert({
+    user_id: hiloUser.id, task_id:null, points_earned:points, is_correct:null, activity_type:'hilo'
+  });
+  if(points>0){
+    const { data: profile } = await db.from('profiles').select('total_points').eq('id', hiloUser.id).single();
+    await db.from('profiles').update({ total_points:(profile.total_points||0)+points }).eq('id', hiloUser.id);
+  }
+}
+
+function blockGame(){
+  document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🃏</div><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Hi-Lo not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
+}
+
+async function init(){
+  const { data: setRows } = await db.from('settings').select('*').in('key',['hilo_per_step']);
+  if(setRows){ for(const r of setRows){ if(r.key==='hilo_per_step') PER_STEP=r.value; } }
+
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){ window.location.href='/index.html'; return; }
+  hiloUser = session.user;
+
+  const today = new Date().toISOString().split('T')[0];
+  const { data: prog } = await db.from('user_box_progress')
+    .select('*')
+    .eq('user_id', hiloUser.id)
+    .eq('day', today)
+    .eq('game_type', 'hilo')
+    .eq('bridge_unlocked', true)
+    .eq('hilo_played', false);
+
+  const live = (prog||[]).find(p => p.interval_ends_at && new Date(p.interval_ends_at) > new Date());
+  if(!live){ blockGame(); return; }
+  myProgressId = live.id;
+
+  buildDeck();
+  current = drawCard();
+  renderCard(current,false);
+}
+
+init();
+</script>
+</body>
+</html>
