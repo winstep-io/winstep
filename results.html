@@ -198,12 +198,20 @@ async function init(){
   }
 
   // standings — champ pts → cumulative round pts → activity → correct → earliest last point (NO email — public safe)
-  const { data: players } = await db.from('profiles')
+  const { data: rawPlayers } = await db.from('profiles')
     .select('id, username, avatar_id, championship_points, season_points, total_points, total_activity, correct_answers, last_point_at')
     .order('championship_points',{ascending:false})
     .order('total_activity',{ascending:false})
     .order('correct_answers',{ascending:false})
     .limit(100);
+
+  // მხოლოდ აქტიური მონაწილეები — ვისაც აქვს ქულა ან აქტივობა
+  const players = (rawPlayers || []).filter(p =>
+    (p.total_points||0) > 0 ||
+    (p.championship_points||0) > 0 ||
+    (p.season_points||0) > 0 ||
+    (p.total_activity||0) > 0
+  );
 
   if(players){
     players.sort((a,b)=>
@@ -278,7 +286,7 @@ async function viewPastResults(champId, champNum){
     return '<div class="lb-row'+(isWinner?' winner':'')+(isMe?' me':'')+'">'
       + '<span class="lb-rank'+(isWinner?' medal':'')+'">'+medal+'</span>'
       + avatarCell(prof)
-      + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(prof.username))+'</div></div>'
+      + '<div class="lb-info"><div class="lb-name">'+(isMe?'YOU':escapeHtml(dispName(prof.username)))+'</div></div>'
       + (r.prize_amount ? '<span class="lb-prize">'+escapeHtml(r.prize_amount)+'</span>' : '')
       + '<span class="lb-pts">'+(r.championship_points||0)+' <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
       + '</div>';
@@ -355,7 +363,7 @@ function renderStandings(players){
     html += '<div class="lb-row'+(cls?' '+cls:'')+(inPrizeZone&&!isWinner?' prize-zone':'')+'">'
       + '<span class="lb-rank">'+place+'</span>'
       + avatarCell(p)
-      + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div>'
+      + '<div class="lb-info"><div class="lb-name">'+(isMe?'YOU':escapeHtml(dispName(p.username)))+'</div>'
       + '<div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'
       + '<span class="lb-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted);font-weight:400"> / </span><span style="color:#c9d4d1">'+((p.season_points||0)+(p.total_points||0))+'</span> <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
       + (prize ? '<span class="lb-prize">'+prize+'</span>' : '')
