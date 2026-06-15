@@ -56,7 +56,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .lb-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
 .lb-row:last-child{border-bottom:none}
 .lb-row .lb-name{color:var(--text);font-weight:500}
-.lb-row .lb-pts{color:var(--text)}
 #leaderboardContainer{border-radius:12px;overflow:hidden;background:rgba(245,200,66,.08)}
 .lb-rank{font-family:'Space Grotesk',sans-serif;font-size:.72rem;font-weight:400;color:var(--text);width:26px;flex-shrink:0;text-align:center}
 .lb-rank.medal{font-size:.95rem}
@@ -65,7 +64,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .lb-row.me .lb-name{color:var(--gold);font-weight:600}
 .lb-stats{font-size:.7rem;color:#9fb5b0;margin-top:2px}
 .lb-pts{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;color:var(--text);flex-shrink:0}
-.lb-row.me .lb-pts{color:var(--gold)}
+#leaderboardContainer.champ-mode .lb-pts{color:var(--gold)}
 .lb-dots{text-align:center;padding:5px;color:var(--muted);font-size:.7rem;border-bottom:1px solid rgba(255,255,255,.03)}
 .gold2{--gold2:rgba(245,200,66,.15)}
 .pi-card{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:16px;padding:16px 18px}
@@ -433,8 +432,7 @@ async function openRoundInfo(){
   if(pts && pts.length){
     let html = '';
     for(const row of pts){
-      const medal = row.place===1?'🥇':row.place===2?'🥈':row.place===3?'🥉':'';
-      html += '<div class="pts-item"><span class="pts-place">'+medal+' '+ordinal(row.place)+'</span><span class="pts-val">'+row.points+' pts</span></div>';
+      html += '<div class="pts-item"><span class="pts-place">'+ordinal(row.place)+'</span><span class="pts-val">'+row.points+' pts</span></div>';
     }
     document.getElementById('ptsGrid').innerHTML = html;
     ptsLoaded = true;
@@ -485,6 +483,7 @@ async function loadLeaderboard(){
   }
 
   const container = document.getElementById('leaderboardContainer');
+  container.classList.toggle('champ-mode', isChamp);
   if(!players || players.length===0){ container.innerHTML = '<div class="loading" style="padding:20px">No players yet.</div>'; return; }
 
   const medals = ['🥇','🥈','🥉'];
