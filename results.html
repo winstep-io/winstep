@@ -71,7 +71,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.03)}
 .lb-row.prize-zone{background:rgba(245,200,66,.04)}
 .lb-row:last-child{border-bottom:none}
-.lb-row.me{background:var(--gold2);border-left:2px solid var(--gold)}
 .lb-row.winner{background:rgba(245,200,66,.04)}
 .lb-rank{font-family:'Space Grotesk',sans-serif;font-size:.8rem;color:var(--text);width:28px;flex-shrink:0;text-align:center}
 .lb-rank.medal{font-size:1.05rem}
@@ -322,7 +321,7 @@ function renderPodium(players){
     html += '<div class="podium-spot '+cls[idx]+'">'
       + '<div class="podium-avatar"'+(avSvg?' style="background:transparent;box-shadow:none"':'')+'>'+avInner+'<div class="podium-medal">'+medals[idx]+'</div></div>'
       + '<div class="podium-name">'+escapeHtml(dispName(p.username))+'</div>'
-      + '<div class="podium-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted)"> / </span><span style="color:#c9d4d1">'+((p.season_points||0)+(p.total_points||0))+'</span> pts</div>'
+      + '<div class="podium-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted)"> / </span><span style="color:var(--text)">'+((p.season_points||0)+(p.total_points||0))+'</span> pts</div>'
       + (prize ? '<div class="podium-prize">'+prize+'</div>' : '')
       + '<div class="podium-bar">'+(idx+1)+'</div>'
       + '</div>';
@@ -365,7 +364,7 @@ function renderStandings(players){
       + avatarCell(p)
       + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div>'
       + '<div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'
-      + '<span class="lb-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted);font-weight:400"> / </span><span style="color:#c9d4d1">'+((p.season_points||0)+(p.total_points||0))+'</span> <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
+      + '<span class="lb-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted);font-weight:400"> / </span><span style="color:var(--text)">'+((p.season_points||0)+(p.total_points||0))+'</span> <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
       + (prize ? '<span class="lb-prize">'+prize+'</span>' : '')
       + '</div>';
   });
