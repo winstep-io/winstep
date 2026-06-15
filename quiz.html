@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — Quiz</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842;
+  --green:#2ec47a; --green2:rgba(46,196,122,.15);
+  --red:#e63946; --red2:rgba(230,57,70,.15);
+  --text:#e8f0ee; --muted:#4a6660;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px}
+.quiz-wrap{width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;width:100%}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:.82rem;cursor:pointer;letter-spacing:.05em;transition:color .2s}
+.back-btn:hover{color:var(--teal)}
+.quiz-tag{font-family:'Space Grotesk',sans-serif;font-size:.62rem;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;background:var(--teal4);border:1px solid var(--border2);padding:4px 12px;border-radius:100px}
+.ad-banner{width:100%;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.quiz-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.timer-section{padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.timer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.timer-label{font-size:.66rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.timer-value{display:flex;align-items:center;gap:6px;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--teal);letter-spacing:.05em}
+.timer-value.warn{color:var(--gold)}
+.timer-value.danger{color:var(--red)}
+.timer-track{width:100%;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.timer-fill{height:100%;background:var(--teal);border-radius:3px;width:100%;transition:width 1s linear,background .3s}
+.timer-fill.warn{background:var(--gold)}
+.timer-fill.danger{background:var(--red)}
+.question-section{padding:24px 20px}
+.q-number{font-family:'Space Grotesk',sans-serif;font-size:.62rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.q-text{font-family:'Space Grotesk',sans-serif;font-size:1.25rem;font-weight:600;line-height:1.35;color:var(--text);margin-bottom:6px}
+.q-pts{font-size:.72rem;color:var(--gold);letter-spacing:.05em}
+.answers{padding:0 20px 20px;display:flex;flex-direction:column;gap:10px}
+.answer{display:flex;align-items:center;gap:13px;padding:15px 16px;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .18s;text-align:left;font-family:'Rajdhani',sans-serif;width:100%}
+.answer:hover:not(.disabled){border-color:var(--border2);background:var(--bg4);transform:translateX(3px)}
+.answer.disabled{cursor:default;pointer-events:none}
+.answer-letter{width:30px;height:30px;border-radius:8px;background:var(--teal4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--teal);flex-shrink:0;transition:all .18s}
+.answer-text{font-size:.95rem;color:var(--text);font-weight:500;flex:1}
+.answer-mark{font-size:1.1rem;opacity:0;transition:opacity .2s}
+.answer.correct{background:var(--green2);border-color:var(--green)}
+.answer.correct .answer-letter{background:var(--green);border-color:var(--green);color:#000}
+.answer.correct .answer-text{color:var(--green)}
+.answer.correct .answer-mark{opacity:1}
+.answer.wrong{background:var(--red2);border-color:var(--red)}
+.answer.wrong .answer-letter{background:var(--red);border-color:var(--red);color:#fff}
+.answer.wrong .answer-text{color:var(--red)}
+.answer.wrong .answer-mark{opacity:1}
+.answer.faded{opacity:.35}
+.result-msg{padding:16px 20px;border-top:1px solid var(--border);display:none;align-items:center;gap:12px;background:var(--bg3)}
+.result-msg.show{display:flex}
+.result-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.result-icon.correct{background:var(--green2)}
+.result-icon.wrong{background:var(--red2)}
+.result-info{flex:1}
+.result-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.95rem;margin-bottom:1px}
+.result-title.correct{color:var(--green)}
+.result-title.wrong{color:var(--red)}
+.result-sub{font-size:.72rem;color:var(--muted)}
+.result-pts{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.05em}
+.result-pts.correct{color:var(--green)}
+.result-pts.wrong{color:var(--gold)}
+.continue-btn{width:100%;padding:14px;background:var(--teal);border:none;border-radius:12px;color:#000;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;letter-spacing:.05em;transition:all .2s;display:none}
+.continue-btn.show{display:block}
+.continue-btn:hover{background:#44ffe8;box-shadow:0 4px 20px rgba(46,196,182,.3)}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+
+<div class="quiz-wrap">
+  <div class="top-bar">
+    <button class="back-btn" onclick="abandonQuiz(); window.location.href='/dashboard.html'">◀ Back to tasks</button>
+    <span class="quiz-tag" id="quizTag">Quiz</span>
+  </div>
+
+  <div class="ad-banner" id="adSlotTop" style="display:none"><div id="adTop" style="width:100%"></div></div>
+
+  <div class="quiz-card">
+    <div id="quizContent">
+      <div class="loading">Loading question... ⏳</div>
+    </div>
+  </div>
+
+  <!-- ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ეს კომენტარი
+  <div class="ad-banner" id="adSlotBottom" style="display:none"><div id="adBottom" style="width:100%"></div></div>
+  -->
+
+  <button class="continue-btn" id="continueBtn" onclick="window.location.href='/dashboard.html'">← Back to Tasks</button>
+
+<!-- Interstitial (full-screen ad) overlay -->
+<div id="interstitialOverlay" style="display:none;position:fixed;inset:0;background:rgba(8,12,11,.96);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+  <div id="interstitialAd" style="width:100%;max-width:340px;min-height:250px;display:flex;align-items:center;justify-content:center"></div>
+  <button id="interstitialClose" style="margin-top:20px;padding:10px 26px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;display:none">Continue →</button>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let taskId = null;
+let task = null;
+let question = null;
+let answered = false;
+let quizStarted = false;
+let activityId = null;
+let timeLeft = 20;
+let timerInterval = null;
+let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0 };
+
+// get task id from URL
+const params = new URLSearchParams(window.location.search);
+taskId = params.get('task');
+
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){ window.location.href = '/index.html'; return; }
+  currentUser = session.user;
+  loadAds();
+
+  if(!taskId){ document.getElementById('quizContent').innerHTML = '<div class="loading">No quiz selected.</div>'; return; }
+
+  // already answered?
+  const { data: existing } = await db.from('user_activity').select('id').eq('user_id', currentUser.id).eq('task_id', taskId);
+  if(existing && existing.length>0){
+    document.getElementById('quizContent').innerHTML = '<div class="loading">You already completed this quiz. ✓</div>';
+    document.getElementById('continueBtn').classList.add('show');
+    return;
+  }
+
+  // load task
+  const { data: taskData } = await db.from('tasks').select('*').eq('id', taskId).single();
+  task = taskData;
+  document.getElementById('quizTag').textContent = task.title;
+
+  // load question
+  const { data: qData } = await db.from('quiz_questions').select('*').eq('task_id', taskId).single();
+  question = qData;
+
+  // load global point settings
+  const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout']);
+  if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
+
+  // ANTI-CHEAT: ვიქტორინის ჩატვირთვისთანავე ჩავწეროთ activity როგორც timeout (0 ქულა).
+  // ეს ნიშნავს — როგორც კი კითხვას ნახავ, ჩათვლილია "მონაწილეობა". თუ გახვალ პასუხის
+  // გარეშე, ეს timeout-ად რჩება და ვეღარ დაბრუნდები. პასუხის გაცემისას განახლდება.
+  const { data: actRow } = await db.from('user_activity').insert({
+    user_id: currentUser.id,
+    task_id: taskId,
+    points_earned: pointSettings.quiz_timeout || 0,
+    is_correct: null,
+    activity_type: 'quiz'
+  }).select('id').single();
+  activityId = actRow ? actRow.id : null;
+
+  renderQuestion();
+  startTimer();
+}
+
+function renderQuestion(){
+  const html = `
+    <div class="timer-section">
+      <div class="timer-top">
+        <span class="timer-label">⏱️ Time to answer</span>
+        <span class="timer-value" id="timerVal">20s</span>
+      </div>
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+    </div>
+    <div class="question-section">
+      <div class="q-number">${task.title}</div>
+      <div class="q-text">${question.question}</div>
+      <div class="q-pts">🎁 +${pointSettings.quiz_correct} points for correct answer</div>
+    </div>
+    <div class="answers" id="answers">
+      <button class="answer" data-letter="A" onclick="pick(this)"><span class="answer-letter">A</span><span class="answer-text">${question.answer_a}</span><span class="answer-mark"></span></button>
+      <button class="answer" data-letter="B" onclick="pick(this)"><span class="answer-letter">B</span><span class="answer-text">${question.answer_b}</span><span class="answer-mark"></span></button>
+      <button class="answer" data-letter="C" onclick="pick(this)"><span class="answer-letter">C</span><span class="answer-text">${question.answer_c}</span><span class="answer-mark"></span></button>
+      <button class="answer" data-letter="D" onclick="pick(this)"><span class="answer-letter">D</span><span class="answer-text">${question.answer_d}</span><span class="answer-mark"></span></button>
+    </div>
+    <div class="result-msg" id="resultMsg">
+      <div class="result-icon" id="resultIcon"></div>
+      <div class="result-info"><div class="result-title" id="resultTitle"></div><div class="result-sub" id="resultSub"></div></div>
+      <div class="result-pts" id="resultPts"></div>
+    </div>
+  `;
+  document.getElementById('quizContent').innerHTML = html;
+}
+
+function startTimer(){
+  quizStarted = true;
+  timeLeft = 20;
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    const val = document.getElementById('timerVal');
+    const fill = document.getElementById('timerFill');
+    if(!val||!fill) return;
+    val.textContent = timeLeft+'s';
+    fill.style.width = (timeLeft/20*100)+'%';
+    if(timeLeft<=5){ fill.className='timer-fill danger'; val.className='timer-value danger'; }
+    else if(timeLeft<=10){ fill.className='timer-fill warn'; val.className='timer-value warn'; }
+    if(timeLeft<=0){ clearInterval(timerInterval); timeOut(); }
+  },1000);
+}
+
+async function pick(btn){
+  if(answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const chosen = btn.getAttribute('data-letter');
+  // NOTE: გზა A — პასუხი ბრაუზერში მოწმდება (გზა B: server-side)
+  const correctLetter = question.correct_answer;
+  const isCorrect = chosen === correctLetter;
+
+  document.querySelectorAll('.answer').forEach(a=>{
+    a.classList.add('disabled');
+    const letter = a.getAttribute('data-letter');
+    if(letter===correctLetter){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
+    else if(a===btn){ a.classList.add('wrong'); a.querySelector('.answer-mark').textContent='✗'; }
+    else a.classList.add('faded');
+  });
+
+  const points = isCorrect ? pointSettings.quiz_correct : pointSettings.quiz_wrong;
+  await saveResult(isCorrect, points);
+  showResult(isCorrect ? 'correct' : 'wrong', points);
+}
+
+async function timeOut(){
+  answered = true;
+  document.querySelectorAll('.answer').forEach(a=>{
+    a.classList.add('disabled');
+    if(a.getAttribute('data-letter')===question.correct_answer){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
+    else a.classList.add('faded');
+  });
+  await saveResult(null, pointSettings.quiz_timeout);
+  showResult('timeout', pointSettings.quiz_timeout);
+}
+
+// ვიქტორინის მიტოვება — activity უკვე ჩაწერილია ჩატვირთვისას (timeout, 0 ქულა),
+// ამიტომ აქ მხოლოდ timer-ს ვაჩერებთ. ხელახლა შესვლა ისედაც დაბლოკილია.
+function abandonQuiz(){
+  if(answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+}
+
+async function saveResult(isCorrect, points){
+  // განვაახლოთ ჩატვირთვისას შექმნილი activity ჩანაწერი (insert-ის ნაცვლად)
+  if(activityId){
+    await db.from('user_activity').update({
+      points_earned: points,
+      is_correct: isCorrect
+    }).eq('id', activityId);
+  } else {
+    // fallback — თუ რატომღაც ჩანაწერი არ შეიქმნა
+    await db.from('user_activity').insert({
+      user_id: currentUser.id, task_id: taskId,
+      points_earned: points, is_correct: isCorrect, activity_type: 'quiz'
+    });
+  }
+
+  // update profile totals
+  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  const updates = {
+    total_points: (profile.total_points||0) + points,
+    total_activity: (profile.total_activity||0) + (isCorrect!==null ? 1 : 0),
+    correct_answers: (profile.correct_answers||0) + (isCorrect===true ? 1 : 0)
+  };
+  if(points > 0) updates.last_point_at = new Date().toISOString();
+  await db.from('profiles').update(updates).eq('id', currentUser.id);
+
+  // check if this completes the whole box → start interval
+  await checkBoxCompletion();
+}
+
+async function checkBoxCompletion(){
+  if(!task || !task.box_id) return;
+  const today = new Date().toISOString().split('T')[0];
+
+  // all tasks in this box
+  const { data: boxTasks } = await db.from('tasks').select('id').eq('box_id', task.box_id);
+  const totalTasks = (boxTasks||[]).length;
+  if(totalTasks===0) return;
+
+  // my completed tasks in this box
+  const boxTaskIds = boxTasks.map(t=>t.id);
+  const { data: myActivity } = await db.from('user_activity').select('task_id, is_correct').eq('user_id', currentUser.id).in('task_id', boxTaskIds);
+  const completedCount = (myActivity||[]).length;
+
+  // not all done yet → nothing to do
+  if(completedCount < totalTasks) return;
+
+  // already has progress for this box? (avoid duplicate)
+  const { data: existingProg } = await db.from('user_box_progress').select('id').eq('user_id', currentUser.id).eq('box_id', task.box_id);
+  if(existingProg && existingProg.length>0) return;
+
+  // load settings
+  const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
+  let intervalMin = 15, bridgeNeed = 2;
+  if(setRows){ for(const r of setRows){ if(r.key==='box_interval_minutes') intervalMin=r.value; if(r.key==='bridge_unlock_correct') bridgeNeed=r.value; } }
+
+  // correct answers in THIS box
+  const correctInBox = (myActivity||[]).filter(a=>a.is_correct===true).length;
+  const gameUnlocked = correctInBox >= bridgeNeed;
+
+  // how many games ALREADY UNLOCKED today → determines which game is next (cyclic).
+  // counting only unlocked games (not all boxes) means a failed box doesn't skip a game.
+  const { data: unlockedToday } = await db.from('user_box_progress')
+    .select('id').eq('user_id', currentUser.id).eq('day', today).eq('bridge_unlocked', true);
+  const unlockedSoFar = (unlockedToday||[]).length;
+  // cycle: 0→bridge, 1→spin, 2→hilo, 3→bridge...
+  const GAME_CYCLE = ['bridge','spin','hilo'];
+  const gameType = GAME_CYCLE[unlockedSoFar % 3];
+
+  // interval end time (server-relative: now + minutes)
+  const intervalEnds = new Date(Date.now() + intervalMin*60*1000).toISOString();
+
+  await db.from('user_box_progress').insert({
+    user_id: currentUser.id,
+    box_id: task.box_id,
+    day: today,
+    interval_ends_at: intervalEnds,
+    game_type: gameType,
+    bridge_unlocked: gameUnlocked,
+    bridge_played: false,
+    spin_played: false,
+    hilo_played: false
+  });
+
+  // box დასრულდა — შევამოწმოთ box-ის interstitial რეკლამა
+  await maybeShowInterstitialBox();
+}
+
+function showResult(type, points){
+  const msg=document.getElementById('resultMsg');
+  const icon=document.getElementById('resultIcon');
+  const title=document.getElementById('resultTitle');
+  const sub=document.getElementById('resultSub');
+  const pts=document.getElementById('resultPts');
+
+  if(type==='correct'){
+    icon.className='result-icon correct';icon.textContent='✓';
+    title.className='result-title correct';title.textContent='Correct!';
+    sub.textContent='Great job — you nailed it.';
+    pts.className='result-pts correct';pts.textContent='+'+points;
+  } else if(type==='wrong'){
+    icon.className='result-icon wrong';icon.textContent='✗';
+    title.className='result-title wrong';title.textContent='Not quite!';
+    sub.textContent='The correct answer is in green.';
+    pts.className='result-pts wrong';pts.textContent='+'+points;
+  } else {
+    icon.className='result-icon wrong';icon.textContent='⏱️';
+    title.className='result-title wrong';title.textContent="Time's up!";
+    sub.textContent='No answer — counts as skipped.';
+    pts.className='result-pts wrong';pts.textContent='0';
+  }
+  msg.classList.add('show');
+  document.getElementById('continueBtn').classList.add('show');
+  // ვიქტორინა დასრულდა — შევამოწმოთ interstitial რეკლამა
+  maybeShowInterstitial();
+}
+
+// ==================== AD SLOTS ====================
+async function loadAds(){
+  try{
+    const { data: rows } = await db.from('ad_settings').select('*');
+    if(!rows) return;
+    const byKey = {};
+    rows.forEach(r => byKey[r.slot_key] = r);
+    const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
+    renderAdSlot(byKey['quiz_top'], 'adSlotTop', 'adTop', globalScript);
+    // ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ამ ხაზის დასაწყისის //
+    // renderAdSlot(byKey['quiz_bottom'], 'adSlotBottom', 'adBottom', globalScript);
+  }catch(e){}
+}
+function renderAdSlot(cfg, slotId, boxId, globalScript){
+  const slot = document.getElementById(slotId);
+  const box = document.getElementById(boxId);
+  if(!slot || !box) return;
+  if(!cfg || cfg.enabled === false){ slot.style.display='none'; return; }
+  if(cfg.mode === 'manual'){
+    const code = (cfg.custom_code||'').trim();
+    if(!code){ slot.style.display='none'; return; }
+    box.innerHTML = code; activateScripts(box); slot.style.display='flex';
+  } else {
+    const code = (globalScript||'').trim();
+    if(!code){ slot.style.display='none'; return; }
+    if(!window.__adGlobalLoaded){
+      const w = document.createElement('div'); w.innerHTML = code; activateScripts(w);
+      document.head.appendChild(w); window.__adGlobalLoaded = true;
+    }
+    slot.style.display='flex';
+  }
+}
+function activateScripts(container){
+  container.querySelectorAll('script').forEach(old=>{
+    const s = document.createElement('script');
+    for(const attr of old.attributes) s.setAttribute(attr.name, attr.value);
+    s.textContent = old.textContent;
+    old.parentNode.replaceChild(s, old);
+  });
+}
+
+// ==================== INTERSTITIAL ====================
+// აჩვენებს full-screen რეკლამას ვიქტორინის ან box-ის შემდეგ (admin-ის წესით).
+let interstitialShown = false;
+
+async function getIntCfg(){
+  try{
+    const { data } = await db.from('interstitial_settings').select('*').eq('id',1).single();
+    return data;
+  }catch(e){ return null; }
+}
+function parseList(str){
+  return (str||'').split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
+}
+async function countQuizToday(){
+  const today = new Date().toISOString().split('T')[0];
+  const start = today+'T00:00:00.000Z', end = today+'T23:59:59.999Z';
+  const { data } = await db.from('user_activity')
+    .select('id').eq('user_id', currentUser.id).eq('activity_type','quiz')
+    .gte('created_at', start).lte('created_at', end);
+  return (data||[]).length;
+}
+async function countBoxesToday(){
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await db.from('user_box_progress')
+    .select('id').eq('user_id', currentUser.id).eq('day', today);
+  return (data||[]).length;
+}
+
+// box-ის შემდეგ — checkBoxCompletion-ის ბოლოს გამოიძახება (პრიორიტეტი)
+async function maybeShowInterstitialBox(){
+  if(interstitialShown) return false;
+  const cfg = await getIntCfg();
+  if(!cfg || !cfg.enabled || !cfg.box_enabled) return false;
+  const list = parseList(cfg.box_after);
+  if(list.length===0) return false;
+  const boxNum = await countBoxesToday(); // ეს box უკვე ჩაწერილია
+  if(!list.includes(boxNum)) return false;
+  await fireInterstitial(cfg.box_mode, cfg.box_code);
+  return true;
+}
+
+// ვიქტორინის შემდეგ — showResult-ის ბოლოს გამოიძახება
+async function maybeShowInterstitial(){
+  if(interstitialShown) return false;
+  const cfg = await getIntCfg();
+  if(!cfg || !cfg.enabled || !cfg.quiz_enabled) return false;
+  const list = parseList(cfg.quiz_after);
+  if(list.length===0) return false;
+  const quizNum = await countQuizToday(); // ეს ვიქტორინა უკვე ჩაწერილია
+  if(!list.includes(quizNum)) return false;
+  await fireInterstitial(cfg.quiz_mode, cfg.quiz_code);
+  return true;
+}
+
+async function fireInterstitial(mode, manualCode){
+  interstitialShown = true;
+  let code = '';
+  if(mode === 'manual'){
+    code = manualCode || '';
+  } else {
+    // auto → Global Script
+    const { data: adRows } = await db.from('ad_settings').select('*').eq('slot_key','__global__').single();
+    code = (adRows && adRows.custom_code) || '';
+  }
+  showInterstitial(code);
+}
+
+function showInterstitial(adCode){
+  const ov = document.getElementById('interstitialOverlay');
+  const box = document.getElementById('interstitialAd');
+  const closeBtn = document.getElementById('interstitialClose');
+  box.innerHTML = adCode || '<div style="color:#4a6660;font-size:.85rem;text-align:center">Advertisement</div>';
+  box.querySelectorAll('script').forEach(old=>{
+    const s=document.createElement('script');
+    if(old.src) s.src=old.src; else s.textContent=old.textContent;
+    document.body.appendChild(s);
+  });
+  ov.style.display='flex';
+  // Continue ღილაკი 3 წამში ჩნდება (მომხმარებელი ვერ გამოტოვებს მაშინვე)
+  setTimeout(()=>{ closeBtn.style.display='inline-block'; }, 3000);
+  closeBtn.onclick=()=>{ window.location.href='/dashboard.html'; };
+}
+
+// გვერდის დატოვება (ბრაუზერის Back, refresh, tab დახურვა) = ვიქტორინის მიტოვება
+window.addEventListener('pagehide', abandonQuiz);
+window.addEventListener('beforeunload', abandonQuiz);
+// მობილურზე back ხშირად visibilitychange-ს იწვევს
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'hidden') abandonQuiz();
+});
+
+init();
+</script>
+</body>
+</html>
