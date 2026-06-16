@@ -89,11 +89,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .logout-btn2{width:100%;padding:14px;background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.25);border-radius:12px;color:var(--red);font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .2s;margin-top:24px}
 .acc-input{flex:1;padding:11px 13px;background:var(--bg);border:1.5px solid rgba(46,196,182,.12);border-radius:9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem}
 .acc-input:focus{outline:none;border-color:var(--teal2)}
-.pw-wrap{position:relative;flex:1}
-.pw-wrap .acc-input{width:100%;padding-right:44px}
-.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;line-height:0;color:var(--teal2);transition:color .2s;display:flex;align-items:center;justify-content:center}
-.pw-toggle:hover{color:var(--teal)}
-.pw-toggle svg{width:19px;height:19px;display:block}
 .acc-btn{padding:11px 18px;background:var(--teal);border:none;border-radius:9px;color:#000;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.85rem;cursor:pointer;white-space:nowrap;transition:all .2s}
 .acc-btn:hover{background:#44ffe8}
 .logout-btn2:hover{background:rgba(230,57,70,.15)}
@@ -189,15 +184,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
     <!-- Password -->
     <div>
       <div class="sr-label" style="margin-bottom:8px">New Password</div>
-      <div class="pw-wrap" style="margin-bottom:8px">
-        <input id="accPassword" class="acc-input" type="password" placeholder="New password (min 6 chars)" autocomplete="off">
-        <button type="button" class="pw-toggle" onclick="togglePw('accPassword',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
-      </div>
+      <input id="accPassword" class="acc-input" type="password" placeholder="New password (min 6 chars)" autocomplete="off" style="width:100%;margin-bottom:8px">
       <div style="display:flex;gap:8px">
-        <div class="pw-wrap">
-          <input id="accPassword2" class="acc-input" type="password" placeholder="Confirm new password" autocomplete="off">
-          <button type="button" class="pw-toggle" onclick="togglePw('accPassword2',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
-        </div>
+        <input id="accPassword2" class="acc-input" type="password" placeholder="Confirm new password" autocomplete="off">
         <button class="acc-btn" onclick="savePassword()">Save</button>
       </div>
     </div>
@@ -256,14 +245,18 @@ async function loadStanding(){
   const { data: champPlayers } = await db.from('profiles')
     .select('id, championship_points, season_points, total_points, total_activity, correct_answers, last_point_at')
     .eq('is_disqualified', false);
-  (champPlayers||[]).sort((a,b)=>
+  const sorted = (champPlayers||[]).filter(p =>
+    (p.championship_points||0) > 0 || (p.season_points||0) > 0 ||
+    (p.total_points||0) > 0 || (p.total_activity||0) > 0
+  );
+  sorted.sort((a,b)=>
     ((b.championship_points||0)-(a.championship_points||0)) ||
     (((b.season_points||0)+(b.total_points||0))-((a.season_points||0)+(a.total_points||0))) ||
     ((b.total_activity||0)-(a.total_activity||0)) ||
     ((b.correct_answers||0)-(a.correct_answers||0)) ||
     ((a.last_point_at?new Date(a.last_point_at).getTime():Infinity)-(b.last_point_at?new Date(b.last_point_at).getTime():Infinity))
   );
-  const champRank = (champPlayers||[]).findIndex(p=>p.id===currentUser.id) + 1;
+  const champRank = sorted.findIndex(p=>p.id===currentUser.id) + 1;
   document.getElementById('pRank').textContent = champRank>0 ? ('🏆 Championship Rank #'+champRank) : '🏆 Unranked';
 }
 
@@ -293,15 +286,20 @@ async function loadRoundStanding(){
   const liveCor = Math.max(0, (myProfile.correct_answers||0) - histCor);
   const livePts = myProfile.total_points || 0;
 
-  // live place in the current round
-  const { data: players } = await db.from('profiles')
-    .select('id')
+  // live place in the current round — მხოლოდ აქტიური მოთამაშეები (0 აქტივობა/ქულა არ ითვლება)
+  const { data: rawPlayers } = await db.from('profiles')
+    .select('id, total_points, total_activity, championship_points, season_points')
     .eq('is_disqualified', false)
     .order('total_points',{ascending:false})
     .order('total_activity',{ascending:false})
     .order('correct_answers',{ascending:false})
     .order('created_at',{ascending:true});
-  const livePlace = (players||[]).findIndex(p=>p.id===currentUser.id) + 1;
+  // გავფილტროთ — მხოლოდ ისინი, ვისაც აქვს რაიმე აქტივობა ან ქულა
+  const players = (rawPlayers||[]).filter(p =>
+    (p.total_points||0) > 0 || (p.total_activity||0) > 0 ||
+    (p.championship_points||0) > 0 || (p.season_points||0) > 0
+  );
+  const livePlace = players.findIndex(p=>p.id===currentUser.id) + 1;
 
   let rows = '';
   for(const r of (hist||[])){
@@ -430,14 +428,6 @@ async function saveEmail(){
   showAccMsg('Email change requested. Check your new inbox to confirm. 📧', true);
 }
 
-function togglePw(id, btn){
-  const field = document.getElementById(id);
-  const eyeOpen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const eyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
-  if(field.type === 'password'){ field.type = 'text'; btn.innerHTML = eyeOpen; }
-  else { field.type = 'password'; btn.innerHTML = eyeOff; }
-}
-
 async function savePassword(){
   const pw = document.getElementById('accPassword').value;
   const pw2 = document.getElementById('accPassword2').value;
@@ -452,7 +442,7 @@ async function savePassword(){
 
 async function logout(){
   await db.auth.signOut();
-  window.location.href = '/dashboard.html';
+  window.location.href = '/index.html';
 }
 
 init();
