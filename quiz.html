@@ -157,24 +157,6 @@ async function init(){
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout']);
   if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
 
-  // ANTI-CHEAT: ვიქტორინის ჩატვირთვისთანავე ჩავწეროთ activity როგორც timeout (0 ქულა).
-  // ეს ნიშნავს — როგორც კი კითხვას ნახავ, ჩათვლილია "მონაწილეობა". თუ გახვალ პასუხის
-  // გარეშე, ეს timeout-ად რჩება და ვეღარ დაბრუნდები. პასუხის გაცემისას განახლდება.
-  // მხოლოდ ვალიდურ task-ზე (task_id NULL არ უნდა ჩაიწეროს).
-  if(taskId && task){
-    const { data: actRow } = await db.from('user_activity').insert({
-      user_id: currentUser.id,
-      task_id: taskId,
-      points_earned: pointSettings.quiz_timeout || 0,
-      is_correct: null,
-      activity_type: 'quiz_pending'
-    }).select('id').single();
-    activityId = actRow ? actRow.id : null;
-    // აქტივობა ჩაითვალოს მაშინვე (შესვლა = მონაწილეობა, სისტემური back-მაც რომ ვერ აირიოს)
-    const { data: prof } = await db.from('profiles').select('total_activity').eq('id', currentUser.id).single();
-    await db.from('profiles').update({ total_activity: (prof.total_activity||0) + 1 }).eq('id', currentUser.id);
-  }
-
   renderQuestion();
   startTimer();
 }
@@ -271,31 +253,23 @@ async function abandonQuiz(){
 }
 
 async function saveResult(isCorrect, points){
-  // განვაახლოთ ჩატვირთვისას შექმნილი activity ჩანაწერი (task_id-ით, არა activityId-ით)
-  const { data: upd } = await db.from('user_activity').update({
-    points_earned: points,
-    is_correct: isCorrect,
-    activity_type: 'quiz'
-  }).eq('user_id', currentUser.id).eq('task_id', taskId).select('id');
+  if(!taskId) return;
+  // guard: ამ task-ზე უკვე თუ არსებობს ჩანაწერი, აღარ ჩავწეროთ (დუბლირების თავიდან აცილება)
+  const { data: exists } = await db.from('user_activity').select('id').eq('user_id', currentUser.id).eq('task_id', taskId);
+  if(exists && exists.length>0) return;
 
-  // თუ update-მ ვერაფერი იპოვა (placeholder არ შეიქმნა), insert
-  let placeholderExisted = true;
-  if(!upd || upd.length===0){
-    placeholderExisted = false;
-    await db.from('user_activity').insert({
-      user_id: currentUser.id, task_id: taskId,
-      points_earned: points, is_correct: isCorrect, activity_type: 'quiz'
-    });
-  }
+  await db.from('user_activity').insert({
+    user_id: currentUser.id, task_id: taskId,
+    points_earned: points, is_correct: isCorrect, activity_type: 'quiz'
+  });
 
-  // update profile totals — activity უკვე დაითვალა init-ში (placeholder-ისას);
-  // აქ მხოლოდ თუ placeholder არ იყო (fallback), მაშინ +1
+  // update profile totals — შესვლა/მონაწილეობა = activity +1, ქულა ცალკე
   const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
   const updates = {
     total_points: (profile.total_points||0) + points,
+    total_activity: (profile.total_activity||0) + 1,
     correct_answers: (profile.correct_answers||0) + (isCorrect===true ? 1 : 0)
   };
-  if(!placeholderExisted) updates.total_activity = (profile.total_activity||0) + 1;
   if(points > 0) updates.last_point_at = new Date().toISOString();
   await db.from('profiles').update(updates).eq('id', currentUser.id);
 
@@ -518,22 +492,36 @@ function showInterstitial(adCode){
 
 // სისტემური Back / გვერდის დახურვა — placeholder-ს timeout-ად ვაქცევთ (pending → quiz).
 // sync XHR PATCH უზრუნველყოფს ჩაწერას გვერდის დახურვამდე (sendBeacon მხოლოდ POST-ია).
+// სისტემური Back / გვერდის დახურვა პასუხის გარეშე = timeout (0 ქულა, +1 activity).
+// sync XHR insert უზრუნველყოფს ჩაწერას გვერდის დახურვამდე.
 function abandonOnLeave(){
   if(answered || !quizStarted || !taskId || !accessToken) return;
   answered = true;
   clearInterval(timerInterval);
   try{
-    const url = SUPABASE_URL + '/rest/v1/user_activity?user_id=eq.' + currentUser.id + '&task_id=eq.' + taskId + '&activity_type=eq.quiz_pending';
+    // 1. ჩავწეროთ activity (quiz, timeout)
     const xhr = new XMLHttpRequest();
-    xhr.open('PATCH', url, false); // sync
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/user_activity', false);
     xhr.setRequestHeader('Content-Type','application/json');
     xhr.setRequestHeader('apikey', SUPABASE_KEY);
     xhr.setRequestHeader('Authorization','Bearer ' + accessToken);
-    xhr.send(JSON.stringify({ activity_type: 'quiz', is_correct: null, points_earned: pointSettings.quiz_timeout || 0 }));
+    xhr.send(JSON.stringify({ user_id: currentUser.id, task_id: taskId, points_earned: pointSettings.quiz_timeout || 0, is_correct: null, activity_type: 'quiz' }));
+    // 2. გავზარდოთ total_activity
+    const xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', SUPABASE_URL + '/rest/v1/profiles?id=eq.' + currentUser.id + '&select=total_activity', false);
+    xhr2.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr2.setRequestHeader('Authorization','Bearer ' + accessToken);
+    xhr2.send();
+    const cur = JSON.parse(xhr2.responseText||'[]')[0];
+    const xhr3 = new XMLHttpRequest();
+    xhr3.open('PATCH', SUPABASE_URL + '/rest/v1/profiles?id=eq.' + currentUser.id, false);
+    xhr3.setRequestHeader('Content-Type','application/json');
+    xhr3.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr3.setRequestHeader('Authorization','Bearer ' + accessToken);
+    xhr3.send(JSON.stringify({ total_activity: ((cur && cur.total_activity)||0) + 1 }));
   }catch(e){}
 }
 window.addEventListener('pagehide', abandonOnLeave);
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') abandonOnLeave(); });
 
 init();
 </script>
