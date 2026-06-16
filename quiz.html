@@ -110,6 +110,7 @@ const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
+let accessToken = null;
 let taskId = null;
 let task = null;
 let question = null;
@@ -128,6 +129,7 @@ async function init(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href = '/index.html'; return; }
   currentUser = session.user;
+  accessToken = session.access_token;
   loadAds();
 
   if(!taskId){ document.getElementById('quizContent').innerHTML = '<div class="loading">No quiz selected.</div>'; return; }
@@ -168,6 +170,9 @@ async function init(){
       activity_type: 'quiz_pending'
     }).select('id').single();
     activityId = actRow ? actRow.id : null;
+    // აქტივობა ჩაითვალოს მაშინვე (შესვლა = მონაწილეობა, სისტემური back-მაც რომ ვერ აირიოს)
+    const { data: prof } = await db.from('profiles').select('total_activity').eq('id', currentUser.id).single();
+    await db.from('profiles').update({ total_activity: (prof.total_activity||0) + 1 }).eq('id', currentUser.id);
   }
 
   renderQuestion();
@@ -274,20 +279,23 @@ async function saveResult(isCorrect, points){
   }).eq('user_id', currentUser.id).eq('task_id', taskId).select('id');
 
   // თუ update-მ ვერაფერი იპოვა (placeholder არ შეიქმნა), insert
+  let placeholderExisted = true;
   if(!upd || upd.length===0){
+    placeholderExisted = false;
     await db.from('user_activity').insert({
       user_id: currentUser.id, task_id: taskId,
       points_earned: points, is_correct: isCorrect, activity_type: 'quiz'
     });
   }
 
-  // update profile totals — ვიქტორინაში შესვლა ითვლება აქტივობად (timeout-იც), ქულა ცალკე
+  // update profile totals — activity უკვე დაითვალა init-ში (placeholder-ისას);
+  // აქ მხოლოდ თუ placeholder არ იყო (fallback), მაშინ +1
   const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
   const updates = {
     total_points: (profile.total_points||0) + points,
-    total_activity: (profile.total_activity||0) + 1,
     correct_answers: (profile.correct_answers||0) + (isCorrect===true ? 1 : 0)
   };
+  if(!placeholderExisted) updates.total_activity = (profile.total_activity||0) + 1;
   if(points > 0) updates.last_point_at = new Date().toISOString();
   await db.from('profiles').update(updates).eq('id', currentUser.id);
 
@@ -507,6 +515,25 @@ function showInterstitial(adCode){
   setTimeout(()=>{ closeBtn.style.display='inline-block'; }, 3000);
   closeBtn.onclick=()=>{ window.location.href='/dashboard.html'; };
 }
+
+// სისტემური Back / გვერდის დახურვა — placeholder-ს timeout-ად ვაქცევთ (pending → quiz).
+// sync XHR PATCH უზრუნველყოფს ჩაწერას გვერდის დახურვამდე (sendBeacon მხოლოდ POST-ია).
+function abandonOnLeave(){
+  if(answered || !quizStarted || !taskId || !accessToken) return;
+  answered = true;
+  clearInterval(timerInterval);
+  try{
+    const url = SUPABASE_URL + '/rest/v1/user_activity?user_id=eq.' + currentUser.id + '&task_id=eq.' + taskId + '&activity_type=eq.quiz_pending';
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH', url, false); // sync
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization','Bearer ' + accessToken);
+    xhr.send(JSON.stringify({ activity_type: 'quiz', is_correct: null, points_earned: pointSettings.quiz_timeout || 0 }));
+  }catch(e){}
+}
+window.addEventListener('pagehide', abandonOnLeave);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') abandonOnLeave(); });
 
 init();
 </script>
