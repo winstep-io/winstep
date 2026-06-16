@@ -271,19 +271,40 @@ async function handleSubmit(){
       else { showMsg(error.message, 'error'); }
       btn.disabled=false; btn.textContent='Create Account'; return;
     }
-    showMsg('Account created! You can now sign in. 🎉', 'success');
+    showMsg('Account created! 📧 Check your email and click the confirmation link to activate your account.', 'success');
     btn.disabled=false; btn.textContent='Create Account';
-    setTimeout(()=>switchTab('signin'), 1500);
+    setTimeout(()=>switchTab('signin'), 2500);
 
   } else {
     btn.textContent = 'Signing in...';
     const { data, error } = await db.auth.signInWithPassword({ email, password });
 
-    if(error){ showMsg(error.message, 'error'); btn.disabled=false; btn.textContent='Log In'; return; }
+    if(error){
+      // email დადასტურებული არ არის
+      if(/not confirmed|confirm/i.test(error.message)){
+        showResendMsg(email);
+      } else {
+        showMsg(error.message, 'error');
+      }
+      btn.disabled=false; btn.textContent='Log In'; return;
+    }
     showMsg('Welcome back! Redirecting... ✅', 'success');
     // redirect to main page after login:
     setTimeout(()=>{ window.location.href = '/dashboard.html'; }, 1200);
   }
+}
+
+// "Email not confirmed" — შეტყობინება + Resend ღილაკი
+function showResendMsg(email){
+  const box = document.getElementById('msgBox');
+  box.innerHTML = 'Please confirm your email first. <a onclick="resendConfirmation(\'' + email.replace(/'/g,"\\'") + '\')" style="color:var(--teal);cursor:pointer;text-decoration:underline">Resend email</a>';
+  box.className = 'msg-box show error';
+}
+
+async function resendConfirmation(email){
+  const { error } = await db.auth.resend({ type: 'signup', email: email });
+  if(error){ showMsg(error.message, 'error'); return; }
+  showMsg('Confirmation email sent again. 📧 Check your inbox.', 'success');
 }
 
 async function forgotPassword(){
