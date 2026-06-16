@@ -335,6 +335,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
           <div class="field"><label class="field-label">Correct Answer</label><input class="field-input" type="number" id="set_quiz_correct"></div>
           <div class="field"><label class="field-label">Wrong Answer</label><input class="field-input" type="number" id="set_quiz_wrong"></div>
           <div class="field"><label class="field-label">Timeout</label><input class="field-input" type="number" id="set_quiz_timeout"></div>
+          <div class="field"><label class="field-label">Answer Time (seconds)</label><input class="field-input" type="number" id="set_quiz_time_seconds"></div>
         </div>
       </div>
 
@@ -588,7 +589,7 @@ async function checkAdmin(user){
 }
 
 // ---- SETTINGS ----
-const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step'];
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step'];
 async function loadSettings(){
   const { data: rows } = await db.from('settings').select('*');
   if(!rows) return;

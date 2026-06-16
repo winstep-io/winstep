@@ -119,7 +119,7 @@ let quizStarted = false;
 let activityId = null;
 let timeLeft = 20;
 let timerInterval = null;
-let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0 };
+let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0, quiz_time_seconds: 20 };
 
 // get task id from URL
 const params = new URLSearchParams(window.location.search);
@@ -154,7 +154,7 @@ async function init(){
   question = qData;
 
   // load global point settings
-  const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout']);
+  const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
   if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
 
   renderQuestion();
@@ -192,14 +192,15 @@ function renderQuestion(){
 
 function startTimer(){
   quizStarted = true;
-  timeLeft = 20;
+  const totalTime = parseInt(pointSettings.quiz_time_seconds) || 20;
+  timeLeft = totalTime;
   timerInterval = setInterval(()=>{
     timeLeft--;
     const val = document.getElementById('timerVal');
     const fill = document.getElementById('timerFill');
     if(!val||!fill) return;
     val.textContent = timeLeft+'s';
-    fill.style.width = (timeLeft/20*100)+'%';
+    fill.style.width = (timeLeft/totalTime*100)+'%';
     if(timeLeft<=5){ fill.className='timer-fill danger'; val.className='timer-value danger'; }
     else if(timeLeft<=10){ fill.className='timer-fill warn'; val.className='timer-value warn'; }
     if(timeLeft<=0){ clearInterval(timerInterval); timeOut(); }
