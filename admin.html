@@ -314,6 +314,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 
       <div class="msg" id="userMsg"></div>
 
+      <div class="card" style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2)">
+        <div style="font-size:1.8rem">👥</div>
+        <div>
+          <div style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600">Registered Users</div>
+          <div id="regUsersCount" style="font-size:1.7rem;font-weight:700;color:var(--text);line-height:1.1">—</div>
+        </div>
+      </div>
+
       <div class="card">
         <input class="field-input" id="userSearch" placeholder="🔍 Search by username or email..." autocomplete="off" oninput="renderUsers()">
         <div id="userCount" style="font-size:.72rem;color:var(--muted);margin-top:8px"></div>
@@ -1323,7 +1331,12 @@ function renderUsers(){
     return (u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
   });
 
-  document.getElementById('userCount').textContent = filtered.length + ' of ' + allUsers.length + ' users';
+  // მთლიანი დარეგისტრირებული რაოდენობა (ლამაზი ბარათი)
+  const regEl = document.getElementById('regUsersCount');
+  if(regEl) regEl.textContent = allUsers.length;
+
+  // ძიების დროს — ნაპოვნი / ჯამური; ძიების გარეშე — არაფერი
+  document.getElementById('userCount').textContent = q ? (filtered.length + ' of ' + allUsers.length + ' shown') : '';
 
   const list = document.getElementById('usersList');
   if(filtered.length===0){ list.innerHTML = '<div class="empty">No users found.</div>'; return; }
