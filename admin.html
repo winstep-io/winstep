@@ -1369,8 +1369,12 @@ async function toggleBan(userId, isCurrentlyBanned){
   const ban = !isCurrentlyBanned;
   if(userId === currentUser.id){ showMsg('userMsg','You cannot ban yourself.','err'); return; }
   if(!confirm(ban ? 'Ban this user? They will not be able to use the platform.' : 'Unban this user?')) return;
-  const { error } = await db.from('profiles').update({ is_banned: ban }).eq('id', userId);
+  const { data, error } = await db.from('profiles').update({ is_banned: ban }).eq('id', userId).select('id, is_banned');
   if(error){ showMsg('userMsg', error.message, 'err'); return; }
+  if(!data || data.length===0){
+    showMsg('userMsg', 'Update blocked — admin RLS policy needed on profiles.', 'err');
+    return;
+  }
   showMsg('userMsg', ban?'User banned.':'User unbanned.','ok');
   loadUsers();
 }
