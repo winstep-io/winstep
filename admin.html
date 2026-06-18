@@ -1509,7 +1509,7 @@ function openTaskModal(boxId){
 async function openTaskEdit(taskId){
   const { data: t } = await db.from('tasks').select('*').eq('id', taskId).single();
   if(!t){ return; }
-  const { data: q } = await db.from('quiz_questions').select('*').eq('task_id', taskId).maybeSingle();
+  const { data: q } = await db.rpc('admin_get_question', { p_task_id: taskId });
 
   document.getElementById('taskBoxId').value = t.box_id;
   document.getElementById('editTaskId').value = taskId;
