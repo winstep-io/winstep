@@ -170,22 +170,7 @@ async function bridgeInit(){
   STEP_TIME = 10; // could also come from settings later
 }
 
-async function saveBridgeResult(points){
-  if(bridgeSaved) return;
-  bridgeSaved = true;
-
-  // mark bridge as played (use it or lose it — one attempt)
-  if(myProgressId){
-    await db.from('user_box_progress').update({ bridge_played: true }).eq('id', myProgressId);
-  }
-
-  // record activity + add points
-  await db.from('user_activity').insert({
-    user_id: bridgeUser.id, task_id: null, points_earned: points, is_correct: null, activity_type: 'bridge'
-  });
-  const { data: profile } = await db.from('profiles').select('total_points').eq('id', bridgeUser.id).single();
-  await db.from('profiles').update({ total_points: (profile.total_points||0) + points, last_point_at: new Date().toISOString() }).eq('id', bridgeUser.id);
-}
+// გზა B: ქულის დარიცხვა და bridge_played ახლა სერვერზე ხდება (bridge_step / bridge_end).
 
 var cv=document.getElementById('c'),ctx=cv.getContext('2d');
 var CW=460,CH=560;cv.width=CW;cv.height=CH;
@@ -213,18 +198,19 @@ function startStepTimer(){
 }
 function stopStepTimer(){clearInterval(stepTimer);}
 
-function onStepTimeout(){
+async function onStepTimeout(){
   // time ran out — end game, keep accumulated points
   if(!G||G.phase!=='play')return;
   G.phase='timeout';
   setCtrl(false);
   document.getElementById('ctrlBtns').style.display='none';
-  saveBridgeResult(G.score);
+  const { data: res } = await db.rpc('bridge_end');
+  if(res && res.ok) G.score = res.score;
   setTimeout(function(){
     showOv("Time's up!",G.score,'BACK TO DASHBOARD',false);
   },300);
 }
-function newG(){var pat=[];for(var i=0;i<TOTAL;i++)pat.push(Math.random()<.5?0:1);G={phase:'play',pat:pat,rev:[],step:0,score:0,busy:false,x:CX,y:BOT_Y,alpha:1,falling:false,parts:[],shards:[]};}
+function newG(){G={phase:'play',pat:[],rev:[],step:0,score:0,busy:false,x:CX,y:BOT_Y,alpha:1,falling:false,parts:[],shards:[]};}
 function buildBar(){var el=document.getElementById('sb');el.innerHTML='';for(var i=0;i<TOTAL;i++){var d=document.createElement('div');d.className='pip';d.id='p'+i;el.appendChild(d);}}
 function updBar(){for(var i=0;i<TOTAL;i++){var p=document.getElementById('p'+i);if(!p)continue;p.className='pip';if(i<G.step)p.classList.add('done');else if(i===G.step&&G.phase==='play')p.classList.add('cur');}}
 function updHUD(){document.getElementById('hS').textContent=G.step+'/10';document.getElementById('hP').textContent=G.score;}
@@ -277,11 +263,40 @@ function drawShards(){if(!G)return;G.shards.forEach(function(s){ctx.save();ctx.g
 function drawParts(){if(!G)return;G.parts.forEach(function(p){ctx.save();ctx.globalAlpha=p.alpha;ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=4;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();});}
 function drawVig(){var g=ctx.createRadialGradient(CW/2,CH/2,CH*.3,CW/2,CH/2,CH*.85);g.addColorStop(0,'rgba(6,13,11,0)');g.addColorStop(1,'rgba(6,13,11,0.6)');ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);}
 
-function start(){newG();buildBar();hideOv();document.getElementById('ctrlBtns').style.display='flex';document.getElementById('stepTimer').classList.add('show');setCtrl(true);updHUD();updBar();startStepTimer();}
-function pick(side){if(!G||G.busy||G.phase!=='play')return;stopStepTimer();G.busy=true;setCtrl(false);var step=G.step,isSafe=G.pat[step]===side,rc=pRect(step,side),tx=rc.x+rc.w/2,ty=rc.y+rc.h/2;anim(tx,ty,380,function(){if(isSafe)onSafe(step,side);else onFall(step,tx,ty);});}
-function onSafe(step,side){G.rev.push(step);var op=pRect(step,1-side);spawnShards(op.x+op.w/2,op.y+op.h/2);spawnParts(op.x+op.w/2,op.y+op.h/2,'#e63946',8);G.score+=BRIDGE_STEP;G.step++;updHUD();updBar();setTimeout(function(){if(G.step>=TOTAL)onWin();else{G.busy=false;setCtrl(true);startStepTimer();}},420);}
-function onFall(step,px,py){G.rev.push(step);G.phase='dead';spawnShards(px,py);spawnParts(px,py,'#e63946',22);G.falling=true;saveBridgeResult(G.score);var t0=performance.now(),sy=py,sx=px;(function fall(now){var t=Math.min((now-t0)/750,1);G.y=sy+t*t*440;G.x=sx+Math.sin(t*10)*6;G.alpha=1-t;if(t<1)requestAnimationFrame(fall);else{G.falling=false;setTimeout(function(){showOv('Game Over!',G.score,'TRY AGAIN',false);},300);}})(performance.now());}
-function onWin(){G.phase='win';G.score+=BRIDGE_FINISH;updHUD();saveBridgeResult(G.score);anim(CX,TOP_Y,500,function(){spawnParts(CX,TOP_Y,'#2ec4b6',30);spawnParts(CX,TOP_Y,'#f5c842',20);setTimeout(function(){showOv('You crossed\nthe bridge!',G.score,'PLAY AGAIN',true);},700);});}
+async function start(){
+  const { data: res } = await db.rpc('bridge_start');
+  if(!res || !res.ok){
+    document.getElementById('ovT').textContent = (res && res.reason==='already_played') ? 'Already played' : 'Bridge not available';
+    document.getElementById('ovT').style.color = '#e8f0ee';
+    document.getElementById('ovS').textContent = 'This bridge attempt is no longer available.';
+    document.getElementById('ovP').textContent = '';
+    var ob=document.getElementById('ovB'); ob.textContent='BACK TO DASHBOARD'; ob.onclick=function(){window.location.href='/dashboard.html';};
+    document.getElementById('ov').classList.add('show');
+    return;
+  }
+  BRIDGE_STEP = res.step_points; BRIDGE_FINISH = res.finish_bonus;
+  newG();buildBar();hideOv();document.getElementById('ctrlBtns').style.display='flex';document.getElementById('stepTimer').classList.add('show');setCtrl(true);updHUD();updBar();startStepTimer();
+}
+async function pick(side){
+  if(!G||G.busy||G.phase!=='play')return;
+  stopStepTimer();G.busy=true;setCtrl(false);
+  var step=G.step,rc=pRect(step,side),tx=rc.x+rc.w/2,ty=rc.y+rc.h/2;
+  var res;
+  try{ const r = await db.rpc('bridge_step',{ p_side: side }); res = r.data; }catch(e){ res=null; }
+  if(!res || !res.ok){ G.busy=false;setCtrl(true);startStepTimer(); return; }
+  G.pat[step] = res.safe ? side : (1-side);   // მხოლოდ რენდერისთვის
+  anim(tx,ty,380,function(){
+    if(res.safe){
+      G.score=res.score; G.step=res.step;
+      if(res.win) onWin(step); else onSafe(step,side);
+    } else {
+      G.score=res.score; onFall(step,tx,ty);
+    }
+  });
+}
+function onSafe(step,side){G.rev.push(step);var op=pRect(step,1-side);spawnShards(op.x+op.w/2,op.y+op.h/2);spawnParts(op.x+op.w/2,op.y+op.h/2,'#e63946',8);updHUD();updBar();setTimeout(function(){G.busy=false;setCtrl(true);startStepTimer();},420);}
+function onFall(step,px,py){G.rev.push(step);G.phase='dead';spawnShards(px,py);spawnParts(px,py,'#e63946',22);G.falling=true;var t0=performance.now(),sy=py,sx=px;(function fall(now){var t=Math.min((now-t0)/750,1);G.y=sy+t*t*440;G.x=sx+Math.sin(t*10)*6;G.alpha=1-t;if(t<1)requestAnimationFrame(fall);else{G.falling=false;setTimeout(function(){showOv('Game Over!',G.score,'BACK TO DASHBOARD',false);},300);}})(performance.now());}
+function onWin(step){if(step!==undefined)G.rev.push(step);G.phase='win';updHUD();updBar();anim(CX,TOP_Y,500,function(){spawnParts(CX,TOP_Y,'#2ec4b6',30);spawnParts(CX,TOP_Y,'#f5c842',20);setTimeout(function(){showOv('You crossed\nthe bridge!',G.score,'BACK TO DASHBOARD',true);},700);});}
 function anim(tx,ty,dur,cb){var fx=G.x,fy=G.y,t0=performance.now();(function tick(now){var t=Math.min((now-t0)/dur,1);var e=t<.5?2*t*t:-1+(4-2*t)*t;G.x=fx+(tx-fx)*e;G.y=fy+(ty-fy)*e;if(t<1)requestAnimationFrame(tick);else{G.x=tx;G.y=ty;if(cb)cb();}})(performance.now());}
 function spawnShards(x,y){for(var i=0;i<10;i++)G.shards.push({x:x+(Math.random()-.5)*28,y:y+(Math.random()-.5)*18,vx:(Math.random()-.5)*4,vy:-(Math.random()*3+.5),rot:Math.random()*6.28,rv:(Math.random()-.5)*.2,alpha:.9,w:Math.random()*13+4,h:Math.random()*9+3});}
 function spawnParts(x,y,c,n){for(var i=0;i<n;i++){var a=(i/n)*Math.PI*2,sp=Math.random()*3+1;G.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,alpha:1,r:Math.random()*2.5+.5,c});}}
