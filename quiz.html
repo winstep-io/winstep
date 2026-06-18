@@ -144,14 +144,11 @@ async function init(){
     }
   }
 
-  // load task
-  const { data: taskData } = await db.from('tasks').select('*').eq('id', taskId).single();
-  task = taskData;
-  document.getElementById('quizTag').textContent = task.title;
-
-  // load question
-  const { data: qData } = await db.from('quiz_questions').select('*').eq('task_id', taskId).single();
+  // load question (server-side — სწორი პასუხი ბრაუზერში აღარ მოდის)
+  const { data: qData, error: qErr } = await db.rpc('get_quiz_question', { p_task_id: taskId });
+  if(qErr || !qData){ document.getElementById('quizContent').innerHTML = '<div class="loading">Quiz not found.</div>'; return; }
   question = qData;
+  document.getElementById('quizTag').textContent = question.task_title || 'Quiz';
 
   // load global point settings
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
@@ -171,7 +168,7 @@ function renderQuestion(){
       <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
     </div>
     <div class="question-section">
-      <div class="q-number">${task.title}</div>
+      <div class="q-number">${question.task_title}</div>
       <div class="q-text">${question.question}</div>
       <div class="q-pts">🎁 +${pointSettings.quiz_correct} points for correct answer</div>
     </div>
@@ -213,9 +210,11 @@ async function pick(btn){
   clearInterval(timerInterval);
 
   const chosen = btn.getAttribute('data-letter');
-  // NOTE: გზა A — პასუხი ბრაუზერში მოწმდება (გზა B: server-side)
-  const correctLetter = question.correct_answer;
-  const isCorrect = chosen === correctLetter;
+  // გზა B — სერვერი ამოწმებს პასუხს და ანიჭებს ქულას
+  const { data: res } = await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: chosen });
+  const correctLetter = res ? res.correct_answer : null;
+  const isCorrect = !!(res && res.is_correct === true);
+  const points = res ? res.points : 0;
 
   document.querySelectorAll('.answer').forEach(a=>{
     a.classList.add('disabled');
@@ -225,117 +224,34 @@ async function pick(btn){
     else a.classList.add('faded');
   });
 
-  const points = isCorrect ? pointSettings.quiz_correct : pointSettings.quiz_wrong;
-  await saveResult(isCorrect, points);
+  if(res && res.box_completed){ await maybeShowInterstitialBox(); }
   showResult(isCorrect ? 'correct' : 'wrong', points);
 }
 
 async function timeOut(){
   answered = true;
+  const { data: res } = await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: null });
+  const correctLetter = res ? res.correct_answer : null;
   document.querySelectorAll('.answer').forEach(a=>{
     a.classList.add('disabled');
-    if(a.getAttribute('data-letter')===question.correct_answer){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
+    if(a.getAttribute('data-letter')===correctLetter){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
     else a.classList.add('faded');
   });
-  await saveResult(null, pointSettings.quiz_timeout);
-  showResult('timeout', pointSettings.quiz_timeout);
+  if(res && res.box_completed){ await maybeShowInterstitialBox(); }
+  showResult('timeout', res ? res.points : 0);
 }
 
-// ვიქტორინის მიტოვება — activity უკვე ჩაწერილია ჩატვირთვისას (timeout, 0 ქულა),
-// ამიტომ აქ მხოლოდ timer-ს ვაჩერებთ. ხელახლა შესვლა ისედაც დაბლოკილია.
-// დროზე ადრე გასვლა = timeout (0 ქულა), მაგრამ ითვლება დასრულებულ აქტივობად.
-// pending → quiz (completed), რომ box-ის ლოგიკა არ ჩაიხლართოს.
+// ──────────────────────────────────────────────
+// გზა B: saveResult / checkBoxCompletion მოშორებულია —
+// ქულის დარიცხვა და box-ის დასრულება ახლა სერვერზე ხდება (submit_quiz_answer).
+// ──────────────────────────────────────────────
+
+// "Back to tasks" — პასუხის გარეშე გასვლა = timeout (სერვერზე ჩაიწერება)
 async function abandonQuiz(){
   if(answered) return;
   answered = true;
   clearInterval(timerInterval);
-  // timeout-ად ჩავწეროთ (saveResult ამატებს activity-ს და ასრულებს box-ს თუ საჭიროა)
-  await saveResult(null, pointSettings.quiz_timeout || 0);
-}
-
-async function saveResult(isCorrect, points){
-  if(!taskId) return;
-  // guard: ამ task-ზე უკვე თუ არსებობს ჩანაწერი, აღარ ჩავწეროთ (დუბლირების თავიდან აცილება)
-  const { data: exists } = await db.from('user_activity').select('id').eq('user_id', currentUser.id).eq('task_id', taskId);
-  if(exists && exists.length>0) return;
-
-  await db.from('user_activity').insert({
-    user_id: currentUser.id, task_id: taskId,
-    points_earned: points, is_correct: isCorrect, activity_type: 'quiz'
-  });
-
-  // update profile totals — შესვლა/მონაწილეობა = activity +1, ქულა ცალკე
-  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-  const updates = {
-    total_points: (profile.total_points||0) + points,
-    total_activity: (profile.total_activity||0) + 1,
-    correct_answers: (profile.correct_answers||0) + (isCorrect===true ? 1 : 0)
-  };
-  if(points > 0) updates.last_point_at = new Date().toISOString();
-  await db.from('profiles').update(updates).eq('id', currentUser.id);
-
-  // check if this completes the whole box → start interval
-  await checkBoxCompletion();
-}
-
-async function checkBoxCompletion(){
-  if(!task || !task.box_id) return;
-  const today = new Date().toISOString().split('T')[0];
-
-  // all tasks in this box
-  const { data: boxTasks } = await db.from('tasks').select('id').eq('box_id', task.box_id);
-  const totalTasks = (boxTasks||[]).length;
-  if(totalTasks===0) return;
-
-  // my completed tasks in this box — box სრულდება მხოლოდ რეალურად პასუხგაცემული quiz-ებით
-  // (pending/placeholder არ კმარა — ვიქტორინაში შესვლა ბლოკავს დაბრუნებას, მაგრამ box-ს არ ასრულებს)
-  const boxTaskIds = boxTasks.map(t=>t.id);
-  const { data: myActivity } = await db.from('user_activity').select('task_id, is_correct, activity_type').eq('user_id', currentUser.id).in('task_id', boxTaskIds);
-  const answeredActivity = (myActivity||[]).filter(a=>a.activity_type==='quiz');
-  const completedCount = answeredActivity.length;
-
-  // not all done yet → nothing to do
-  if(completedCount < totalTasks) return;
-
-  // already has progress for this box? (avoid duplicate)
-  const { data: existingProg } = await db.from('user_box_progress').select('id').eq('user_id', currentUser.id).eq('box_id', task.box_id);
-  if(existingProg && existingProg.length>0) return;
-
-  // load settings
-  const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
-  let intervalMin = 15, bridgeNeed = 2;
-  if(setRows){ for(const r of setRows){ if(r.key==='box_interval_minutes') intervalMin=r.value; if(r.key==='bridge_unlock_correct') bridgeNeed=r.value; } }
-
-  // correct answers in THIS box
-  const correctInBox = (myActivity||[]).filter(a=>a.is_correct===true).length;
-  const gameUnlocked = correctInBox >= bridgeNeed;
-
-  // how many games ALREADY UNLOCKED today → determines which game is next (cyclic).
-  // counting only unlocked games (not all boxes) means a failed box doesn't skip a game.
-  const { data: unlockedToday } = await db.from('user_box_progress')
-    .select('id').eq('user_id', currentUser.id).eq('day', today).eq('bridge_unlocked', true);
-  const unlockedSoFar = (unlockedToday||[]).length;
-  // cycle: 0→bridge, 1→spin, 2→hilo, 3→bridge...
-  const GAME_CYCLE = ['bridge','spin','hilo'];
-  const gameType = GAME_CYCLE[unlockedSoFar % 3];
-
-  // interval end time (server-relative: now + minutes)
-  const intervalEnds = new Date(Date.now() + intervalMin*60*1000).toISOString();
-
-  await db.from('user_box_progress').insert({
-    user_id: currentUser.id,
-    box_id: task.box_id,
-    day: today,
-    interval_ends_at: intervalEnds,
-    game_type: gameType,
-    bridge_unlocked: gameUnlocked,
-    bridge_played: false,
-    spin_played: false,
-    hilo_played: false
-  });
-
-  // box დასრულდა — შევამოწმოთ box-ის interstitial რეკლამა
-  await maybeShowInterstitialBox();
+  await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: null });
 }
 
 function showResult(type, points){
@@ -500,26 +416,13 @@ function abandonOnLeave(){
   answered = true;
   clearInterval(timerInterval);
   try{
-    // 1. ჩავწეროთ activity (quiz, timeout)
+    // გზა B — timeout-ად ჩაწერა სერვერის ფუნქციით (sync XHR ასწრებს გვერდის დახურვამდე)
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', SUPABASE_URL + '/rest/v1/user_activity', false);
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/rpc/submit_quiz_answer', false);
     xhr.setRequestHeader('Content-Type','application/json');
     xhr.setRequestHeader('apikey', SUPABASE_KEY);
     xhr.setRequestHeader('Authorization','Bearer ' + accessToken);
-    xhr.send(JSON.stringify({ user_id: currentUser.id, task_id: taskId, points_earned: pointSettings.quiz_timeout || 0, is_correct: null, activity_type: 'quiz' }));
-    // 2. გავზარდოთ total_activity
-    const xhr2 = new XMLHttpRequest();
-    xhr2.open('GET', SUPABASE_URL + '/rest/v1/profiles?id=eq.' + currentUser.id + '&select=total_activity', false);
-    xhr2.setRequestHeader('apikey', SUPABASE_KEY);
-    xhr2.setRequestHeader('Authorization','Bearer ' + accessToken);
-    xhr2.send();
-    const cur = JSON.parse(xhr2.responseText||'[]')[0];
-    const xhr3 = new XMLHttpRequest();
-    xhr3.open('PATCH', SUPABASE_URL + '/rest/v1/profiles?id=eq.' + currentUser.id, false);
-    xhr3.setRequestHeader('Content-Type','application/json');
-    xhr3.setRequestHeader('apikey', SUPABASE_KEY);
-    xhr3.setRequestHeader('Authorization','Bearer ' + accessToken);
-    xhr3.send(JSON.stringify({ total_activity: ((cur && cur.total_activity)||0) + 1 }));
+    xhr.send(JSON.stringify({ p_task_id: taskId, p_chosen: null }));
   }catch(e){}
 }
 window.addEventListener('pagehide', abandonOnLeave);
