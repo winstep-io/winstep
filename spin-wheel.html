@@ -176,7 +176,7 @@ let spinning = false;
 let totalRotation = 0;
 let hasSpun = false;
 
-function spin(){
+async function spin(){
   if(spinning || hasSpun) return;
   spinning = true;
   hasSpun = true;
@@ -189,9 +189,16 @@ function spin(){
   card.classList.remove('show');
   ring.classList.add('spinning');
 
-  const targetSlot = Math.floor(Math.random() * N);
-  const positionIndex = SLOT_ORDER[targetSlot];
-  const targetValue = valueAt(positionIndex);
+  // გზა B — შედეგს სერვერი ირჩევს და წერს ქულას
+  const { data: res } = await db.rpc('spin_play');
+  if(!res || !res.ok){
+    ring.classList.remove('spinning');
+    blockGame();
+    return;
+  }
+  const positionIndex = res.position;          // 0..20 (სერვერიდან)
+  const targetValue = res.value;               // ქულა (სერვერიდან)
+  const targetSlot = SLOT_ORDER.indexOf(positionIndex);
 
   const centerAngle = targetSlot * SEG + SEG/2;
   const landing = (360 - (centerAngle % 360)) % 360;
@@ -208,7 +215,6 @@ function spin(){
     ring.classList.remove('spinning');
     btn.textContent = 'Done';
     spinning = false;
-    saveSpinResult(targetValue);
   };
   document.getElementById('wheel').addEventListener('transitionend', onEnd);
 }
@@ -233,20 +239,7 @@ function showResult(value){
   }, 1500);
 }
 
-async function saveSpinResult(points){
-  if(spinSaved) return;
-  spinSaved = true;
-  if(myProgressId){
-    await db.from('user_box_progress').update({ spin_played: true }).eq('id', myProgressId);
-  }
-  await db.from('user_activity').insert({
-    user_id: spinUser.id, task_id: null, points_earned: points, is_correct: null, activity_type: 'spin'
-  });
-  if(points > 0){
-    const { data: profile } = await db.from('profiles').select('total_points').eq('id', spinUser.id).single();
-    await db.from('profiles').update({ total_points: (profile.total_points||0) + points, last_point_at: new Date().toISOString() }).eq('id', spinUser.id);
-  }
-}
+// გზა B: ქულის დარიცხვა და spin_played ახლა სერვერზე ხდება (spin_play).
 
 function blockGame(){
   document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🎡</div><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Spin Wheel not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
