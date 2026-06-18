@@ -138,20 +138,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
     <div class="loading">Loading activity... ⏳</div>
   </div>
 
-  <div class="section-title">Settings</div>
-  <div class="card">
-    <div class="settings-row">
-      <div>
-        <div class="sr-label">Time Format</div>
-        <div class="sr-desc">How times are displayed</div>
-      </div>
-      <div class="tf-toggle">
-        <button class="tf-opt" id="tf12" onclick="setTimeFormat('12h')">12h</button>
-        <button class="tf-opt" id="tf24" onclick="setTimeFormat('24h')">24h</button>
-      </div>
-    </div>
-  </div>
-
   <div class="section-title">Choose Avatar</div>
   <div class="card" style="padding:18px">
     <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">Pick a character — it shows on the leaderboard and results.</div>
@@ -229,11 +215,6 @@ async function init(){
   document.getElementById('sRace').textContent = (profile.season_points||0) + (profile.total_points||0);
   document.getElementById('sCorrect').textContent = profile.correct_answers || 0;
   document.getElementById('sActivity').textContent = profile.total_activity || 0;
-
-  // time format
-  const tf = profile.time_format === '24h' ? '24h' : '12h';
-  document.getElementById('tf12').classList.toggle('active', tf==='12h');
-  document.getElementById('tf24').classList.toggle('active', tf==='24h');
 
   loadStanding();
   loadRoundStanding();
@@ -342,12 +323,6 @@ function timeAgo(ts){
   if(diff<3600) return Math.floor(diff/60)+'m ago';
   if(diff<86400) return Math.floor(diff/3600)+'h ago';
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
-
-async function setTimeFormat(fmt){
-  document.getElementById('tf12').classList.toggle('active', fmt==='12h');
-  document.getElementById('tf24').classList.toggle('active', fmt==='24h');
-  await db.from('profiles').update({ time_format: fmt }).eq('id', currentUser.id);
 }
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
