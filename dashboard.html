@@ -602,47 +602,11 @@ function ordinal(n){ const s=['th','st','nd','rd']; const v=n%100; return n+(s[(
 // ---- load boxes + tasks ----
 let pointSettings = { box_interval_minutes: 15, bridge_unlock_correct: 2 };
 
-// გადაამოწმებს ყველა დღევანდელ box-ს: თუ ყველა quiz დასრულდა მაგრამ game progress
-// არ შეიქმნა (მაგ. ბოლო quiz სისტემური back-ით დაიხურა), აქ შევქმნით.
+// გზა B — box-ის დასრულება/თამაშის განბლოკვა სერვერზე მოწმდება (anti-cheat).
+// client აღარ წერს user_box_progress-ს; სერვერი ამოწმებს და ქმნის საჭიროებისას.
 async function checkAllBoxesCompletion(){
   if(!currentUser) return;
-  const today = new Date().toISOString().split('T')[0];
-  const { data: boxes } = await db.from('boxes').select('id').eq('date', today);
-  if(!boxes || !boxes.length) return;
-
-  const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
-  let intervalMin = 15, bridgeNeed = 2;
-  if(setRows){ for(const r of setRows){ if(r.key==='box_interval_minutes') intervalMin=r.value; if(r.key==='bridge_unlock_correct') bridgeNeed=r.value; } }
-
-  for(const box of boxes){
-    const { data: boxTasks } = await db.from('tasks').select('id').eq('box_id', box.id);
-    const totalTasks = (boxTasks||[]).length;
-    if(totalTasks===0) continue;
-    const boxTaskIds = boxTasks.map(t=>t.id);
-
-    const { data: myAct } = await db.from('user_activity').select('is_correct, activity_type').eq('user_id', currentUser.id).in('task_id', boxTaskIds);
-    const completed = (myAct||[]).filter(a=>a.activity_type==='quiz').length;
-    if(completed < totalTasks) continue; // ჯერ ყველა არ დასრულდა
-
-    // უკვე აქვს progress?
-    const { data: existing } = await db.from('user_box_progress').select('id').eq('user_id', currentUser.id).eq('box_id', box.id);
-    if(existing && existing.length>0) continue;
-
-    // შევქმნათ game progress
-    const correctInBox = (myAct||[]).filter(a=>a.is_correct===true).length;
-    const gameUnlocked = correctInBox >= bridgeNeed;
-    const { data: unlockedToday } = await db.from('user_box_progress')
-      .select('id').eq('user_id', currentUser.id).eq('day', today).eq('bridge_unlocked', true);
-    const GAME_CYCLE = ['bridge','spin','hilo'];
-    const gameType = GAME_CYCLE[((unlockedToday||[]).length) % 3];
-    const intervalEnds = new Date(Date.now() + intervalMin*60*1000).toISOString();
-
-    await db.from('user_box_progress').insert({
-      user_id: currentUser.id, box_id: box.id, day: today,
-      interval_ends_at: intervalEnds, game_type: gameType,
-      bridge_unlocked: gameUnlocked, bridge_played: false, spin_played: false, hilo_played: false
-    });
-  }
+  await db.rpc('ensure_box_progress');
 }
 
 async function loadBoxes(){
