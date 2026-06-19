@@ -76,7 +76,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .field-input,.field-select{width:100%;padding:11px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem}
 .field-input:focus,.field-select:focus{outline:none;border-color:var(--teal2)}
 .field-row{display:flex;gap:10px}
-.field-row .field{flex:1}
+.field-row .field{flex:1;display:flex;flex-direction:column}
+.field-row .field .field-input,.field-row .field .field-select{margin-top:auto}
 
 .btn{padding:11px 18px;border:none;border-radius:9px;font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;letter-spacing:.03em;transition:all .2s}
 .btn-primary{background:var(--teal);color:#000}
@@ -249,6 +250,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       <div class="page-sub">Final standings of finished championships — with emails for sending prizes.</div>
 
       <div class="msg" id="payoutMsg"></div>
+
+      <div id="taxWarnBox"></div>
 
       <div class="card">
         <div class="card-title">🏆 Select Championship</div>
@@ -798,7 +801,40 @@ async function saveAds(){
 }
 
 // ==================== CHAMPIONSHIP RESULTS (PAYOUTS) ====================
+// US tax monitoring: flag US-IP users whose winnings this calendar year reached $500
+async function loadTaxWarnings(){
+  const box = document.getElementById('taxWarnBox');
+  if(!box) return;
+  box.innerHTML = '';
+  const { data: usUsers } = await db.from('profiles').select('id, username, email').eq('ip_country','US');
+  if(!usUsers || usUsers.length===0) return;
+  const ids = usUsers.map(u=>u.id);
+  const byId = {}; usUsers.forEach(u=>{ byId[u.id]=u; });
+  const yearStart = new Date(new Date().getFullYear(),0,1).toISOString();
+  const { data: pays } = await db.from('championship_payouts')
+    .select('user_id, prize_amount, created_at').in('user_id', ids).gte('created_at', yearStart);
+  if(!pays || pays.length===0) return;
+  const totals = {};
+  for(const p of pays){
+    const n = parseFloat((p.prize_amount||'').toString().replace(/[^0-9.]/g,'')) || 0;
+    totals[p.user_id] = (totals[p.user_id]||0) + n;
+  }
+  const flagged = Object.keys(totals).filter(uid => totals[uid] >= 500);
+  if(flagged.length===0) return;
+  let html = '<div style="background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.35);border-radius:12px;padding:14px 16px;margin-bottom:16px">'
+    + '<div style="font-weight:700;color:var(--red);margin-bottom:8px">⚠️ U.S. tax monitoring — '+flagged.length+' user(s) reached the $500 threshold this year</div>'
+    + '<div style="font-size:.78rem;color:var(--soft);margin-bottom:10px">IP country is US and total winnings this calendar year are $500 or more — approaching the $600 IRS reporting threshold. Review eligibility / tax handling before further payouts. (IP is a soft signal, not a tax determination.)</div>';
+  for(const uid of flagged){
+    const u = byId[uid] || {};
+    html += '<div style="font-size:.82rem;border-top:1px solid rgba(230,57,70,.2);padding:7px 0">'
+      + '<strong>'+escapeHtml(u.username||'—')+'</strong> · <span style="font-family:monospace;font-size:.76rem">'+escapeHtml(u.email||'—')+'</span> · <span style="color:var(--gold);font-weight:700">$'+totals[uid].toFixed(2)+'</span> won this year</div>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+}
+
 async function loadPayoutChampList(){
+  loadTaxWarnings();
   const { data: champs } = await db.from('championships').select('*').eq('status','finished').order('number',{ascending:false});
   const sel = document.getElementById('payoutChampSelect');
   if(!champs || champs.length===0){
@@ -831,7 +867,7 @@ async function loadPayouts(){
 
   // get usernames + emails for these users
   const ids = payouts.map(p=>p.user_id);
-  const { data: profs } = await db.from('profiles').select('id, username, email').in('id', ids);
+  const { data: profs } = await db.from('profiles').select('id, username, email, ip_country').in('id', ids);
   const pById = {}; (profs||[]).forEach(p=>{ pById[p.id]=p; });
 
   // summary
@@ -843,7 +879,7 @@ async function loadPayouts(){
     + '<div style="font-size:.74rem;color:var(--muted)">'+totalPaid+'/'+withPrize+' paid</div></div>';
 
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem">'
-    + '<tr style="text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase"><th style="padding:8px 6px">#</th><th style="padding:8px 6px">Player</th><th style="padding:8px 6px">Email</th><th style="padding:8px 6px">Points</th><th style="padding:8px 6px">Prize</th><th style="padding:8px 6px">Status</th></tr>';
+    + '<tr style="text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase"><th style="padding:8px 6px">#</th><th style="padding:8px 6px">Player</th><th style="padding:8px 6px">Email</th><th style="padding:8px 6px">IP Country</th><th style="padding:8px 6px">Points</th><th style="padding:8px 6px">Prize</th><th style="padding:8px 6px">Status</th></tr>';
 
   for(const p of payouts){
     const prof = pById[p.user_id] || {};
@@ -863,6 +899,7 @@ async function loadPayouts(){
       + '<td style="padding:9px 6px;font-weight:700">'+medal+'</td>'
       + '<td style="padding:9px 6px">'+escapeHtml(prof.username||'—')+'</td>'
       + '<td style="padding:9px 6px;font-family:monospace;font-size:.76rem">'+escapeHtml(prof.email||'—')+'</td>'
+      + '<td style="padding:9px 6px">'+(prof.ip_country==='US'?'<span style="color:var(--red);font-weight:700">🇺🇸 US</span>':escapeHtml(prof.ip_country||'—'))+'</td>'
       + '<td style="padding:9px 6px;color:var(--teal);font-weight:600">'+p.championship_points+'</td>'
       + '<td style="padding:9px 6px;color:var(--gold);font-weight:600">'+prize+'</td>'
       + '<td style="padding:9px 6px">'+statusCell+'</td>'
