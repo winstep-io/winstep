@@ -179,6 +179,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   </div>
 
   <button class="logout-btn2" onclick="logout()">Log Out</button>
+  <button onclick="deleteAccount()" style="width:100%;padding:12px;margin-top:10px;background:transparent;border:none;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.04em;cursor:pointer;text-decoration:underline;transition:color .2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">Delete my account</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -418,6 +419,16 @@ async function savePassword(){
 async function logout(){
   await db.auth.signOut();
   window.location.href = '/dashboard.html';
+}
+
+async function deleteAccount(){
+  if(!confirm('Delete your account permanently? This removes your account, points, and all activity. This cannot be undone.')) return;
+  if(!confirm('Last chance — are you absolutely sure? Your account will be permanently deleted.')) return;
+  const { error } = await db.rpc('delete_my_account');
+  if(error){ alert('Could not delete your account: ' + error.message + '\nPlease contact winstep.team@gmail.com'); return; }
+  try { await db.auth.signOut(); } catch(_){}
+  alert('Your account has been deleted.');
+  window.location.href = '/index.html';
 }
 
 init();
