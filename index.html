@@ -313,7 +313,7 @@ async function handleSubmit(){
     btn.textContent = 'Creating account...';
     const { data, error } = await db.auth.signUp({
       email, password,
-      options: { data: { username: username } }
+      options: { data: { username: username, agreed: true } }
     });
 
     if(error){
