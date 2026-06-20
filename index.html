@@ -64,8 +64,8 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
 .forgot-row{display:flex;justify-content:flex-end;margin-top:-6px}
 .forgot-link{font-size:.74rem;color:var(--muted);text-decoration:none;letter-spacing:.03em;cursor:pointer}
 .forgot-link:hover{color:var(--teal)}
-.legal{font-size:.64rem;color:rgba(74,102,96,.7);text-align:center;line-height:1.5;max-width:340px}
-.legal a{color:var(--muted);text-decoration:underline}
+.legal{font-size:.7rem;color:#c9d4d1;text-align:left;line-height:1.55}
+.legal a{color:var(--teal);text-decoration:underline}
 .signup-only{display:none}
 .signup-only.show{display:flex}
 .signin-only{display:flex}
@@ -159,6 +159,14 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
       <a class="forgot-link" onclick="forgotPassword()">Forgot password?</a>
     </div>
 
+    <div class="legal signup-only" id="legalNote" style="margin:2px 0 14px">
+      <label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;text-align:left;line-height:1.5">
+        <input type="checkbox" id="agreeCheck" style="margin-top:2px;flex-shrink:0;width:17px;height:17px;accent-color:var(--teal);cursor:pointer">
+        <span>I certify that I am 18 years of age or older, and I agree to the <a href="/terms.html" target="_blank">Terms of Service</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/official-rules.html" target="_blank">Official Rules</a>. I understand that U.S. residents winning $600 or more in a calendar year must provide tax documentation before prizes are issued.</span>
+      </label>
+      <div style="margin-top:8px;opacity:.75">No purchase necessary to participate.</div>
+    </div>
+
     <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Log In</button>
 
     <div class="or-divider"><span>or</span></div>
@@ -171,14 +179,6 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
     <div class="auth-note" id="authNote">
       Don't have an account? <a onclick="switchTab('signup')">Sign up free</a>
     </div>
-  </div>
-
-  <div class="legal signup-only" id="legalNote">
-    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;text-align:left;line-height:1.4">
-      <input type="checkbox" id="agreeCheck" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
-      <span>I certify that I am 18 years of age or older, and I agree to the <a href="/terms.html" target="_blank">Terms of Service</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/official-rules.html" target="_blank">Official Rules</a>. I understand that U.S. residents winning $600 or more in a calendar year must provide tax documentation before prizes are issued.</span>
-    </label>
-    <div style="margin-top:8px;opacity:.7">No purchase necessary to participate.</div>
   </div>
 </div>
 
