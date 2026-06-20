@@ -314,7 +314,16 @@ async function init(){
 
   if(profile){
     document.getElementById('userName').textContent = profile.username;
-    document.getElementById('userPoints').textContent = (profile.season_points||0) + (profile.total_points||0);
+    // Total Round Points = authoritative sum of finished rounds + live (matches profile & round table)
+    let _trp = (profile.season_points||0) + (profile.total_points||0);
+    try{
+      const { data: _ar } = await db.from('rounds').select('championship_id').eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(_ar && _ar.championship_id){
+        const { data: _h } = await db.from('user_round_stats').select('round_points').eq('user_id', currentUser.id).eq('championship_id', _ar.championship_id);
+        _trp = (_h||[]).reduce((s,r)=>s+(r.round_points||0),0) + (profile.total_points||0);
+      }
+    }catch(_){}
+    document.getElementById('userPoints').textContent = _trp;
     document.getElementById('userChampPoints').textContent = profile.championship_points || 0;
     const av = avatarSVG(profile.avatar_id, 38);
     const avEl = document.getElementById('userAvatar');

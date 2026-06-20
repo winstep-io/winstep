@@ -123,7 +123,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-val gold" id="sChamp">0</div><div class="stat-lbl">Championship Pts</div></div>
-    <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-val silver" id="sRace">0</div><div class="stat-lbl">Round Points</div></div>
+    <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-val silver" id="sRace">0</div><div class="stat-lbl">Total Round Points</div></div>
     <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-val" id="sActivity">0</div><div class="stat-lbl">Total Activity</div></div>
     <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="sCorrect">0</div><div class="stat-lbl">Total Correct Answers</div></div>
   </div>
@@ -239,7 +239,11 @@ async function loadStanding(){
     ((a.last_point_at?new Date(a.last_point_at).getTime():Infinity)-(b.last_point_at?new Date(b.last_point_at).getTime():Infinity))
   );
   const champRank = sorted.findIndex(p=>p.id===currentUser.id) + 1;
-  document.getElementById('pRank').textContent = champRank>0 ? ('🏆 Championship Rank #'+champRank) : '🏆 Unranked';
+  const { data: champ } = await db.from('championships').select('number').eq('status','active').order('number',{ascending:false}).limit(1).maybeSingle();
+  const champNum = champ ? champ.number : null;
+  document.getElementById('pRank').textContent = champRank>0
+    ? (champNum ? ('🏆 Championship #'+champNum+' — '+ordinal(champRank)+' place') : ('🏆 '+ordinal(champRank)+' place'))
+    : '🏆 Unranked';
 }
 
 function ordinal(n){
@@ -267,6 +271,10 @@ async function loadRoundStanding(){
   const liveAct = Math.max(0, (myProfile.total_activity||0) - histAct);
   const liveCor = Math.max(0, (myProfile.correct_answers||0) - histCor);
   const livePts = myProfile.total_points || 0;
+
+  // Total Round Points = authoritative sum of all rounds (finished + live) — always matches the table below
+  const totalRoundPts = (hist||[]).reduce((s,r)=>s+(r.round_points||0),0) + livePts;
+  document.getElementById('sRace').textContent = totalRoundPts;
 
   // live place in the current round — მხოლოდ აქტიური მოთამაშეები (0 აქტივობა/ქულა არ ითვლება)
   const { data: rawPlayers } = await db.from('profiles')
