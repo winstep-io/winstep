@@ -174,8 +174,11 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
   </div>
 
   <div class="legal signup-only" id="legalNote">
-    By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
-    No purchase necessary to participate.
+    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;text-align:left;line-height:1.4">
+      <input type="checkbox" id="agreeCheck" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
+      <span>I certify that I am 18 years of age or older, and I agree to the <a href="/terms.html" target="_blank">Terms of Service</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/official-rules.html" target="_blank">Official Rules</a>. I understand that U.S. residents winning $600 or more in a calendar year must provide tax documentation before prizes are issued.</span>
+    </label>
+    <div style="margin-top:8px;opacity:.7">No purchase necessary to participate.</div>
   </div>
 </div>
 
@@ -292,6 +295,7 @@ async function handleSubmit(){
 
     if(!username || username.length < 3){ showMsg('Username must be at least 3 characters.', 'error'); btn.disabled=false; return; }
     if(password !== confirm){ showMsg('Passwords do not match.', 'error'); btn.disabled=false; return; }
+    if(!document.getElementById('agreeCheck').checked){ showMsg('Please confirm you are 18+ and agree to the Terms & Privacy Policy.', 'error'); btn.disabled=false; return; }
 
     btn.textContent = 'Checking...';
 
