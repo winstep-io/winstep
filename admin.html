@@ -323,11 +323,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
         <div>
           <div style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600">Registered Users</div>
           <div id="regUsersCount" style="font-size:1.7rem;font-weight:700;color:var(--text);line-height:1.1">—</div>
+          <div id="cookieStats" style="font-size:.72rem;color:var(--muted);margin-top:6px"></div>
         </div>
       </div>
 
       <div class="card">
         <input class="field-input" id="userSearch" placeholder="🔍 Search by username or email..." autocomplete="off" oninput="renderUsers()">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <span style="font-size:.72rem;color:var(--muted)">🍪 Cookie:</span>
+          <select class="field-input" id="cookieFilter" onchange="renderUsers()" style="width:auto;padding:6px 10px;font-size:.8rem">
+            <option value="all">All</option>
+            <option value="accepted">Accept</option>
+            <option value="rejected">Reject</option>
+            <option value="none">None</option>
+          </select>
+        </div>
         <div id="userCount" style="font-size:.72rem;color:var(--muted);margin-top:8px"></div>
       </div>
 
@@ -1364,14 +1374,24 @@ async function loadUsers(){
 
 function renderUsers(){
   const q = (document.getElementById('userSearch').value||'').toLowerCase().trim();
+  const ccFilter = (document.getElementById('cookieFilter')||{}).value || 'all';
+  const ccVal = u => (u.cookie_consent==='accepted'||u.cookie_consent==='rejected') ? u.cookie_consent : 'none';
   const filtered = allUsers.filter(u=>{
-    if(!q) return true;
-    return (u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
+    if(q && !((u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q))) return false;
+    if(ccFilter!=='all' && ccVal(u)!==ccFilter) return false;
+    return true;
   });
 
   // მთლიანი დარეგისტრირებული რაოდენობა (ლამაზი ბარათი)
   const regEl = document.getElementById('regUsersCount');
   if(regEl) regEl.textContent = allUsers.length;
+
+  // cookie consent რაოდენობები
+  const accN = allUsers.filter(u=>u.cookie_consent==='accepted').length;
+  const rejN = allUsers.filter(u=>u.cookie_consent==='rejected').length;
+  const noneN = allUsers.length - accN - rejN;
+  const csEl = document.getElementById('cookieStats');
+  if(csEl) csEl.innerHTML = '<span style="color:var(--teal,#2ec4b6)">✓ Accept: '+accN+'</span> &nbsp;·&nbsp; <span style="color:#9fb5b0">✕ Reject: '+rejN+'</span> &nbsp;·&nbsp; <span style="color:#7a908b">None: '+noneN+'</span>';
 
   // ძიების დროს — ნაპოვნი / ჯამური; ძიების გარეშე — არაფერი
   document.getElementById('userCount').textContent = q ? (filtered.length + ' of ' + allUsers.length + ' shown') : '';
@@ -1385,8 +1405,9 @@ function renderUsers(){
     if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
     if(u.is_banned) badges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
     const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
+    const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+'</div></div><div class="li-actions">'
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
       + '<button class="btn btn-ghost btn-sm" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '<button class="btn btn-danger btn-sm" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
       + '</div></div>';

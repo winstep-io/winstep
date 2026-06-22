@@ -333,6 +333,14 @@ async function init(){
   const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
   myProfile = profile;
 
+  // sync cookie-consent choice (localStorage) -> profile, so admin can see it
+  try{
+    const cc = localStorage.getItem('winstep_cookie_consent');
+    if((cc==='accepted'||cc==='rejected') && profile && profile.cookie_consent !== cc){
+      await db.rpc('set_cookie_consent', { p: cc });
+    }
+  }catch(_){}
+
   // capture IP country once (admin tax monitoring; soft signal, not a tax determination)
   if(profile && !profile.is_banned && !profile.ip_country){
     try{
