@@ -534,7 +534,7 @@ async function loadLeaderboard(){
   const sortCol = isChamp ? 'championship_points' : 'total_points';
 
   const { data: rawPlayers } = await db
-    .from('profiles')
+    .from('public_profiles')
     .select('id, username, avatar_id, total_points, season_points, championship_points, total_activity, correct_answers, last_point_at, created_at')
     .order(sortCol, { ascending: false })
     .order('total_activity', { ascending: false })

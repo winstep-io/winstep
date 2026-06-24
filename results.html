@@ -197,7 +197,7 @@ async function init(){
   }
 
   // standings — champ pts → cumulative round pts → activity → correct → earliest last point (NO email — public safe)
-  const { data: rawPlayers } = await db.from('profiles')
+  const { data: rawPlayers } = await db.from('public_profiles')
     .select('id, username, avatar_id, championship_points, season_points, total_points, total_activity, correct_answers, last_point_at')
     .order('championship_points',{ascending:false})
     .order('total_activity',{ascending:false})
@@ -237,7 +237,7 @@ async function loadPastChampionships(){
   for(const c of champs){
     let winnerName = '—';
     if(c.winner_user_id){
-      const { data: w } = await db.from('profiles').select('username').eq('id', c.winner_user_id).maybeSingle();
+      const { data: w } = await db.from('public_profiles').select('username').eq('id', c.winner_user_id).maybeSingle();
       if(w) winnerName = w.username;
     }
     const period = (c.start_date||'') + (c.end_date?(' → '+c.end_date):'');
@@ -274,7 +274,7 @@ async function viewPastResults(champId, champNum){
   // usernames + avatars
   const ids = prizeRows.map(r=>r.user_id);
   if(myRow && !myInPrizes) ids.push(myRow.user_id);
-  const { data: profiles } = await db.from('profiles').select('id, username, avatar_id').in('id', ids);
+  const { data: profiles } = await db.from('public_profiles').select('id, username, avatar_id').in('id', ids);
   const profById = {}; (profiles||[]).forEach(p=>{ profById[p.id]=p; });
 
   const rowHtml = (r)=>{
