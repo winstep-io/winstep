@@ -330,7 +330,7 @@ async function init(){
   currentUser = session.user;
 
   // load profile
-  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  const { data: profile } = await db.from('profiles').select('id, username, avatar_id, championship_points, season_points, total_points, cookie_consent, is_banned, ip_country, terms_accepted_at').eq('id', currentUser.id).single();
   myProfile = profile;
 
   // sync cookie-consent choice (localStorage) -> profile, so admin can see it
@@ -534,7 +534,7 @@ async function loadLeaderboard(){
   const sortCol = isChamp ? 'championship_points' : 'total_points';
 
   const { data: rawPlayers } = await db
-    .from('public_profiles')
+    .from('profiles')
     .select('id, username, avatar_id, total_points, season_points, championship_points, total_activity, correct_answers, last_point_at, created_at')
     .order(sortCol, { ascending: false })
     .order('total_activity', { ascending: false })

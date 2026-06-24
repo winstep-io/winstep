@@ -198,7 +198,7 @@ async function init(){
   if(!session){ window.location.href = '/index.html'; return; }
   currentUser = session.user;
 
-  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  const { data: profile } = await db.from('profiles').select('id, username, avatar_id, championship_points, season_points, total_points, correct_answers, total_activity').eq('id', currentUser.id).single();
   myProfile = profile;
   if(!profile) return;
 
@@ -225,7 +225,7 @@ async function init(){
 
 // championship rank (pill) — new tiebreaker order
 async function loadStanding(){
-  const { data: champPlayers } = await db.from('public_profiles')
+  const { data: champPlayers } = await db.from('profiles')
     .select('id, championship_points, season_points, total_points, total_activity, correct_answers, last_point_at')
     .eq('is_disqualified', false);
   const sorted = (champPlayers||[]).filter(p =>
@@ -278,7 +278,7 @@ async function loadRoundStanding(){
   document.getElementById('sRace').textContent = totalRoundPts;
 
   // live place in the current round — მხოლოდ აქტიური მოთამაშეები (0 აქტივობა/ქულა არ ითვლება)
-  const { data: rawPlayers } = await db.from('public_profiles')
+  const { data: rawPlayers } = await db.from('profiles')
     .select('id, total_points, total_activity, championship_points, season_points')
     .eq('is_disqualified', false)
     .order('total_points',{ascending:false})
