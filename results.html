@@ -62,7 +62,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .p3 .podium-bar{height:38px;background:linear-gradient(180deg,rgba(205,127,50,.12),transparent);color:var(--bronze)}
 
 /* prize note */
-.prize-note{text-align:center;font-size:.78rem;color:var(--soft);margin-bottom:32px;display:flex;align-items:center;justify-content:center;gap:7px}
+.prize-note{text-align:center;font-size:.78rem;color:var(--soft);margin-bottom:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.4}
+.prize-note .disclaimer{font-size:.68rem;color:var(--muted)}
+.prize-note a{color:var(--teal);text-decoration:underline}
 
 /* full standings */
 .section-title{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px}
@@ -134,7 +136,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   <!-- PODIUM -->
   <div class="podium" id="podium"></div>
 
-  <div class="prize-note">🎁 All prizes paid as Amazon Gift Cards</div>
+  <div class="prize-note">
+    <span>🎁 All prizes paid as Amazon.com Gift Cards.</span>
+    <span class="disclaimer">*Amazon is not a sponsor. See <a href="/official-rules.html">Official Rules</a>.</span>
+  </div>
 
   <!-- FULL STANDINGS -->
   <div class="section-title">Full Standings</div>
