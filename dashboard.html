@@ -172,74 +172,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 
 .loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
 .empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px}
-/* ============================================================
-   WINSTEP MOTION (direction C — Ambient)
-   reveal on load · ambient glow + particles · hover(desktop) / tap(mobile)
-   ============================================================ */
-/* --- page-load reveal (stagger) --- */
-.ws-anim{opacity:0;transform:translateY(16px) scale(.985)}
-body.ws-ready .ws-anim{animation:wsReveal .6s cubic-bezier(.2,.8,.2,1) forwards}
-body.ws-ready .ws-anim.d1{animation-delay:.05s}
-body.ws-ready .ws-anim.d2{animation-delay:.13s}
-body.ws-ready .ws-anim.d3{animation-delay:.21s}
-body.ws-ready .ws-anim.d4{animation-delay:.29s}
-body.ws-ready .ws-anim.d5{animation-delay:.37s}
-@keyframes wsReveal{to{opacity:1;transform:translateY(0) scale(1)}}
-
-/* dynamically-rendered rows/boxes reveal as they appear */
-.lb-row{animation:wsRowIn .45s cubic-bezier(.2,.8,.2,1) both}
-.lb-row:nth-child(1){animation-delay:.04s}
-.lb-row:nth-child(2){animation-delay:.10s}
-.lb-row:nth-child(3){animation-delay:.16s}
-.lb-row:nth-child(4){animation-delay:.22s}
-.lb-row:nth-child(5){animation-delay:.28s}
-@keyframes wsRowIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
-.box-card{animation:wsReveal .5s cubic-bezier(.2,.8,.2,1) both}
-.boxes .box-card:nth-child(1){animation-delay:.06s}
-.boxes .box-card:nth-child(2){animation-delay:.16s}
-.boxes .box-card:nth-child(3){animation-delay:.26s}
-.boxes .box-card:nth-child(4){animation-delay:.36s}
-
-/* --- ambient background: glow orb + floating particles --- */
-.ws-orb{position:fixed;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(46,196,182,.10),transparent 70%);top:-120px;right:-100px;pointer-events:none;z-index:0;animation:wsPulse 6s ease-in-out infinite}
-@keyframes wsPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.2);opacity:.9}}
-.ws-particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.ws-particles span{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--teal);opacity:.3}
-.ws-particles span:nth-child(1){left:8%;animation:wsFloat 11s ease-in-out infinite}
-.ws-particles span:nth-child(2){left:24%;animation:wsFloat 14s ease-in-out infinite 2s}
-.ws-particles span:nth-child(3){left:46%;animation:wsFloat 12s ease-in-out infinite 1s}
-.ws-particles span:nth-child(4){left:67%;animation:wsFloat 15s ease-in-out infinite 3s}
-.ws-particles span:nth-child(5){left:83%;animation:wsFloat 13s ease-in-out infinite .5s}
-.ws-particles span:nth-child(6){left:93%;animation:wsFloat 16s ease-in-out infinite 4s}
-@keyframes wsFloat{0%{bottom:-10px;opacity:0}15%{opacity:.45}85%{opacity:.45}100%{bottom:105%;opacity:0}}
-/* keep content above ambient layers */
-header,.layout,.ad-slot{position:relative;z-index:1}
-
-/* --- drifting sheen on round banner --- */
-.round-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(46,196,182,.06),transparent);background-size:200% 100%;animation:wsDrift 5s linear infinite;pointer-events:none}
-@keyframes wsDrift{to{background-position:-200% 0}}
-
-/* --- interactions: hover (desktop) / tap (mobile) --- */
-.lb-row,.box-card,.round-banner{transition:transform .2s,border-color .25s,box-shadow .25s}
-@media (hover:hover){
-  .box-card:hover{transform:translateY(-2px) scale(1.005);border-color:var(--teal);box-shadow:0 0 24px rgba(46,196,182,.16)}
-  .lb-row:hover{background:rgba(46,196,182,.05)}
-}
-.box-card:active{transform:scale(.99);border-color:var(--teal);box-shadow:0 0 20px rgba(46,196,182,.18)}
-
-/* --- accessibility: respect reduced motion --- */
-@media (prefers-reduced-motion: reduce){
-  .ws-anim,.lb-row,.box-card{animation:none!important;opacity:1!important;transform:none!important}
-  .ws-orb,.ws-particles span,.round-banner::after{animation:none!important}
-  .ws-particles span{opacity:0}
-}
 </style>
   <script src="/cookie-consent.js"></script>
 </head>
 <body>
-
-<div class="ws-orb"></div>
-<div class="ws-particles"><span></span><span></span><span></span><span></span><span></span><span></span></div>
 
 <header>
   <div class="logo" onclick="window.location.href='/dashboard.html'" style="cursor:pointer">
@@ -271,12 +207,12 @@ header,.layout,.ad-slot{position:relative;z-index:1}
 
 <div class="layout">
   <div class="main-col">
-    <div class="welcome ws-anim d1">Welcome, <span id="userName">...</span>!</div>
-    <div class="welcome-sub ws-anim d1">Complete tasks to earn points and climb the leaderboard.</div>
+    <div class="welcome">Welcome, <span id="userName">...</span>!</div>
+    <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
 
-    <div class="champ-badge ws-anim d2" id="champBadge" style="display:none"></div>
+    <div class="champ-badge" id="champBadge" style="display:none"></div>
 
-    <div class="round-banner ws-anim d2" id="roundBanner" style="display:none">
+    <div class="round-banner" id="roundBanner" style="display:none">
       <div class="rb-left">
         <div class="rb-info">
           <div class="rb-num" id="rbNum">Round 1 / 10</div>
@@ -296,14 +232,14 @@ header,.layout,.ad-slot{position:relative;z-index:1}
       <div id="betweenSub" style="font-size:.95rem;color:var(--soft,#9fb5b0);max-width:360px;margin:0 auto;line-height:1.5">The next season is coming. Check back soon to compete!</div>
     </div>
 
-    <div class="sec-title ws-anim d3">Today's Boxes</div>
+    <div class="sec-title">Today's Boxes</div>
     <div id="boxesContainer">
       <div class="loading">Loading boxes... ⏳</div>
     </div>
   </div>
 
   <div class="sidebar-col">
-    <div class="card ws-anim d3">
+    <div class="card">
       <div class="card-head">Leaderboard<span class="live-badge"><span class="live-dot"></span>Live</span></div>
       <div class="lb-tabs">
         <button class="lb-tab active" id="tabChampionship" onclick="switchLb('championship')">🏆 Championship</button>
@@ -314,7 +250,7 @@ header,.layout,.ad-slot{position:relative;z-index:1}
       </div>
     </div>
 
-    <div class="pi-card ws-anim d4" id="prizeCard" style="display:none">
+    <div class="pi-card" id="prizeCard" style="display:none">
       <div class="pi-title">Championship Prizes 🎁</div>
       <div id="prizeRows"></div>
       <div style="font-size:.72rem;color:var(--soft);font-weight:500;margin-top:11px;line-height:1.4">🎁 All prizes paid as Amazon.com Gift Cards.<br><span style="font-size:.66rem;color:var(--muted)">*Amazon is not a sponsor. See <a href="/official-rules.html" style="color:var(--teal);text-decoration:underline">Official Rules</a>.</span></div>
@@ -982,9 +918,6 @@ async function logout(){
 }
 
 init();
-
-// trigger page-load reveal animation
-requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ document.body.classList.add('ws-ready'); }); });
 </script>
 <div class="modal-overlay" id="roundInfoModal" onclick="if(event.target===this)closeRoundInfo()">
   <div class="modal-card">
