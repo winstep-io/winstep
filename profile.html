@@ -149,6 +149,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   <div class="card" style="padding:18px">
     <div id="accMsg" style="display:none;padding:10px 14px;border-radius:9px;font-size:.82rem;margin-bottom:14px"></div>
 
+    <!-- User ID -->
+    <div style="margin-bottom:18px">
+      <div class="sr-label" style="margin-bottom:8px">User ID</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px">
+        <span style="font-family:'Space Grotesk',monospace;font-size:1.05rem;font-weight:600;letter-spacing:.08em;color:var(--teal)">#<span id="accUserId">—</span></span>
+        <button onclick="copyUserId()" title="Copy ID" style="margin-left:auto;background:transparent;border:1px solid var(--border2);color:var(--soft);border-radius:8px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .2s">Copy</button>
+      </div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:6px">Your unique ID. Mention it when contacting support.</div>
+    </div>
+
     <!-- Username -->
     <div style="margin-bottom:18px">
       <div class="sr-label" style="margin-bottom:8px">Username</div>
@@ -198,7 +208,7 @@ async function init(){
   if(!session){ window.location.href = '/index.html'; return; }
   currentUser = session.user;
 
-  const { data: profile } = await db.from('profiles').select('id, username, avatar_id, championship_points, season_points, total_points, correct_answers, total_activity').eq('id', currentUser.id).single();
+  const { data: profile } = await db.from('profiles').select('id, display_id, username, avatar_id, championship_points, season_points, total_points, correct_answers, total_activity').eq('id', currentUser.id).single();
   myProfile = profile;
   if(!profile) return;
 
@@ -209,6 +219,7 @@ async function init(){
   document.getElementById('pName').textContent = profile.username;
 
   // account fields
+  document.getElementById('accUserId').textContent = profile.display_id || '—';
   document.getElementById('accUsername').value = profile.username || '';
   document.getElementById('accEmail').value = currentUser.email || '';
 
@@ -344,6 +355,18 @@ function showAccMsg(text, ok){
   if(ok){ m.style.background='rgba(46,196,122,.12)'; m.style.border='1px solid rgba(46,196,122,.3)'; m.style.color='#2ec47a'; }
   else { m.style.background='rgba(230,57,70,.12)'; m.style.border='1px solid rgba(230,57,70,.3)'; m.style.color='#ff6b78'; }
   setTimeout(()=>{ m.style.display='none'; }, 4000);
+}
+
+function copyUserId(){
+  const id = document.getElementById('accUserId').textContent;
+  if(!id || id==='—') return;
+  navigator.clipboard.writeText(id).then(()=>{
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.color = 'var(--teal)';
+    setTimeout(()=>{ btn.textContent = orig; btn.style.color = ''; }, 1400);
+  }).catch(()=>{});
 }
 
 async function saveUsername(){

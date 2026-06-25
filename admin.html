@@ -328,7 +328,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       </div>
 
       <div class="card">
-        <input class="field-input" id="userSearch" placeholder="🔍 Search by username or email..." autocomplete="off" oninput="renderUsers()">
+        <input class="field-input" id="userSearch" placeholder="🔍 Search by username, email, or ID..." autocomplete="off" oninput="renderUsers()">
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
           <span style="font-size:.72rem;color:var(--muted)">🍪 Cookie:</span>
           <select class="field-input" id="cookieFilter" onchange="renderUsers()" style="width:auto;padding:6px 10px;font-size:.8rem">
@@ -593,8 +593,8 @@ function showLoginForm(){
 
 async function checkAdmin(user){
   currentUser = user;
-  const { data: profile } = await db.from('profiles').select('is_admin').eq('id', user.id).single();
-  if(!profile || !profile.is_admin){
+  const { data: isAdmin } = await db.rpc('is_admin');
+  if(!isAdmin){
     // logged in but NOT admin
     document.getElementById('gateChecking').style.display = 'none';
     document.getElementById('gateLogin').style.display = 'none';
@@ -817,7 +817,8 @@ async function loadTaxWarnings(){
   const box = document.getElementById('taxWarnBox');
   if(!box) return;
   box.innerHTML = '';
-  const { data: usUsers } = await db.from('profiles').select('id, username, email').eq('ip_country','US');
+  const { data: allU } = await db.rpc('admin_get_users');
+  const usUsers = (allU||[]).filter(u => u.ip_country === 'US');
   if(!usUsers || usUsers.length===0) return;
   const ids = usUsers.map(u=>u.id);
   const byId = {}; usUsers.forEach(u=>{ byId[u.id]=u; });
@@ -878,7 +879,8 @@ async function loadPayouts(){
 
   // get usernames + emails for these users
   const ids = payouts.map(p=>p.user_id);
-  const { data: profs } = await db.from('profiles').select('id, username, email, ip_country').in('id', ids);
+  const { data: allProfs } = await db.rpc('admin_get_users');
+  const profs = (allProfs||[]).filter(p => ids.includes(p.id));
   const pById = {}; (profs||[]).forEach(p=>{ pById[p.id]=p; });
 
   // summary
@@ -1213,36 +1215,14 @@ async function deleteRound(roundId, roundNum){
 async function endRound(roundId, roundNum){
   if(!confirm('End Round '+roundNum+'? This awards F1 points to the top 10 and resets race points for the new round. This cannot be undone.')) return;
 
-  // 1. get top players by total_points (race points this round)
-  const { data: players } = await db.from('profiles').select('id, username, total_points').order('total_points',{ascending:false}).limit(10);
-  if(!players || players.length===0){ showMsg('roundMsg','No players to award.','err'); return; }
-
-  // 2. get F1 points table
-  const { data: ptsTable } = await db.from('round_points_table').select('*');
-  const ptsByPlace = {}; (ptsTable||[]).forEach(p=>{ ptsByPlace[p.place]=p.points; });
-
-  // 3. award each player
-  for(let i=0; i<players.length; i++){
-    const place = i+1;
-    const champPts = ptsByPlace[place] || 0;
-    const player = players[i];
-
-    // record result
-    await db.from('round_results').insert({
-      round_id: roundId, user_id: player.id, place,
-      race_points: player.total_points, championship_points_awarded: champPts
-    });
-
-    // add championship points to profile
-    const { data: prof } = await db.from('profiles').select('championship_points').eq('id', player.id).single();
-    await db.from('profiles').update({ championship_points: (prof.championship_points||0)+champPts }).eq('id', player.id);
-  }
+  // 1+2+3+5. server-side: award top 10 (round_results + championship_points) + reset total_points
+  const { data: awardedCount, error: awardErr } = await db.rpc('admin_award_round_points', { p_round_id: roundId });
+  if(awardErr){ showMsg('roundMsg', awardErr.message, 'err'); return; }
+  if(!awardedCount || awardedCount===0){ showMsg('roundMsg','No players to award.','err'); return; }
+  const players = { length: awardedCount }; // for the final message below
 
   // 4. mark round finished
   await db.from('rounds').update({ status:'finished' }).eq('id', roundId);
-
-  // 5. reset everyone's race points (total_points) for the new round
-  await db.from('profiles').update({ total_points: 0 }).neq('id','00000000-0000-0000-0000-000000000000');
 
   // 6. get this round's info (number, end_date, total_rounds)
   const { data: endedRound } = await db.from('rounds').select('*').eq('id', roundId).single();
@@ -1367,7 +1347,8 @@ async function deletePrize(id){
 let allUsers = [];
 
 async function loadUsers(){
-  const { data: users } = await db.from('profiles').select('*').order('championship_points',{ascending:false});
+  const { data: users, error: usersErr } = await db.rpc('admin_get_users');
+  if(usersErr){ console.error('admin_get_users error:', usersErr.message); }
   allUsers = users || [];
   renderUsers();
 }
@@ -1377,7 +1358,7 @@ function renderUsers(){
   const ccFilter = (document.getElementById('cookieFilter')||{}).value || 'all';
   const ccVal = u => (u.cookie_consent==='accepted'||u.cookie_consent==='rejected') ? u.cookie_consent : 'none';
   const filtered = allUsers.filter(u=>{
-    if(q && !((u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q))) return false;
+    if(q && !((u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.display_id||'').includes(q))) return false;
     if(ccFilter!=='all' && ccVal(u)!==ccFilter) return false;
     return true;
   });
@@ -1407,7 +1388,7 @@ function renderUsers(){
     const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
       + '<button class="btn btn-ghost btn-sm" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '<button class="btn btn-danger btn-sm" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
       + '</div></div>';
@@ -1418,7 +1399,7 @@ function renderUsers(){
 async function toggleAdmin(userId, isCurrentlyAdmin){
   const makeAdmin = !isCurrentlyAdmin;
   if(!confirm(makeAdmin ? 'Give this user admin access?' : 'Remove admin access from this user?')) return;
-  const { error } = await db.from('profiles').update({ is_admin: makeAdmin }).eq('id', userId);
+  const { error } = await db.rpc('admin_set_user_admin', { p_user_id: userId, p_make_admin: makeAdmin });
   if(error){ showMsg('userMsg', error.message, 'err'); return; }
   showMsg('userMsg', makeAdmin?'Admin access granted.':'Admin access removed.','ok');
   loadUsers();
@@ -1428,12 +1409,8 @@ async function toggleBan(userId, isCurrentlyBanned){
   const ban = !isCurrentlyBanned;
   if(userId === currentUser.id){ showMsg('userMsg','You cannot ban yourself.','err'); return; }
   if(!confirm(ban ? 'Ban this user? They will not be able to use the platform.' : 'Unban this user?')) return;
-  const { data, error } = await db.from('profiles').update({ is_banned: ban }).eq('id', userId).select('id, is_banned');
+  const { data, error } = await db.rpc('admin_set_user_banned', { p_user_id: userId, p_banned: ban });
   if(error){ showMsg('userMsg', error.message, 'err'); return; }
-  if(!data || data.length===0){
-    showMsg('userMsg', 'Update blocked — admin RLS policy needed on profiles.', 'err');
-    return;
-  }
   showMsg('userMsg', ban?'User banned.':'User unbanned.','ok');
   loadUsers();
 }
