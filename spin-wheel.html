@@ -215,10 +215,13 @@ async function spin(){
 
   document.getElementById('wheel').style.transform = `rotate(${totalRotation}deg)`;
 
-  const onEnd = () => {
+  const onEnd = async () => {
     document.getElementById('wheel').removeEventListener('transitionend', onEnd);
-    showResult(targetValue);
     ring.classList.remove('spinning');
+    // ბორბალი გაჩერდა — ახლა ირიცხება ქულა (გზა B: სერვერი). ტრიალის შუა
+    // გამოსვლისას ეს არ გამოიძახება → ქულა 0.
+    try { await db.rpc('spin_confirm'); } catch(e){}
+    showResult(targetValue);
     btn.textContent = 'Done';
     spinning = false;
   };
