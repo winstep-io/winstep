@@ -151,6 +151,10 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let hiloUser = null;
 let myProgressId = null;
 let hiloSaved = false;
+let currentSession = null;     // ავტ. ტოკენი pagehide-ის sync XHR-ისთვის
+let gameActive = false;        // თამაში დაიწყო (hilo_start გავიდა)
+let gameEnded  = false;        // თამაში ბუნებრივად დასრულდა (wrong/timeout) ან დაიბლოკა
+let forfeited  = false;        // forfeit უკვე გაიგზავნა (ერთხელ)
 let PER_STEP = 5;          // points per correct guess (from admin)
 let TURN_TIME = 10;        // seconds per turn (Bridge-ის იგივე პრინციპი)
 let turnTimer = null, turnLeft = 10;
@@ -220,6 +224,24 @@ async function onTurnTimeout(){
   setTimeout(gameOver, 700);
 }
 
+// ---- გამოსვლა თამაშის პროცესში = მიტოვება (Back ღილაკი / Back to Dashboard / დახურვა) ----
+// თამაში იხურება ქულის გარეშე (0), მცდელობა იხარჯება — დაბრუნება შეუძლებელია.
+// pagehide-ში sync XHR გამოიყენება, რადგან გვერდის დატოვებისას async ვერ მოასწრებს.
+function forfeitGame(){
+  if(!gameActive || gameEnded || forfeited) return;
+  forfeited = true;
+  try{
+    const token = (currentSession && currentSession.access_token) || SUPABASE_KEY;
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/rpc/hilo_forfeit', false); // sync
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send('{}');
+  }catch(e){}
+}
+window.addEventListener('pagehide', forfeitGame);
+
 async function guess(direction){
   if(busy) return;
   busy=true; setButtons(false);
@@ -254,6 +276,7 @@ function finishTurn(continues){
 }
 
 function gameOver(){
+  gameEnded = true;          // ბუნებრივი დასასრული — forfeit აღარ საჭიროა (ქულა უკვე ჩაირიცხა)
   stopTurnTimer();
   document.getElementById('finalScore').textContent=score;
   document.getElementById('finalSub').textContent = score===1?'point earned':'points earned';
@@ -263,6 +286,7 @@ function gameOver(){
 // გზა B: ქულის დარიცხვა და hilo_played ახლა სერვერზე ხდება (hilo_guess).
 
 function blockGame(){
+  gameEnded = true;          // თამაში არ დაწყებულა — forfeit არ გავუშვათ
   document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🃏</div><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Hi-Lo not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
 }
 
@@ -273,6 +297,7 @@ async function init(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href='/index.html'; return; }
   hiloUser = session.user;
+  currentSession = session;
 
   const today = new Date().toISOString().split('T')[0];
   const { data: prog } = await db.from('user_box_progress')
@@ -290,6 +315,7 @@ async function init(){
   // server starts the game (დასტა სერვერზე იმალება)
   const { data: res } = await db.rpc('hilo_start');
   if(!res || !res.ok){ blockGame(); return; }
+  gameActive = true;         // აქედან გამოსვლა = მიტოვება
   PER_STEP = res.per_step;
   current = res.card;
   renderCard(current,false);

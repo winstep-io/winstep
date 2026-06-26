@@ -132,6 +132,10 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let spinUser = null;
 let myProgressId = null;
 let spinSaved = false;
+let currentSession = null;   // ავტ. ტოკენი pagehide-ის sync XHR-ისთვის
+let gameActive = false;      // გვერდი გაიხსნა და მცდელობა ცოცხალია
+let gameEnded  = false;      // დატრიალდა ან დაიბლოკა
+let forfeited  = false;      // forfeit უკვე გაიგზავნა
 
 // wheel config (set from admin settings)
 let START = 0, STEP = 1;
@@ -197,6 +201,7 @@ async function spin(){
     blockGame();
     return;
   }
+  gameEnded = true;          // დატრიალდა — მცდელობა გაიხარჯა (spin_played=true სერვერზე)
   const positionIndex = res.position;          // 0..20 (სერვერიდან)
   const targetValue = res.value;               // ქულა (სერვერიდან)
   const targetSlot = SLOT_ORDER.indexOf(positionIndex);
@@ -242,7 +247,25 @@ function showResult(value){
 
 // გზა B: ქულის დარიცხვა და spin_played ახლა სერვერზე ხდება (spin_play).
 
+// ---- გამოსვლა დატრიალებამდე = მიტოვება (Back / Back to Dashboard / დახურვა) ----
+// მცდელობა იხარჯება ქულის გარეშე (0): დაშბორდზე აღარ ჩანს, ხელახლა ვერ შევა.
+function forfeitGame(){
+  if(!gameActive || gameEnded || forfeited) return;
+  forfeited = true;
+  try{
+    const token = (currentSession && currentSession.access_token) || SUPABASE_KEY;
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/rpc/spin_forfeit', false); // sync
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send('{}');
+  }catch(e){}
+}
+window.addEventListener('pagehide', forfeitGame);
+
 function blockGame(){
+  gameEnded = true;          // თამაში არ ცოცხალია — forfeit არ გავუშვათ
   document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🎡</div><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Spin Wheel not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
 }
 
@@ -256,6 +279,7 @@ async function init(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href = '/index.html'; return; }
   spinUser = session.user;
+  currentSession = session;
 
   // eligibility: spin game unlocked, not played, interval running
   const today = new Date().toISOString().split('T')[0];
@@ -270,6 +294,7 @@ async function init(){
   const live = (prog||[]).find(p => p.interval_ends_at && new Date(p.interval_ends_at) > new Date());
   if(!live){ blockGame(); return; }
   myProgressId = live.id;
+  gameActive = true;         // აქედან გამოსვლა დატრიალებამდე = მიტოვება
 }
 
 init();

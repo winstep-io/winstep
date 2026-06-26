@@ -139,11 +139,15 @@ let myProgressId = null;            // user_box_progress row that unlocked the b
 let BRIDGE_STEP = 10;               // points per safe step (from settings)
 let BRIDGE_FINISH = 50;             // finish bonus (from settings)
 let bridgeSaved = false;            // prevent double-saving
+let currentSession = null;          // ავტ. ტოკენი pagehide-ის sync XHR-ისთვის
+let gameActive = false;             // bridge_start გავიდა — თამაში ცოცხალია
+let forfeited  = false;             // forfeit უკვე გაიგზავნა (ერთხელ)
 
 async function bridgeInit(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href = '/index.html'; return; }
   bridgeUser = session.user;
+  currentSession = session;
 
   // load point settings
   const { data: setRows } = await db.from('settings').select('*').in('key',['bridge_step','bridge_finish']);
@@ -172,6 +176,24 @@ async function bridgeInit(){
 }
 
 // გზა B: ქულის დარიცხვა და bridge_played ახლა სერვერზე ხდება (bridge_step / bridge_end).
+
+// ---- გამოსვლა თამაშის პროცესში = მიტოვება (Back / Back to Dashboard / დახურვა) ----
+// თამაში იხურება ქულის გარეშე (0): დაშბორდზე აღარ ჩანს, ხელახლა ვერ შევა.
+// G.phase!=='play' = ბუნებრივი დასასრული (win/dead/timeout) — მაშინ forfeit არ ეშვება.
+function forfeitGame(){
+  if(!gameActive || forfeited || !G || G.phase !== 'play') return;
+  forfeited = true;
+  try{
+    var token = (currentSession && currentSession.access_token) || SUPABASE_KEY;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/rpc/bridge_forfeit', false); // sync
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send('{}');
+  }catch(e){}
+}
+window.addEventListener('pagehide', forfeitGame);
 
 var cv=document.getElementById('c'),ctx=cv.getContext('2d');
 var CW=460,CH=560;cv.width=CW;cv.height=CH;
@@ -276,6 +298,7 @@ async function start(){
     return;
   }
   BRIDGE_STEP = res.step_points; BRIDGE_FINISH = res.finish_bonus;
+  gameActive = true;         // აქედან გამოსვლა = მიტოვება
   newG();buildBar();hideOv();document.getElementById('ctrlBtns').style.display='flex';document.getElementById('stepTimer').classList.add('show');setCtrl(true);updHUD();updBar();startStepTimer();
 }
 async function pick(side){
