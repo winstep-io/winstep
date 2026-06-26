@@ -295,6 +295,17 @@ async function loadAds(){
     renderAdSlot(byKey['quiz_top'], 'adSlotTop', 'adTop', globalScript);
     // ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ამ ხაზის დასაწყისის //
     // renderAdSlot(byKey['quiz_bottom'], 'adSlotBottom', 'adBottom', globalScript);
+
+    // ვიდეო/interstitial პროვაიდერის სკრიპტი — site-wide ჩატვირთვა <head>-ში
+    // (მხოლოდ თუ admin-ში „Load site-wide" ჩართულია). მზადდება interstitial-მდე.
+    const videoCfg = byKey['__video__'];
+    if(videoCfg && videoCfg.enabled === true){
+      const vcode = (videoCfg.custom_code||'').trim();
+      if(vcode && !window.__videoGlobalLoaded){
+        const w = document.createElement('div'); w.innerHTML = vcode; activateScripts(w);
+        document.head.appendChild(w); window.__videoGlobalLoaded = true;
+      }
+    }
   }catch(e){}
 }
 function renderAdSlot(cfg, slotId, boxId, globalScript){
@@ -386,8 +397,8 @@ async function fireInterstitial(mode, manualCode){
   if(mode === 'manual'){
     code = manualCode || '';
   } else {
-    // auto → Global Script
-    const { data: adRows } = await db.from('ad_settings').select('*').eq('slot_key','__global__').single();
+    // auto → Video / Interstitial Provider Script (__video__), არა ბანერების Global (__global__)
+    const { data: adRows } = await db.from('ad_settings').select('*').eq('slot_key','__video__').single();
     code = (adRows && adRows.custom_code) || '';
   }
   showInterstitial(code);
@@ -399,6 +410,8 @@ function showInterstitial(adCode){
   const closeBtn = document.getElementById('interstitialClose');
   box.innerHTML = adCode || '<div style="color:#4a6660;font-size:.85rem;text-align:center">Advertisement</div>';
   box.querySelectorAll('script').forEach(old=>{
+    // თუ ეს გარე სკრიპტი უკვე ჩაიტვირთა site-wide-ად, ხელახლა არ ჩავტვირთოთ
+    if(old.src && document.querySelector('script[src="'+old.src+'"]')) return;
     const s=document.createElement('script');
     if(old.src) s.src=old.src; else s.textContent=old.textContent;
     document.body.appendChild(s);

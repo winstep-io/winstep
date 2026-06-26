@@ -403,9 +403,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       <div class="page-sub">Control ad placements across the platform. Empty slots stay hidden until an ad loads.</div>
 
       <div class="card">
-        <div class="card-title">🌐 Global Ad Provider Script</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Paste your ad network's main script here (e.g. Ezoic, AdSense). Loads once across the whole site. Leave empty if you only use Manual ad codes.</div>
-        <textarea class="field-input" id="ad_global" rows="3" placeholder="Paste main script (e.g. Ezoic header script)..." style="resize:vertical;font-family:monospace;font-size:.78rem"></textarea>
+        <div class="card-title">🎥 Video / Interstitial Provider Script</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Paste your <strong>video / interstitial</strong> ad network's script here. Loads once across the site. The Interstitial (Full-Screen) Ad below uses this whenever it's set to <strong>Auto (Network)</strong>. Leave empty if you only use Manual ad codes for interstitials.</div>
+        <textarea class="field-input" id="ad_video" rows="3" placeholder="Paste video / interstitial provider script..." style="resize:vertical;font-family:monospace;font-size:.78rem"></textarea>
+        <div class="ad-toggle-row" style="margin:12px 0 4px">
+          <div class="ad-toggle" id="ad_video_sitewide" onclick="toggleVideoSitewide(this)"><div class="ad-toggle-knob"></div></div>
+          <span class="ad-toggle-label">Load site-wide: Off</span>
+        </div>
+        <div style="font-size:.68rem;color:var(--muted);line-height:1.5">Turn ON only if your video network's instructions say to place its script in your site header / &lt;head&gt; on every page (SDK-based networks). For a self-contained interstitial tag that shows on its own, leave this OFF.</div>
       </div>
 
       <div class="card">
@@ -454,6 +459,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 
         <div class="msg" id="intMsg" style="margin-top:12px"></div>
         <button class="btn btn-primary" onclick="saveInterstitial()" style="margin-top:12px">Save Interstitial Settings</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌐 Global Ad Provider Script <span style="font-weight:400;color:var(--muted);font-size:.8rem">(banners)</span></div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Paste your <strong>banner</strong> ad network's main script here (e.g. Ezoic, AdSense). Loads once across the whole site. The banner slots below use this whenever they're set to <strong>Auto (Network)</strong>. Leave empty if you only use Manual ad codes.</div>
+        <textarea class="field-input" id="ad_global" rows="3" placeholder="Paste main script (e.g. Ezoic header script)..." style="resize:vertical;font-family:monospace;font-size:.78rem"></textarea>
       </div>
 
       <div class="card">
@@ -720,6 +731,13 @@ async function saveInterstitial(){
   };
   const { error } = await db.from('interstitial_settings').update(payload).eq('id',1);
   if(error){ showMsg('intMsg', error.message, 'err'); return; }
+  // ვიდეო-ქსელის Global Script (interstitial-ის ჯგუფი) — ამავე ღილაკით ინახება
+  const adVideoEl = document.getElementById('ad_video');
+  if(adVideoEl){
+    const vsw = document.getElementById('ad_video_sitewide');
+    const videoEnabled = vsw ? vsw.classList.contains('on') : false;
+    await db.from('ad_settings').update({ custom_code: adVideoEl.value, enabled: videoEnabled, updated_at: new Date().toISOString() }).eq('slot_key','__video__');
+  }
   document.getElementById('int_box_after').value  = payload.box_after;
   document.getElementById('int_quiz_after').value = payload.quiz_after;
   showMsg('intMsg','Interstitial settings saved! ✅','ok');
@@ -730,8 +748,17 @@ async function loadAds(){
   const byKey = {};
   (rows||[]).forEach(r => byKey[r.slot_key] = r);
 
-  // global script
+  // global script (banners)
   document.getElementById('ad_global').value = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
+  // video / interstitial provider script
+  const adVideoEl = document.getElementById('ad_video');
+  if(adVideoEl) adVideoEl.value = (byKey['__video__'] && byKey['__video__'].custom_code) || '';
+  const vsw = document.getElementById('ad_video_sitewide');
+  if(vsw){
+    const on = byKey['__video__'] ? (byKey['__video__'].enabled === true) : false;
+    vsw.classList.toggle('on', on);
+    vsw.parentElement.querySelector('.ad-toggle-label').textContent = on ? 'Load site-wide: On' : 'Load site-wide: Off';
+  }
 
   // each slot
   AD_SLOTS.forEach(slot => {
@@ -765,6 +792,12 @@ function toggleAdSlot(el){
   el.parentElement.querySelector('.ad-toggle-label').textContent = on ? 'Enabled' : 'Disabled';
 }
 
+function toggleVideoSitewide(el){
+  el.classList.toggle('on');
+  el.parentElement.querySelector('.ad-toggle-label').textContent =
+    el.classList.contains('on') ? 'Load site-wide: On' : 'Load site-wide: Off';
+}
+
 function setAdMode(btn, mode){
   const card = btn.closest('.card');
   card.querySelectorAll('.ad-mode-btn').forEach(b=>b.classList.remove('active'));
@@ -774,8 +807,15 @@ function setAdMode(btn, mode){
 }
 
 async function saveAds(){
-  // global
+  // global (banners)
   await db.from('ad_settings').update({ custom_code: document.getElementById('ad_global').value, updated_at: new Date().toISOString() }).eq('slot_key','__global__');
+  // video / interstitial provider (also persisted here so either Save button works)
+  const adVideoEl = document.getElementById('ad_video');
+  if(adVideoEl){
+    const vsw = document.getElementById('ad_video_sitewide');
+    const videoEnabled = vsw ? vsw.classList.contains('on') : false;
+    await db.from('ad_settings').update({ custom_code: adVideoEl.value, enabled: videoEnabled, updated_at: new Date().toISOString() }).eq('slot_key','__video__');
+  }
 
   // each slot
   for(const slot of AD_SLOTS){
