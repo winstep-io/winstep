@@ -387,26 +387,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       </div>
 
       <div class="card">
-        <div class="card-title">📺🌐 Other Tasks</div>
-        <div class="field-row">
-          <div class="field"><label class="field-label">Video Task</label><input class="field-input" type="number" id="set_video_points"></div>
-          <div class="field"><label class="field-label">Website Task</label><input class="field-input" type="number" id="set_website_points"></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label class="field-label">App Install</label><input class="field-input" type="number" id="set_app_install_points"></div>
-          <div class="field"><label class="field-label">Survey</label><input class="field-input" type="number" id="set_survey_points"></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label class="field-label">Signup / Registration</label><input class="field-input" type="number" id="set_signup_points"></div>
-          <div class="field"><label class="field-label">Free Trial / Subscription</label><input class="field-input" type="number" id="set_trial_points"></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label class="field-label">Social Action</label><input class="field-input" type="number" id="set_social_points"></div>
-          <div class="field"><label class="field-label">Custom Offer</label><input class="field-input" type="number" id="set_custom_points"></div>
-        </div>
-      </div>
-
-      <div class="card">
         <div class="card-title">⏱️ Game Timing</div>
         <div class="field-row">
           <div class="field"><label class="field-label">Box Interval (min)</label><input class="field-input" type="number" id="set_box_interval_minutes"></div>
@@ -462,8 +442,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
           <div class="ad-toggle" id="int_quiz_enabled" onclick="toggleInt(this)"><div class="ad-toggle-knob"></div></div>
           <span class="ad-toggle-label">After a quiz</span>
         </div>
-        <div style="font-size:.72rem;color:var(--muted);margin:2px 0 6px">Which quiz numbers of the day (comma-separated, e.g. 3,7):</div>
-        <input class="field-input" id="int_quiz_after" placeholder="e.g. 3,7" style="margin-bottom:10px">
+        <div style="font-size:.72rem;color:var(--muted);margin:2px 0 6px">Show an ad after every N quizzes (interval, e.g. 3 = after the 3rd, 6th, 9th… quiz). Resets daily.</div>
+        <input class="field-input" id="int_quiz_after" type="number" min="1" placeholder="e.g. 3" style="margin-bottom:10px">
         <div class="ad-mode-row">
           <button class="ad-mode-btn active" id="int_quiz_auto" onclick="setIntMode('quiz','auto')">Auto (Network)</button>
           <button class="ad-mode-btn" id="int_quiz_manual" onclick="setIntMode('quiz','manual')">Manual (Custom)</button>
@@ -516,12 +496,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
         <option value="quiz">Quiz</option>
         <option value="video">Video Ad</option>
         <option value="website">Website Visit</option>
-        <option value="app_install">App Install</option>
-        <option value="survey">Survey</option>
-        <option value="signup">Signup / Registration</option>
-        <option value="trial">Free Trial / Subscription</option>
-        <option value="social">Social Action</option>
-        <option value="custom">Custom Offer</option>
       </select>
     </div>
     <div class="field">
@@ -723,6 +697,11 @@ function setIntToggle(id, on){
 function cleanNums(str){
   return (str||'').split(',').map(s=>s.trim()).filter(s=>/^\d+$/.test(s)).join(',');
 }
+// ერთ მთელ დადებით რიცხვს ტოვებს (ინტერვალისთვის). არასწორი/ცარიელი -> ''.
+function cleanInterval(str){
+  const n = parseInt(String(str||'').trim(), 10);
+  return (Number.isFinite(n) && n >= 1) ? String(n) : '';
+}
 function intMode(which){
   return document.getElementById('int_'+which+'_manual').classList.contains('active') ? 'manual' : 'auto';
 }
@@ -734,7 +713,7 @@ async function saveInterstitial(){
     box_mode:     intMode('box'),
     box_code:     document.getElementById('int_box_code').value,
     quiz_enabled: document.getElementById('int_quiz_enabled').classList.contains('on'),
-    quiz_after:   cleanNums(document.getElementById('int_quiz_after').value),
+    quiz_after:   cleanInterval(document.getElementById('int_quiz_after').value),
     quiz_mode:    intMode('quiz'),
     quiz_code:    document.getElementById('int_quiz_code').value,
     updated_at:   new Date().toISOString()

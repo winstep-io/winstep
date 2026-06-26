@@ -367,14 +367,15 @@ async function maybeShowInterstitialBox(){
 }
 
 // ვიქტორინის შემდეგ — showResult-ის ბოლოს გამოიძახება
+// ინტერვალური ლოგიკა: რეკლამა ყოველ N ვიქტორინაზე (quizNum % N === 0). დღიური ათვლა.
 async function maybeShowInterstitial(){
   if(interstitialShown) return false;
   const cfg = await getIntCfg();
   if(!cfg || !cfg.enabled || !cfg.quiz_enabled) return false;
-  const list = parseList(cfg.quiz_after);
-  if(list.length===0) return false;
-  const quizNum = await countQuizToday(); // ეს ვიქტორინა უკვე ჩაწერილია
-  if(!list.includes(quizNum)) return false;
+  const interval = parseInt(String(cfg.quiz_after||'').trim(), 10);
+  if(!Number.isFinite(interval) || interval < 1) return false;
+  const quizNum = await countQuizToday(); // ეს ვიქტორინა უკვე ჩაწერილია (დღიური)
+  if(quizNum < 1 || (quizNum % interval) !== 0) return false;
   await fireInterstitial(cfg.quiz_mode, cfg.quiz_code);
   return true;
 }
