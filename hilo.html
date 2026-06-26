@@ -62,6 +62,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .guess-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
 .arrow{font-size:1.1rem}
 
+.turn-timer{width:200px;max-width:78vw;margin:2px 0 2px}
+.tt-track{width:100%;height:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.tt-fill{height:100%;width:100%;background:var(--teal);border-radius:4px;transition:width 1s linear,background .3s}
+.tt-fill.low{background:var(--red)}
+.tt-val{text-align:center;font-size:.72rem;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.05em}
+
 .hint{font-size:.74rem;color:var(--muted);margin-top:16px;text-align:center;max-width:330px}
 
 .overlay{position:fixed;inset:0;background:rgba(8,12,11,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
@@ -111,6 +117,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     </div>
   </div>
 
+  <div class="turn-timer" id="turnTimer">
+    <div class="tt-track"><div class="tt-fill" id="ttFill"></div></div>
+    <div class="tt-val" id="ttVal">10s</div>
+  </div>
+
   <div class="feedback" id="feedback">Make your guess</div>
 
   <div class="guess-row">
@@ -141,6 +152,8 @@ let hiloUser = null;
 let myProgressId = null;
 let hiloSaved = false;
 let PER_STEP = 5;          // points per correct guess (from admin)
+let TURN_TIME = 10;        // seconds per turn (Bridge-ის იგივე პრინციპი)
+let turnTimer = null, turnLeft = 10;
 
 const SUITS = [{sym:'♠',red:false},{sym:'♥',red:true},{sym:'♦',red:true},{sym:'♣',red:false}];
 const RANKS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
@@ -176,9 +189,41 @@ function renderCard(card, animate){
 function setFeedback(t,type){ const f=document.getElementById('feedback'); f.textContent=t; f.className='feedback'+(type?' '+type:''); }
 function setButtons(en){ document.getElementById('btnHigh').disabled=!en; document.getElementById('btnLow').disabled=!en; }
 
+// ---- 10-წამიანი ტაიმერი თითო სვლაზე (Bridge-ის იგივე პრინციპი) ----
+// დრო რომ ამოიწურება → თამაში სრულდება. დაგროვილი ქულა რჩება
+// (სერვერი ისედაც წერს ქულას ყოველ სწორ გამოცნობაზე hilo_guess-ში).
+function startTurnTimer(){
+  clearInterval(turnTimer);
+  turnLeft = TURN_TIME;
+  drawTimer();
+  turnTimer = setInterval(()=>{
+    turnLeft--;
+    drawTimer();
+    if(turnLeft <= 0){ clearInterval(turnTimer); onTurnTimeout(); }
+  }, 1000);
+}
+function stopTurnTimer(){ clearInterval(turnTimer); }
+function drawTimer(){
+  const fill = document.getElementById('ttFill');
+  const val  = document.getElementById('ttVal');
+  if(!fill || !val) return;
+  fill.style.width = Math.max(0, (turnLeft / TURN_TIME) * 100) + '%';
+  val.textContent  = Math.max(0, turnLeft) + 's';
+  fill.classList.toggle('low', turnLeft <= 3);
+}
+async function onTurnTimeout(){
+  if(busy) return;
+  busy = true; setButtons(false);
+  setFeedback("Time's up! Game over.", 'bad');
+  // გზა B — სერვერი ნიშნავს მცდელობას დასრულებულად (replay-ის თავიდან აცილება)
+  try { await db.rpc('hilo_end'); } catch(e){}
+  setTimeout(gameOver, 700);
+}
+
 async function guess(direction){
   if(busy) return;
   busy=true; setButtons(false);
+  stopTurnTimer();
   // გზა B — სერვერი ხსნის შემდეგ კარტას და ამოწმებს
   const { data: res } = await db.rpc('hilo_guess', { p_dir: direction });
   if(!res || !res.ok){ busy=false; setButtons(true); return; }
@@ -204,11 +249,12 @@ async function guess(direction){
 }
 
 function finishTurn(continues){
-  if(continues){ setTimeout(()=>{ busy=false; setButtons(true); },350); }
+  if(continues){ setTimeout(()=>{ busy=false; setButtons(true); startTurnTimer(); },350); }
   else { setTimeout(gameOver,700); }
 }
 
 function gameOver(){
+  stopTurnTimer();
   document.getElementById('finalScore').textContent=score;
   document.getElementById('finalSub').textContent = score===1?'point earned':'points earned';
   document.getElementById('overlay').classList.add('show');
@@ -247,6 +293,7 @@ async function init(){
   PER_STEP = res.per_step;
   current = res.card;
   renderCard(current,false);
+  startTurnTimer();
 }
 
 init();
