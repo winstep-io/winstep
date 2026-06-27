@@ -98,10 +98,6 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
   <button class="continue-btn" id="continueBtn" onclick="window.location.href='/dashboard.html'">← Back to Tasks</button>
 
 <!-- Interstitial (full-screen ad) overlay -->
-<div id="interstitialOverlay" style="display:none;position:fixed;inset:0;background:rgba(8,12,11,.96);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:20px">
-  <div id="interstitialAd" style="width:100%;max-width:340px;min-height:250px;display:flex;align-items:center;justify-content:center"></div>
-  <button id="interstitialClose" style="margin-top:20px;padding:10px 26px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;display:none">Continue →</button>
-</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -225,7 +221,7 @@ async function pick(btn){
     else a.classList.add('faded');
   });
 
-  if(res && res.box_completed){ await maybeShowInterstitialBox(); }
+  // interstitial ტრიგერი დაშბორდზე გადავიდა (გზა-დამოუკიდებლობისთვის)
   showResult(isCorrect ? 'correct' : 'wrong', points);
 }
 
@@ -238,7 +234,6 @@ async function timeOut(){
     if(a.getAttribute('data-letter')===correctLetter){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
     else a.classList.add('faded');
   });
-  if(res && res.box_completed){ await maybeShowInterstitialBox(); }
   showResult('timeout', res ? res.points : 0);
 }
 
@@ -280,8 +275,7 @@ function showResult(type, points){
   }
   msg.classList.add('show');
   document.getElementById('continueBtn').classList.add('show');
-  // ვიქტორინა დასრულდა — შევამოწმოთ interstitial რეკლამა
-  maybeShowInterstitial();
+  // interstitial ტრიგერი დაშბორდზე გადავიდა (გზა-დამოუკიდებლობისთვის)
 }
 
 // ==================== AD SLOTS ====================
@@ -295,17 +289,7 @@ async function loadAds(){
     renderAdSlot(byKey['quiz_top'], 'adSlotTop', 'adTop', globalScript);
     // ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ამ ხაზის დასაწყისის //
     // renderAdSlot(byKey['quiz_bottom'], 'adSlotBottom', 'adBottom', globalScript);
-
-    // ვიდეო/interstitial პროვაიდერის სკრიპტი — site-wide ჩატვირთვა <head>-ში
-    // (მხოლოდ თუ admin-ში „Load site-wide" ჩართულია). მზადდება interstitial-მდე.
-    const videoCfg = byKey['__video__'];
-    if(videoCfg && videoCfg.enabled === true){
-      const vcode = (videoCfg.custom_code||'').trim();
-      if(vcode && !window.__videoGlobalLoaded){
-        const w = document.createElement('div'); w.innerHTML = vcode; activateScripts(w);
-        document.head.appendChild(w); window.__videoGlobalLoaded = true;
-      }
-    }
+    // (ვიდეო-სკრიპტის site-wide ჩატვირთვა დაშბორდზე გადავიდა — interstitial ახლა იქ ჩნდება)
   }catch(e){}
 }
 function renderAdSlot(cfg, slotId, boxId, globalScript){
@@ -336,91 +320,8 @@ function activateScripts(container){
   });
 }
 
-// ==================== INTERSTITIAL ====================
-// აჩვენებს full-screen რეკლამას ვიქტორინის ან box-ის შემდეგ (admin-ის წესით).
-let interstitialShown = false;
-
-async function getIntCfg(){
-  try{
-    const { data } = await db.from('interstitial_settings').select('*').eq('id',1).single();
-    return data;
-  }catch(e){ return null; }
-}
-function parseList(str){
-  return (str||'').split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
-}
-async function countQuizToday(){
-  const today = new Date().toISOString().split('T')[0];
-  const start = today+'T00:00:00.000Z', end = today+'T23:59:59.999Z';
-  const { data } = await db.from('user_activity')
-    .select('id').eq('user_id', currentUser.id).eq('activity_type','quiz')
-    .gte('created_at', start).lte('created_at', end);
-  return (data||[]).length;
-}
-async function countBoxesToday(){
-  const today = new Date().toISOString().split('T')[0];
-  const { data } = await db.from('user_box_progress')
-    .select('id').eq('user_id', currentUser.id).eq('day', today);
-  return (data||[]).length;
-}
-
-// box-ის შემდეგ — checkBoxCompletion-ის ბოლოს გამოიძახება (პრიორიტეტი)
-async function maybeShowInterstitialBox(){
-  if(interstitialShown) return false;
-  const cfg = await getIntCfg();
-  if(!cfg || !cfg.enabled || !cfg.box_enabled) return false;
-  const list = parseList(cfg.box_after);
-  if(list.length===0) return false;
-  const boxNum = await countBoxesToday(); // ეს box უკვე ჩაწერილია
-  if(!list.includes(boxNum)) return false;
-  await fireInterstitial(cfg.box_mode, cfg.box_code);
-  return true;
-}
-
-// ვიქტორინის შემდეგ — showResult-ის ბოლოს გამოიძახება
-// ინტერვალური ლოგიკა: რეკლამა ყოველ N ვიქტორინაზე (quizNum % N === 0). დღიური ათვლა.
-async function maybeShowInterstitial(){
-  if(interstitialShown) return false;
-  const cfg = await getIntCfg();
-  if(!cfg || !cfg.enabled || !cfg.quiz_enabled) return false;
-  const interval = parseInt(String(cfg.quiz_after||'').trim(), 10);
-  if(!Number.isFinite(interval) || interval < 1) return false;
-  const quizNum = await countQuizToday(); // ეს ვიქტორინა უკვე ჩაწერილია (დღიური)
-  if(quizNum < 1 || (quizNum % interval) !== 0) return false;
-  await fireInterstitial(cfg.quiz_mode, cfg.quiz_code);
-  return true;
-}
-
-async function fireInterstitial(mode, manualCode){
-  interstitialShown = true;
-  let code = '';
-  if(mode === 'manual'){
-    code = manualCode || '';
-  } else {
-    // auto → Video / Interstitial Provider Script (__video__), არა ბანერების Global (__global__)
-    const { data: adRows } = await db.from('ad_settings').select('*').eq('slot_key','__video__').single();
-    code = (adRows && adRows.custom_code) || '';
-  }
-  showInterstitial(code);
-}
-
-function showInterstitial(adCode){
-  const ov = document.getElementById('interstitialOverlay');
-  const box = document.getElementById('interstitialAd');
-  const closeBtn = document.getElementById('interstitialClose');
-  box.innerHTML = adCode || '<div style="color:#4a6660;font-size:.85rem;text-align:center">Advertisement</div>';
-  box.querySelectorAll('script').forEach(old=>{
-    // თუ ეს გარე სკრიპტი უკვე ჩაიტვირთა site-wide-ად, ხელახლა არ ჩავტვირთოთ
-    if(old.src && document.querySelector('script[src="'+old.src+'"]')) return;
-    const s=document.createElement('script');
-    if(old.src) s.src=old.src; else s.textContent=old.textContent;
-    document.body.appendChild(s);
-  });
-  ov.style.display='flex';
-  // Continue ღილაკი 3 წამში ჩნდება (მომხმარებელი ვერ გამოტოვებს მაშინვე)
-  setTimeout(()=>{ closeBtn.style.display='inline-block'; }, 3000);
-  closeBtn.onclick=()=>{ window.location.href='/dashboard.html'; };
-}
+// interstitial (box/quiz full-screen რეკლამა) ახლა dashboard.html-ში მუშაობს —
+// გზა-დამოუკიდებლად (ბოქსი/ვიქტორინა როგორც არ უნდა დაიხუროს). აქ აღარ არის.
 
 // სისტემური Back / გვერდის დახურვა — placeholder-ს timeout-ად ვაქცევთ (pending → quiz).
 // sync XHR PATCH უზრუნველყოფს ჩაწერას გვერდის დახურვამდე (sendBeacon მხოლოდ POST-ია).

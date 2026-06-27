@@ -262,6 +262,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   <div class="ad-box" id="adBottom"></div>
 </div>
 
+<div id="interstitialOverlay" style="display:none;position:fixed;inset:0;background:rgba(8,12,11,.96);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+  <div id="interstitialAd" style="width:100%;max-width:340px;min-height:250px;display:flex;align-items:center;justify-content:center"></div>
+  <button id="interstitialClose" style="margin-top:20px;padding:10px 26px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;display:none">Continue →</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/avatars.js"></script>
 <script>
@@ -608,6 +613,17 @@ async function loadAds(){
     const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
     renderAdSlot(byKey['dashboard_top'], 'adSlotTop', 'adTop', globalScript);
     renderAdSlot(byKey['dashboard_bottom'], 'adSlotBottom', 'adBottom', globalScript);
+
+    // ვიდეო/interstitial პროვაიდერის სკრიპტი — site-wide ჩატვირთვა <head>-ში
+    // (მხოლოდ თუ admin-ში „Load site-wide" ჩართულია). interstitial ახლა აქ, დაშბორდზე ჩნდება.
+    const videoCfg = byKey['__video__'];
+    if(videoCfg && videoCfg.enabled === true){
+      const vcode = (videoCfg.custom_code||'').trim();
+      if(vcode && !window.__videoGlobalLoaded){
+        const w = document.createElement('div'); w.innerHTML = vcode; activateScripts(w);
+        document.head.appendChild(w); window.__videoGlobalLoaded = true;
+      }
+    }
   }catch(e){ /* ad failure shouldn't break the page */ }
 }
 
@@ -743,7 +759,7 @@ async function loadBoxes(){
       states[i] = 'completed';
       // is this box's interval still running? (blocks the NEXT box)
       if(prog.interval_ends_at && new Date(prog.interval_ends_at) > new Date()){
-        intervalActive = { prog, box, nextBox: boxes[i+1] || null };
+        intervalActive = { prog, box, nextBox: boxes[i+1] || null, boxIndex: i };
         blockedByInterval = true;
       } else {
         blockedByInterval = false;
@@ -773,6 +789,10 @@ async function loadBoxes(){
   }
 
   startDayCountdown();
+
+  // box/quiz interstitial — გზა-დამოუკიდებელი: ბოქსი/ვიქტორინა როგორც არ უნდა დაიხუროს,
+  // მომხმარებელი აქ ბრუნდება და რეკლამა (თუ ეკუთვნის) აქ გამოჩნდება.
+  maybeShowInterstitialDashboard(intervalActive);
 }
 
 function renderBox(box, taskList, doneTaskIds, state, prog){
@@ -915,6 +935,76 @@ function startTask(taskId, type){
 async function logout(){
   await db.auth.signOut();
   window.location.href = '/dashboard.html';
+}
+
+// ==================== INTERSTITIAL (dashboard-side) ====================
+// რეკლამის ტრიგერი აქ არის (და არა quiz-ში), რომ გზა-დამოუკიდებელი იყოს:
+// ბოქსი/ვიქტორინა როგორც არ უნდა დაიხუროს (სწორი/არასწორი/timeout/გამოსვლა/Back),
+// მომხმარებელი დაშბორდზე ბრუნდება და რეკლამა (თუ ეკუთვნის) აქ გამოჩნდება.
+async function getIntCfg(){
+  try{
+    const { data } = await db.from('interstitial_settings').select('*').eq('id',1).single();
+    return data;
+  }catch(e){ return null; }
+}
+function parseList(str){
+  return (str||'').split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
+}
+
+async function maybeShowInterstitialDashboard(intervalActive){
+  if(!currentUser) return;                 // სტუმარს არ ეხება
+  const cfg = await getIntCfg();
+  if(!cfg || !cfg.enabled) return;          // Master switch
+
+  // --- BOX (პრიორიტეტი): ახლა დახურული ბოქსი (აქტიური break-ით) ---
+  if(cfg.box_enabled && intervalActive && intervalActive.prog && !intervalActive.prog.box_ad_shown){
+    const list = parseList(cfg.box_after);
+    const boxNum = (intervalActive.boxIndex|0) + 1;   // ბოქსის რეალური ნომერი (პოზიცია)
+    if(list.includes(boxNum)){
+      const { data: r } = await db.rpc('claim_box_ad', { p_box_id: intervalActive.box.id });
+      if(r && r.claimed){ await fireInterstitial(cfg.box_mode, cfg.box_code); return; }
+    }
+  }
+
+  // --- QUIZ: ყოველ N ვიქტორინაზე ---
+  if(cfg.quiz_enabled){
+    const n = parseInt(String(cfg.quiz_after||'').trim(), 10);
+    if(Number.isFinite(n) && n >= 1){
+      const { data: r } = await db.rpc('claim_quiz_ad', { p_n: n });
+      if(r && r.claimed){ await fireInterstitial(cfg.quiz_mode, cfg.quiz_code); return; }
+    }
+  }
+}
+
+async function fireInterstitial(mode, manualCode){
+  let code = '';
+  if(mode === 'manual'){
+    code = manualCode || '';
+  } else {
+    // auto → Video / Interstitial Provider Script (__video__)
+    const { data: adRows } = await db.from('ad_settings').select('*').eq('slot_key','__video__').single();
+    code = (adRows && adRows.custom_code) || '';
+  }
+  showInterstitial(code);
+}
+
+function showInterstitial(adCode){
+  const ov = document.getElementById('interstitialOverlay');
+  const box = document.getElementById('interstitialAd');
+  const closeBtn = document.getElementById('interstitialClose');
+  if(!ov || !box || !closeBtn) return;
+  box.innerHTML = adCode || '<div style="color:#4a6660;font-size:.85rem;text-align:center">Advertisement</div>';
+  box.querySelectorAll('script').forEach(old=>{
+    if(old.src && document.querySelector('script[src="'+old.src+'"]')) return; // site-wide dedupe
+    const s=document.createElement('script');
+    if(old.src) s.src=old.src; else s.textContent=old.textContent;
+    document.body.appendChild(s);
+  });
+  ov.style.display='flex';
+  closeBtn.style.display='none';
+  // Continue ღილაკი 3 წამში ჩნდება; დახურვა მხოლოდ overlay-ს მალავს (უკვე დაშბორდზე ვართ)
+  setTimeout(()=>{ closeBtn.style.display='inline-block'; }, 3000);
+  closeBtn.onclick=()=>{ ov.style.display='none'; };
 }
 
 init();
