@@ -14,16 +14,28 @@ document.documentElement.className += ' ws-checking';
 <script>
 (function(){
   function reveal(){ document.documentElement.classList.remove('ws-checking'); }
-  var t = setTimeout(reveal, 1200);
+  var t = setTimeout(reveal, 1500);
+  function go(){ clearTimeout(t); window.location.replace('/dashboard.html'); }
+
+  // Fast path: any Supabase auth-token key already in this browser? (no CDN needed)
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k && k.indexOf('-auth-token')>-1 && k.indexOf('code-verifier')===-1 && localStorage.getItem(k)){
+        return go();
+      }
+    }
+  }catch(e){}
+
+  // Reliable path: ask Supabase directly (same check the dashboard uses).
   try{
     var db = window.supabase.createClient(
       'https://eybpnmplndedpnhuasyd.supabase.co',
       'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY'
     );
     db.auth.getSession().then(function(res){
-      clearTimeout(t);
-      if(res && res.data && res.data.session){ window.location.replace('/dashboard.html'); }
-      else { reveal(); }
+      if(res && res.data && res.data.session){ go(); }
+      else { clearTimeout(t); reveal(); }
     }).catch(function(){ clearTimeout(t); reveal(); });
   }catch(e){ clearTimeout(t); reveal(); }
 })();
