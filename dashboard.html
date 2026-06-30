@@ -269,6 +269,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 <div id="interstitialOverlay" style="display:none;position:fixed;inset:0;background:#000;z-index:9999">
   <div id="interstitialAd" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
   <button id="interstitialClose" style="position:absolute;top:16px;right:16px;z-index:2;padding:8px 15px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;font-family:Rajdhani,sans-serif;font-weight:600;font-size:.9rem;letter-spacing:.02em;cursor:pointer;display:none">✕ Close</button>
+  <div id="interstitialBarWrap" style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.12);z-index:2;pointer-events:none"><div id="interstitialBar" style="height:100%;width:0%;background:#f5c842;box-shadow:0 0 8px rgba(245,200,66,.6)"></div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1006,9 +1007,19 @@ function showInterstitial(adCode){
   });
   ov.style.display='flex';
   closeBtn.style.display='none';
-  // „✕ Close" 7 წამში ჩნდება — ქსელის Skip Ad (5წ, ქვედა-მარჯვნივ) შემდეგ, ზედა-მარჯვნივ.
-  // ვიდეო-ქსელის callback (auto-close) აქ დაემატება ქსელის არჩევის შემდეგ.
-  setTimeout(()=>{ closeBtn.style.display='inline-block'; }, 7000);
+  // YouTube-style yellow countdown bar fills over 7s; „✕ Close" appears exactly when it completes.
+  const bar = document.getElementById('interstitialBar');
+  let closeShown = false;
+  function revealClose(){ if(closeShown) return; closeShown = true; closeBtn.style.display='inline-block'; }
+  if(bar){
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    void bar.offsetWidth;                 // reflow so the reset applies before animating
+    bar.style.transition = 'width 7s linear';
+    bar.style.width = '100%';
+    bar.addEventListener('transitionend', revealClose, { once:true });
+  }
+  setTimeout(revealClose, 7100);          // safety fallback if transitionend doesn't fire
   closeBtn.onclick=()=>{ ov.style.display='none'; };
 }
 
