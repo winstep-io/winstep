@@ -17,8 +17,9 @@ document.documentElement.className += ' ws-checking';
   var t = setTimeout(reveal, 1500);
   function go(){ clearTimeout(t); window.location.replace('/dashboard.html'); }
 
-  // Fast path: any Supabase auth-token key already in this browser? (no CDN needed)
+  // Fast path: is the session token present? (no CDN needed)
   try{
+    if(localStorage.getItem('sb-eybpnmplndedpnhuasyd-auth-token')){ return go(); }
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
       if(k && k.indexOf('-auth-token')>-1 && k.indexOf('code-verifier')===-1 && localStorage.getItem(k)){
