@@ -3,20 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>html.ws-checking body{visibility:hidden}</style>
 <script>
-/* If a logged-in session exists in this browser, skip the landing and go
-   straight to the dashboard. Guests and search-engine crawlers (never logged
-   in) see the full landing. Runs before paint = no flash. */
+/* Hide the page for a moment while we check for a logged-in session, so members
+   jump straight to the dashboard with no landing flash. Guests and crawlers
+   (no session) are revealed at once. A safety timeout always reveals. */
+document.documentElement.className += ' ws-checking';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 (function(){
+  function reveal(){ document.documentElement.classList.remove('ws-checking'); }
+  var t = setTimeout(reveal, 1200);
   try{
-    for(var i=0;i<localStorage.length;i++){
-      var key=localStorage.key(i);
-      if(key && /^sb-.*-auth-token(\.\d+)?$/.test(key) && localStorage.getItem(key)){
-        window.location.replace('/dashboard.html');
-        return;
-      }
-    }
-  }catch(e){}
+    var db = window.supabase.createClient(
+      'https://eybpnmplndedpnhuasyd.supabase.co',
+      'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY'
+    );
+    db.auth.getSession().then(function(res){
+      clearTimeout(t);
+      if(res && res.data && res.data.session){ window.location.replace('/dashboard.html'); }
+      else { reveal(); }
+    }).catch(function(){ clearTimeout(t); reveal(); });
+  }catch(e){ clearTimeout(t); reveal(); }
 })();
 </script>
 <title>winstep — Play free, win Amazon Gift Cards</title>
