@@ -72,6 +72,10 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
 .continue-btn.show{display:block}
 .continue-btn:hover{background:#44ffe8;box-shadow:0 4px 20px rgba(46,196,182,.3)}
 .loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
+.ws-mini-foot{margin-top:auto;text-align:center;padding:22px 16px 4px;font-size:.72rem;color:var(--muted)}
+.ws-mini-foot a{color:var(--muted);text-decoration:none;cursor:pointer;transition:color .2s}
+.ws-mini-foot a:hover{color:var(--teal)}
+.ws-mini-foot .sep{margin:0 9px;opacity:.55}
 </style>
   <script src="/cookie-consent.js"></script>
 </head>
@@ -345,5 +349,9 @@ window.addEventListener('pagehide', abandonOnLeave);
 
 init();
 </script>
+<footer class="ws-mini-foot">
+  <a href="/privacy.html">Privacy</a><span class="sep">·</span><a onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</a>
+</footer>
+
 </body>
 </html>
