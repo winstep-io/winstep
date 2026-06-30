@@ -11,12 +11,9 @@
   try{
     for(var i=0;i<localStorage.length;i++){
       var key=localStorage.key(i);
-      if(key && /^sb-.*-auth-token$/.test(key)){
-        var s=JSON.parse(localStorage.getItem(key));
-        if(s && (s.access_token || (s.currentSession && s.currentSession.access_token))){
-          window.location.replace('/dashboard.html');
-          return;
-        }
+      if(key && /^sb-.*-auth-token(\.\d+)?$/.test(key) && localStorage.getItem(key)){
+        window.location.replace('/dashboard.html');
+        return;
       }
     }
   }catch(e){}
