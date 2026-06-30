@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* If a logged-in session exists in this browser, skip the landing and go
+   straight to the dashboard. Guests and search-engine crawlers (never logged
+   in) see the full landing. Runs before paint = no flash. */
+(function(){
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var key=localStorage.key(i);
+      if(key && /^sb-.*-auth-token$/.test(key)){
+        var s=JSON.parse(localStorage.getItem(key));
+        if(s && (s.access_token || (s.currentSession && s.currentSession.access_token))){
+          window.location.replace('/dashboard.html');
+          return;
+        }
+      }
+    }
+  }catch(e){}
+})();
+</script>
+<title>winstep — Play free, win Amazon Gift Cards</title>
+<meta name="description" content="winstep is a free skill-and-chance championship. Answer daily quizzes, play bonus games, climb the leaderboard, and compete for Amazon.com Gift Card prizes. No purchase necessary.">
+<link rel="canonical" href="https://winstep.io/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;line-height:1.65;overflow-x:hidden}
+.glow{position:fixed;top:-160px;left:50%;transform:translateX(-50%);width:760px;height:520px;max-width:130vw;background:radial-gradient(ellipse,rgba(46,196,182,.07),transparent 70%);pointer-events:none;z-index:0}
+a{color:var(--teal);text-decoration:none}
+
+/* header */
+header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:15px 24px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.92);backdrop-filter:blur(20px)}
+.logo{display:flex;align-items:center;gap:11px;cursor:pointer}
+.logo-badge{width:40px;height:40px;background:var(--teal);border-radius:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 22px rgba(46,196,182,.3)}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;color:var(--text)}
+.logo-name span{color:var(--teal)}
+.btn{font-family:'Rajdhani',sans-serif;font-weight:700;cursor:pointer;border-radius:11px;transition:all .2s;border:none;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.btn-solid{background:var(--teal);color:#04100e;padding:10px 20px;font-size:.9rem;box-shadow:0 4px 18px rgba(46,196,182,.25)}
+.btn-solid:hover{background:#44ffe8;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--soft);padding:14px 28px;font-size:1rem}
+.btn-ghost:hover{color:var(--teal);border-color:var(--teal)}
+.btn-lg{padding:15px 34px;font-size:1rem;border-radius:12px}
+
+.wrap{max-width:920px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+
+/* hero — product peek */
+.hero{text-align:center;padding:58px 0 10px}
+.eyebrow{display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:.66rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);padding:7px 16px;border-radius:100px;margin-bottom:22px}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(2.1rem,5.5vw,3.3rem);font-weight:700;line-height:1.08;letter-spacing:-.02em;margin-bottom:16px}
+.hero h1 .gold{color:var(--gold)}
+.hero-sub{font-size:clamp(1rem,2.4vw,1.16rem);color:var(--soft);max-width:520px;margin:0 auto 26px}
+.hero-cta{display:flex;gap:13px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.npn{font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:34px}
+.frame{max-width:760px;margin:0 auto;border:1px solid var(--border2);border-radius:14px;overflow:hidden;box-shadow:0 26px 70px rgba(0,0,0,.6);background:var(--bg2)}
+.frame-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.dotr{width:11px;height:11px;border-radius:50%;background:#2a3633}
+.frame-url{flex:1;margin-left:8px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:.74rem;color:var(--soft);text-align:center}
+.app{padding:18px;background:radial-gradient(120% 80% at 50% 0%,#0f1a18,var(--bg) 60%)}
+.app-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.champ{font-family:'Space Grotesk',sans-serif;font-size:.72rem;color:var(--gold);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.25);padding:6px 14px;border-radius:100px}
+.pts{display:flex;gap:7px;align-items:center;background:var(--bg3);border:1px solid var(--border2);border-radius:100px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem}
+.pts .g{color:var(--gold)}.pts .s{color:var(--muted)}.pts .w{color:#c9d4d1}
+.boxc{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.boxh{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.boxn{font-weight:600;font-size:.92rem}
+.boxs{font-size:.72rem;color:var(--teal);display:flex;align-items:center;gap:6px}
+.boxs .d{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.task{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.task-ic{width:34px;height:34px;border-radius:9px;background:var(--teal4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1rem}
+.task-i{flex:1}
+.task-t{font-size:.88rem;font-weight:500}
+.task-d{font-size:.72rem;color:var(--muted)}
+.task-p{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;color:var(--gold);margin-right:6px}
+.task-b{background:var(--teal);color:#04100e;border:none;border-radius:8px;padding:7px 14px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem}
+.bridge{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:13px;padding:13px 16px}
+.bridge-ic{font-size:1.4rem}
+.bridge-i{flex:1}
+.bridge-t{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.85rem}
+.bridge-s{font-size:.72rem;color:var(--soft)}
+.bridge-b{background:var(--gold);color:#3a2c00;border:none;border-radius:8px;padding:7px 16px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem}
+
+/* sections */
+section{padding:60px 0}
+.sec-h{text-align:center;margin-bottom:42px}
+.sec-h h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.5rem,4vw,2rem);font-weight:700;margin-bottom:10px}
+.sec-h p{color:var(--soft);max-width:480px;margin:0 auto}
+
+/* how it works cards */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.c{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:26px 22px;text-align:left;transition:border-color .2s}
+.c:hover{border-color:var(--border2)}
+.c-ico{width:46px;height:46px;border-radius:12px;background:var(--teal4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.c-ico svg{width:24px;height:24px;color:var(--teal)}
+.c h3{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:600;margin-bottom:7px}
+.c p{font-size:.92rem;color:var(--soft);line-height:1.6}
+
+/* faq */
+.faq{display:flex;flex-direction:column;gap:10px;max-width:720px;margin:0 auto}
+details{background:var(--bg2);border:1px solid var(--border);border-radius:13px;overflow:hidden;transition:border-color .2s}
+details[open]{border-color:var(--border2)}
+summary{list-style:none;cursor:pointer;padding:17px 20px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1rem;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:14px}
+summary::-webkit-details-marker{display:none}
+summary .chev{flex-shrink:0;width:20px;height:20px;color:var(--teal);transition:transform .25s}
+details[open] summary .chev{transform:rotate(180deg)}
+details .ans{padding:0 20px 18px;color:var(--soft);font-size:.96rem;line-height:1.65}
+details .ans a{text-decoration:underline}
+
+/* ready to play */
+.bottom{text-align:center;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:20px;padding:48px 24px;margin-top:6px}
+.bottom h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.5rem,4vw,1.9rem);font-weight:700;margin-bottom:10px}
+.bottom p{color:var(--soft);margin-bottom:26px}
+
+/* footer */
+footer{border-top:1px solid var(--border);margin-top:64px;padding:36px 0 44px}
+.foot-links{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:center;margin-bottom:18px}
+.foot-links a{font-weight:600;font-size:.9rem;color:var(--soft);cursor:pointer}
+.foot-links a:hover{color:var(--teal)}
+.foot-disclaimer{font-size:.8rem;color:var(--muted);max-width:720px;margin:0 auto;text-align:center;line-height:1.6}
+.foot-disclaimer strong{color:var(--soft)}
+
+@media(max-width:680px){.cards{grid-template-columns:1fr}.hero{padding:44px 0 6px}section{padding:46px 0}.app-top .champ{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="/cookie-consent.js"></script>
+</head>
+<body>
+<div class="glow"></div>
+
+<header>
+  <div class="logo" onclick="window.location.href='/home.html'">
+    <span class="logo-badge"><svg width="22" height="22" viewBox="0 0 24 24"><rect x="3" y="13" width="4" height="7" rx="1" fill="#0a1010"/><rect x="10" y="8" width="4" height="12" rx="1" fill="#0a1010"/><rect x="17" y="3" width="4" height="17" rx="1" fill="#0a1010"/></svg></span>
+    <span class="logo-name">win<span>step</span></span>
+  </div>
+</header>
+
+<!-- HERO: product peek -->
+<div class="wrap">
+  <div class="hero">
+    <span class="eyebrow">Free skill-and-chance championship</span>
+    <h1>Open a box. Earn points.<br><span class="gold">Climb the championship.</span></h1>
+    <p class="hero-sub">This is what you'll play every day — quick quizzes, bonus games, and a live race to the top. Free to join, Amazon Gift Cards to win.</p>
+    <div class="hero-cta"><a class="btn btn-solid btn-lg" id="heroPrimary" href="/dashboard.html">Start playing free</a></div>
+    <div class="npn">No purchase necessary &middot; 18+</div>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dotr"></span><span class="dotr"></span><span class="dotr"></span><span class="frame-url">winstep.io/dashboard</span></div>
+      <div class="app">
+        <div class="app-top">
+          <span class="champ">🏆 Championship #4 · Round 2</span>
+          <span class="pts"><span class="g">315</span><span class="s">/</span><span class="w">1,240</span></span>
+        </div>
+        <div class="boxc">
+          <div class="boxh"><span class="boxn">📦 Box 1</span><span class="boxs"><span class="d"></span>Active</span></div>
+          <div class="task"><span class="task-ic">❓</span><div class="task-i"><div class="task-t">Quick Trivia</div><div class="task-d">Tap to answer · 20s timer</div></div><span class="task-p">+10</span><button class="task-b">Answer</button></div>
+        </div>
+        <div class="bridge"><span class="bridge-ic">🌉</span><div class="bridge-i"><div class="bridge-t">Bridge unlocked!</div><div class="bridge-s">Bonus game — available during this break only</div></div><button class="bridge-b">Play</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="sec-h"><h2>How it works</h2><p>Three simple steps from sign-up to your first shot at the grand prize.</p></div>
+    <div class="cards">
+      <div class="c">
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16" stroke-linecap="round"/></svg></div>
+        <h3>Play daily</h3>
+        <p>Open three boxes a day, each with a short skill-based quiz. Unlock quick bonus games — Bridge, Spin Wheel, Hi-Lo — between them.</p>
+      </div>
+      <div class="c">
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Earn points</h3>
+        <p>Every correct answer and game adds to your round score. Each round, the top 10 earn championship points that carry across the season.</p>
+      </div>
+      <div class="c">
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Win prizes</h3>
+        <p>Finish on top of the championship when the season ends and claim the grand prize, awarded as Amazon.com Gift Cards.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="sec-h"><h2>Questions, answered</h2><p>Everything you might want to know before you start playing.</p></div>
+    <div class="faq">
+      <details open>
+        <summary>Is winstep really free?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">Yes. Creating an account and playing is completely free, and no purchase or payment is ever required to enter or win. There are no paid offers to complete — you earn everything through the free daily quizzes and bonus games.</div>
+      </details>
+      <details>
+        <summary>How do I earn points?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">You earn round points by answering the daily quizzes inside your boxes, and by playing the bonus games (Bridge, Spin Wheel, and Hi-Lo) when they unlock. The more accurately and consistently you play, the higher you climb.</div>
+      </details>
+      <details>
+        <summary>What are "boxes"?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">Boxes are your daily challenges. Three unlock each day, each containing a quick skill-based quiz. They open one at a time, with a short break in between, and reset every day so there's always something new to play.</div>
+      </details>
+      <details>
+        <summary>What are the bonus games?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">Bridge, Spin Wheel, and Hi-Lo are quick mini-games that can unlock during the break after a box — if you've answered enough quiz questions correctly. They're worth bonus points but are only playable during that break.</div>
+      </details>
+      <details>
+        <summary>How do rounds and championships work?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">A round runs for a set period. When it ends, the top 10 players earn championship points on a motorsport-style scale. Those points add up across all the rounds in a season, and the player on top at the end wins the grand prize.</div>
+      </details>
+      <details>
+        <summary>What prizes can I win?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">Prizes are awarded as Amazon.com Gift Cards. The number of prizes and their value vary between championships and are shown on each championship's page before the drawing opens. Full details are in our <a href="/official-rules.html">Official Rules</a>.</div>
+      </details>
+      <details>
+        <summary>Is winstep affiliated with Amazon?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">No. winstep is an independent platform. It is in no way sponsored, endorsed, administered by, or associated with Amazon, and Amazon is not a sponsor of any winstep promotion. Amazon.com Gift Cards are used only as prizes, subject to Amazon's own terms.</div>
+      </details>
+      <details>
+        <summary>Who can take part?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">You must be at least 18 years old and registered with winstep. The competition is void where prohibited or restricted by law, and some regions may be excluded from prize eligibility for certain promotions. See the <a href="/official-rules.html">Official Rules</a> for details.</div>
+      </details>
+      <details>
+        <summary>Do I have to buy anything or complete paid offers?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">No. There are no paid tasks or offers. winstep is supported by standard on-page advertising, and you earn points purely by playing the free quizzes and games. No paid action will ever increase your chances of winning.</div>
+      </details>
+      <details>
+        <summary>How are ties broken?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">If two players finish level, the tie is broken in order by championship points, then total round points, then total activity, then number of correct quiz answers, and finally by who reached their total first. The full method is set out in the <a href="/official-rules.html">Official Rules</a>.</div>
+      </details>
+      <details>
+        <summary>Can I have more than one account?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">No. Each player may hold only one account. Creating multiple or fake accounts, using bots, or colluding with others leads to disqualification and account termination. We verify gameplay on our servers to keep things fair.</div>
+      </details>
+      <details>
+        <summary>How will I receive my prize?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">When a championship ends, winners receive their prize by email as an Amazon.com Gift Card code — there's nothing extra to claim, since your age and eligibility are confirmed when you register. The one exception: U.S. winners who reach $600 or more in a calendar year will need to provide tax documentation before a prize is issued.</div>
+      </details>
+      <details>
+        <summary>I forgot my password — what do I do?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">On the <a href="/index.html">log in page</a>, enter your email and tap "Forgot password". We'll email you a secure link to set a new one. For your security, we can't see or change your password for you — recovery is always by email.</div>
+      </details>
+      <details>
+        <summary>How is my data handled, and can I delete my account?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="ans">We explain exactly what we collect and why in our <a href="/privacy.html">Privacy Policy</a>. You can delete your account and personal data at any time from your profile page, or by emailing us.</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- READY TO PLAY -->
+  <div class="bottom">
+    <h2>Ready to play?</h2>
+    <p>Join free and open today's first box in under a minute.</p>
+    <a class="btn btn-solid btn-lg" id="bottomPrimary" href="/dashboard.html">Create your free account</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+      <a href="/official-rules.html">Official Rules</a>
+      <a onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</a>
+      <a href="mailto:winstep.team@gmail.com">Contact</a>
+    </div>
+    <p class="foot-disclaimer"><strong>No purchase or payment of any kind is necessary to enter or win.</strong> Prizes are awarded as Amazon.com Gift Cards. winstep is in no way sponsored, endorsed, or associated with Amazon. Amazon is not a sponsor. 18+. Void where prohibited. &copy; 2026 winstep &middot; winstep.io</p>
+  </div>
+</footer>
+
+</body>
+</html>
