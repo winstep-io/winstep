@@ -10,15 +10,13 @@
    (no session) are revealed at once. A safety timeout always reveals. */
 document.documentElement.className += ' ws-checking';
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   function reveal(){ document.documentElement.classList.remove('ws-checking'); }
   var t = setTimeout(reveal, 1500);
   function go(){ clearTimeout(t); window.location.replace('/dashboard.html'); }
-
-  // Fast path: is the session token present? (no CDN needed)
   try{
+    // If a logged-in session token exists in this browser, skip the landing.
     if(localStorage.getItem('sb-eybpnmplndedpnhuasyd-auth-token')){ return go(); }
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
@@ -27,24 +25,15 @@ document.documentElement.className += ' ws-checking';
       }
     }
   }catch(e){}
-
-  // Reliable path: ask Supabase directly (same check the dashboard uses).
-  try{
-    var db = window.supabase.createClient(
-      'https://eybpnmplndedpnhuasyd.supabase.co',
-      'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY'
-    );
-    db.auth.getSession().then(function(res){
-      if(res && res.data && res.data.session){ go(); }
-      else { clearTimeout(t); reveal(); }
-    }).catch(function(){ clearTimeout(t); reveal(); });
-  }catch(e){ clearTimeout(t); reveal(); }
+  clearTimeout(t); reveal();   // no session → show the landing
 })();
 </script>
 <title>Winstep — Play free, win Amazon Gift Cards</title>
 <meta name="description" content="Winstep is a free skill-and-chance championship. Answer daily quizzes, play bonus games, climb the leaderboard, and compete for Amazon.com Gift Card prizes. No purchase necessary.">
 <link rel="canonical" href="https://winstep.io/home.html">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
