@@ -133,8 +133,8 @@ details .ans a{text-decoration:underline}
 /* footer */
 footer{border-top:1px solid var(--border);margin-top:64px;padding:36px 0 44px}
 .foot-links{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:center;margin-bottom:18px}
-.foot-links a{font-weight:600;font-size:.9rem;color:var(--soft);cursor:pointer}
-.foot-links a:hover{color:var(--teal)}
+.foot-links a,.foot-links button{font-weight:600;font-size:.9rem;color:var(--soft);cursor:pointer;font-family:inherit;background:none;border:none;padding:0}
+.foot-links a:hover,.foot-links button:hover{color:var(--teal)}
 .foot-disclaimer{font-size:.8rem;color:var(--muted);max-width:720px;margin:0 auto;text-align:center;line-height:1.6}
 .foot-disclaimer strong{color:var(--soft)}
 
@@ -278,7 +278,7 @@ footer{border-top:1px solid var(--border);margin-top:64px;padding:36px 0 44px}
       <a href="/privacy.html">Privacy Policy</a>
       <a href="/terms.html">Terms of Service</a>
       <a href="/official-rules.html">Official Rules</a>
-      <a onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</a>
+      <button type="button" onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</button>
       <a href="mailto:winstep.team@gmail.com">Contact</a>
     </div>
     <p class="foot-disclaimer"><strong>No purchase or payment of any kind is necessary to enter or win.</strong> Prizes are awarded as Amazon.com Gift Cards. Winstep is in no way sponsored, endorsed, or associated with Amazon. Amazon is not a sponsor. 18+. Void where prohibited. &copy; 2026 Winstep &middot; winstep.io</p>

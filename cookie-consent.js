@@ -70,7 +70,7 @@
           '\uD83C\uDF6A We use cookies to keep you logged in and support our free rewards. ' +
           'Choose your preference below. ' +
           '<a href="/privacy.html" target="_blank" rel="noopener" ' +
-          'style="color:#2ec4b6;text-decoration:underline">Learn more</a>' +
+          'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
         '</div>' +
         '<div style="display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:center">' +
           '<button id="ws-cookie-reject" type="button" ' +
