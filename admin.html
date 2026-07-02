@@ -1687,6 +1687,20 @@ function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':
 
 async function logout(){ await db.auth.signOut(); window.location.href='/index.html'; }
 
+// --- Admin idle auto-logout: sign out after 15 minutes of inactivity ---
+(function(){
+  var IDLE_MS = 15 * 60 * 1000;   // 15 minutes
+  var idleTimer;
+  function resetIdle(){
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){ logout(); }, IDLE_MS);
+  }
+  ['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(function(evt){
+    window.addEventListener(evt, resetIdle, { passive:true });
+  });
+  resetIdle();
+})();
+
 init();
 </script>
 </body>
