@@ -103,6 +103,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
 @media (prefers-reduced-motion: reduce){.verify-icon .ring{animation:none}.verify-card,.verify-overlay{transition:none}}
 </style>
   <script src="/cookie-consent.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 <div class="glow"></div>
@@ -169,6 +170,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
       <p style="margin:12px 0 0 26px;opacity:.8">No purchase necessary to participate.</p>
     </div>
 
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAADuaBdw260z6JkeC" data-theme="dark" data-callback="onCaptcha" data-expired-callback="onCaptchaExpired" data-error-callback="onCaptchaExpired" style="margin:0 0 14px"></div>
     <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Log In</button>
 
     <div class="or-divider"><span>or</span></div>
@@ -216,6 +218,15 @@ const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 // ============================================
 
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- Cloudflare Turnstile (bot protection) ---
+let captchaToken = '';
+window.onCaptcha = function(token){ captchaToken = token; };
+window.onCaptchaExpired = function(){ captchaToken = ''; };
+function resetCaptcha(){
+  captchaToken = '';
+  if(window.turnstile){ try{ turnstile.reset(); }catch(e){} }
+}
 
 function togglePw(id, btn){
   const field = document.getElementById(id);
@@ -279,6 +290,28 @@ function setFieldError(inputId, errId){
   });
 });
 
+// --- Disposable / temporary email block (common providers) ---
+const DISPOSABLE_DOMAINS = new Set([
+  '10minutemail.com','10minutemail.net','20minutemail.com','2prong.com','33mail.com',
+  'anonbox.net','armyspy.com','burnermail.io','discard.email','dispostable.com',
+  'emailondeck.com','emltmp.com','fakeinbox.com','fakemailgenerator.com','getairmail.com',
+  'getnada.com','guerrillamail.com','guerrillamail.info','guerrillamail.net','guerrillamail.org',
+  'guerrillamailblock.com','harakirimail.com','inboxbear.com','jetable.org','luxusmail.org',
+  'mailcatch.com','maildrop.cc','mailinator.com','mailnesia.com','mailsac.com',
+  'mailtemp.info','mintemail.com','minuteinbox.com','moakt.com','mohmal.com',
+  'mytemp.email','nada.email','sharklasers.com','spam4.me','spamgourmet.com',
+  'tempinbox.com','temp-mail.org','temp-mail.io','tempmail.com','tempmail.net',
+  'tempmailo.com','tempr.email','throwawaymail.com','tmpeml.com','tmpmail.net',
+  'tmpmail.org','trashmail.com','trashmail.net','trbvm.com','yopmail.com',
+  'yopmail.net','yopmail.fr'
+]);
+function isDisposableEmail(email){
+  const at = email.lastIndexOf('@');
+  if(at < 0) return false;
+  const domain = email.slice(at + 1).toLowerCase().trim();
+  return DISPOSABLE_DOMAINS.has(domain);
+}
+
 async function handleSubmit(){
   const email = document.getElementById('emailInput').value.trim();
   const password = document.getElementById('passwordInput').value;
@@ -299,6 +332,14 @@ async function handleSubmit(){
     if(password !== confirm){ showMsg('Passwords do not match.', 'error'); btn.disabled=false; return; }
     if(!document.getElementById('agreeCheck').checked){ showMsg('Please confirm you are 18+ and agree to the Terms & Privacy Policy.', 'error'); btn.disabled=false; return; }
 
+    // Disposable / temporary email block
+    if(isDisposableEmail(email)){
+      document.getElementById('emailInput').classList.add('field-error');
+      showMsg('Please use a permanent email address — temporary email providers are not allowed.', 'error');
+      btn.disabled=false; btn.textContent='Create Account';
+      return;
+    }
+
     btn.textContent = 'Checking...';
 
     // 1. შევამოწმოთ username უკვე თუ არსებობს (profiles — username საჯაროა, leaderboard-ზე ჩანს)
@@ -311,11 +352,14 @@ async function handleSubmit(){
       return;
     }
 
+    if(!captchaToken){ showMsg('Please wait a moment for the security check to finish, then try again.', 'error'); btn.disabled=false; btn.textContent='Create Account'; return; }
+
     btn.textContent = 'Creating account...';
     const { data, error } = await db.auth.signUp({
       email, password,
-      options: { data: { username: username, agreed: true } }
+      options: { data: { username: username, agreed: true }, captchaToken }
     });
+    resetCaptcha();
 
     if(error){
       // Supabase ამოწმებs email-ს — დუბლიკატის შემთხვევაში email ველს ვაწითლებთ
@@ -327,8 +371,11 @@ async function handleSubmit(){
     openVerifyModal(email);
 
   } else {
+    if(!captchaToken){ showMsg('Please wait a moment for the security check to finish, then try again.', 'error'); btn.disabled=false; btn.textContent='Log In'; return; }
+
     btn.textContent = 'Signing in...';
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    const { data, error } = await db.auth.signInWithPassword({ email, password, options: { captchaToken } });
+    resetCaptcha();
 
     if(error){
       // email დადასტურებული არ არის
@@ -353,7 +400,9 @@ function showResendMsg(email){
 }
 
 async function resendConfirmation(email){
-  const { error } = await db.auth.resend({ type: 'signup', email: email });
+  if(!captchaToken){ showMsg('Please wait a moment for the security check to finish, then try again.', 'error'); return; }
+  const { error } = await db.auth.resend({ type: 'signup', email: email, options: { captchaToken } });
+  resetCaptcha();
   if(error){ showMsg(error.message, 'error'); return; }
   showMsg('Confirmation email sent again. 📧 Check your inbox.', 'success');
 }
@@ -377,7 +426,9 @@ async function resendFromModal(){
   link.style.pointerEvents = 'none';
   status.textContent = 'Sending...';
   status.className = 'verify-status show';
-  const { error } = await db.auth.resend({ type: 'signup', email: pendingVerifyEmail });
+  if(!captchaToken){ status.textContent = 'Security check not ready — wait a moment and retry.'; status.className = 'verify-status show err'; link.style.pointerEvents='auto'; return; }
+  const { error } = await db.auth.resend({ type: 'signup', email: pendingVerifyEmail, options: { captchaToken } });
+  resetCaptcha();
   if(error){ status.textContent = error.message; status.className = 'verify-status show err'; }
   else { status.textContent = 'Sent again — check your inbox.'; status.className = 'verify-status show ok'; }
   setTimeout(()=>{ link.style.pointerEvents = 'auto'; }, 4000);
@@ -386,9 +437,12 @@ async function resendFromModal(){
 async function forgotPassword(){
   const email = document.getElementById('emailInput').value.trim();
   if(!email){ showMsg('Enter your email first, then tap "Forgot password".', 'error'); return; }
+  if(!captchaToken){ showMsg('Please wait a moment for the security check to finish, then try again.', 'error'); return; }
   const { error } = await db.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/reset-password.html'
+    redirectTo: window.location.origin + '/reset-password.html',
+    captchaToken
   });
+  resetCaptcha();
   if(error){ showMsg(error.message, 'error'); return; }
   showMsg('Password reset link sent to your email. 📧', 'success');
 }
