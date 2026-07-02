@@ -107,6 +107,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .badge.website{background:rgba(100,150,255,.12);color:#8ab4ff}
 </style>
   <script src="/cookie-consent.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -137,6 +138,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       <label class="field-label">Password</label>
       <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password">
     </div>
+    <div style="display:flex;justify-content:center;margin:0 0 14px"><div class="cf-turnstile" data-sitekey="0x4AAAAAADuaBdw260z6JkeC" data-theme="dark" data-callback="onCaptcha" data-expired-callback="onCaptchaExpired" data-error-callback="onCaptchaExpired"></div></div>
     <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;margin-top:6px" id="loginBtn">Admin Login</button>
   </div>
 </div>
@@ -558,6 +560,15 @@ const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// --- Cloudflare Turnstile (bot protection) ---
+let captchaToken = '';
+window.onCaptcha = function(token){ captchaToken = token; };
+window.onCaptchaExpired = function(){ captchaToken = ''; };
+function resetCaptcha(){
+  captchaToken = '';
+  if(window.turnstile){ try{ turnstile.reset(); }catch(e){} }
+}
+
 let currentUser = null;
 
 // ---- access gate ----
@@ -634,8 +645,11 @@ async function adminLogin(){
   const btn = document.getElementById('loginBtn');
   if(!email || !password){ showMsg('loginMsg','Please fill in all fields.','err'); return; }
 
+  if(!captchaToken){ showMsg('loginMsg','Please wait a moment for the security check to finish, then try again.','err'); return; }
+
   btn.disabled = true; btn.textContent = 'Signing in...';
-  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  const { data, error } = await db.auth.signInWithPassword({ email, password, options: { captchaToken } });
+  resetCaptcha();
   if(error){ showMsg('loginMsg', error.message, 'err'); btn.disabled=false; btn.textContent='Admin Login'; return; }
 
   // logged in → now verify admin
