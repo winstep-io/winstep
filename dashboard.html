@@ -1047,5 +1047,79 @@ init();
   <a href="/privacy.html">Privacy</a><span class="sep">·</span><a onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</a>
 </footer>
 
+<!-- Ad blocker notice: dashboard only, logged-in users, shown after the cookie choice, repeats every 10 days -->
+<script>
+(function(){
+  'use strict';
+  var LAST_KEY = 'winstep_adblock_notice_last';
+  var TEN_DAYS = 10 * 24 * 60 * 60 * 1000;
+
+  function isDue(){
+    try{
+      var last = parseInt(localStorage.getItem(LAST_KEY) || '0', 10);
+      if(!last) return true;
+      return (Date.now() - last) > TEN_DAYS;
+    }catch(e){ return true; }
+  }
+  function markDismissed(){
+    try{ localStorage.setItem(LAST_KEY, String(Date.now())); }catch(e){}
+  }
+
+  function buildBanner(){
+    if(document.getElementById('ws-adblock-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'ws-adblock-banner';
+    b.setAttribute('role', 'dialog');
+    b.setAttribute('aria-label', 'Ad blocker notice');
+    b.style.cssText =
+      'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+      'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
+      'box-shadow:0 -8px 30px rgba(0,0,0,.45);padding:16px 20px;' +
+      "font-family:Rajdhani,'Segoe UI',sans-serif;color:#c9d4d1";
+    b.innerHTML =
+      '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
+      'gap:18px;flex-wrap:wrap;justify-content:center">' +
+        '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
+          'Winstep is free to play, and ads are our only source of income. ' +
+          'We keep them clean \u2014 no pop-ups, no auto-playing sound, no spam. ' +
+          'If you use an ad blocker, please consider turning it off for Winstep \u2014 ' +
+          'it directly supports the free prizes. Thank you! \uD83D\uDC9A' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;flex-shrink:0">' +
+          '<button id="ws-adblock-close" type="button" aria-label="Close" ' +
+          'style="padding:11px 22px;background:transparent;border:1.5px solid rgba(159,181,176,.55);' +
+          "color:#c9d4d1;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer\">" +
+          '\u2715 Close</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(b);
+    var closeBtn = document.getElementById('ws-adblock-close');
+    if(closeBtn) closeBtn.onclick = function(){ markDismissed(); b.remove(); };
+  }
+
+  function showIfDue(){ if(isDue()) buildBanner(); }
+
+  // wait until the cookie question is resolved, so the two bottom bars never overlap
+  function whenCookieResolved(cb){
+    var state = null;
+    try{ state = window.winstepConsent && window.winstepConsent.get(); }catch(e){}
+    if(state === 'accepted' || state === 'rejected'){ cb(); return; }
+    window.addEventListener('winstep:consent', function(){ cb(); }, { once: true });
+  }
+
+  // any mode (guest preview or logged-in) — dashboard only, after the cookie choice
+  function initAdblockNotice(){
+    if(!isDue()) return;
+    whenCookieResolved(showIfDue);
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initAdblockNotice);
+  } else {
+    initAdblockNotice();
+  }
+})();
+</script>
+
 </body>
 </html>

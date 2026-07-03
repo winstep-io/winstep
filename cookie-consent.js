@@ -67,8 +67,8 @@
       '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
       'gap:18px;flex-wrap:wrap;justify-content:center">' +
         '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
-          '\uD83C\uDF6A We use cookies to keep you logged in and support our free rewards. ' +
-          'Choose your preference below. ' +
+          '\uD83C\uDF6A Winstep is completely free for everyone, and ads are our only source of income. ' +
+          'Accepting cookies helps us keep it that way \u2014 but the choice is yours. Thank you for understanding! ' +
           '<a href="/privacy.html" target="_blank" rel="noopener" ' +
           'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
         '</div>' +
@@ -97,6 +97,8 @@
     try { localStorage.setItem(KEY, state); } catch (e) {}
     applyConsent(state);
     removeBanner();
+    // let other on-page scripts know the cookie question is now resolved
+    try { window.dispatchEvent(new CustomEvent('winstep:consent', { detail: { state: state } })); } catch (e) {}
   }
 
   function showBannerIfNeeded() {
