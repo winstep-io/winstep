@@ -1460,7 +1460,7 @@ async function toggleBan(userId, isCurrentlyBanned){
 }
 
 // ---- read-only player profile preview (built from already-loaded admin_get_users data) ----
-function openUserProfile(userId){
+async function openUserProfile(userId){
   const u = (allUsers||[]).find(x=>x.id===userId);
   if(!u){ showMsg('userMsg','User not found. Try reloading the list.','err'); return; }
 
@@ -1488,7 +1488,9 @@ function openUserProfile(userId){
     ['Registered', reg],
     ['Cookie consent', cc],
     ['🏆 Championship points', (u.championship_points||0)],
-    ['🏁 Round points', (u.total_points||0)],
+    ['🏁 Current round points', (u.total_points||0)],
+    ['🏁 Total round points', '<span id="upTotalRound" style="color:var(--muted)">…</span>'],
+    ['🎯 Total activity', '<span id="upTotalActivity" style="color:var(--muted)">…</span>'],
     ['✅ Correct answers', (u.correct_answers||0)],
     ['Admin', u.is_admin ? 'Yes' : 'No'],
     ['Banned', u.is_banned ? 'Yes' : 'No']
@@ -1503,6 +1505,24 @@ function openUserProfile(userId){
 
   document.getElementById('upBody').innerHTML = html;
   document.getElementById('userProfileModal').style.display = 'flex';
+
+  // season-long totals aren't in admin_get_users; fetch them (admin-only, RLS-safe) and fill in
+  try{
+    const { data: extra } = await db.rpc('admin_get_user_extra', { p_user_id: userId });
+    const e = Array.isArray(extra) ? extra[0] : extra;
+    const trEl = document.getElementById('upTotalRound');
+    const taEl = document.getElementById('upTotalActivity');
+    if(e){
+      if(trEl){ trEl.textContent = (e.season_points||0) + (e.total_points||0); trEl.style.color = 'var(--text,#e8f0ee)'; }
+      if(taEl){ taEl.textContent = (e.total_activity||0); taEl.style.color = 'var(--text,#e8f0ee)'; }
+    } else {
+      if(trEl) trEl.textContent = '—';
+      if(taEl) taEl.textContent = '—';
+    }
+  }catch(err){
+    const trEl = document.getElementById('upTotalRound'); if(trEl) trEl.textContent = '—';
+    const taEl = document.getElementById('upTotalActivity'); if(taEl) taEl.textContent = '—';
+  }
 }
 function closeUserProfile(){ document.getElementById('userProfileModal').style.display = 'none'; }
 
