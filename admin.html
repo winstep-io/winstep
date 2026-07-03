@@ -344,6 +344,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       </div>
 
       <div id="usersList"><div class="loading">Loading...</div></div>
+
+      <div class="card" style="margin-top:16px">
+        <div style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px">🌍 Users by country</div>
+        <div id="countryStats"><div class="loading">Loading...</div></div>
+      </div>
     </div>
 
     <!-- ============ POINTS SETTINGS ============ -->
@@ -1417,6 +1422,9 @@ function renderUsers(){
   const csEl = document.getElementById('cookieStats');
   if(csEl) csEl.innerHTML = '<span style="color:var(--teal,#2ec4b6)">✓ Accept: '+accN+'</span> &nbsp;·&nbsp; <span style="color:#9fb5b0">✕ Reject: '+rejN+'</span> &nbsp;·&nbsp; <span style="color:#7a908b">None: '+noneN+'</span>';
 
+  // ქვეყნების ცხრილი — ყოველთვის მთელ allUsers-ზე (ძებნის ფილტრისგან დამოუკიდებლად)
+  renderCountryStats();
+
   // ძიების დროს — ნაპოვნი / ჯამური; ძიების გარეშე — არაფერი
   document.getElementById('userCount').textContent = q ? (filtered.length + ' of ' + allUsers.length + ' shown') : '';
 
@@ -1477,8 +1485,8 @@ async function openUserProfile(userId){
 
   const cc = (u.cookie_consent==='accepted') ? 'Accept' : (u.cookie_consent==='rejected') ? 'Reject' : 'None';
   const country = (u.ip_country==='US')
-    ? '<span style="color:var(--red);font-weight:700">🇺🇸 US</span>'
-    : escapeHtml(u.ip_country||'—');
+    ? '<span style="color:var(--red);font-weight:700">🇺🇸 United States</span>'
+    : (u.ip_country ? escapeHtml(countryName(u.ip_country)) : '—');
   const reg = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
 
   const rows = [
@@ -1525,6 +1533,53 @@ async function openUserProfile(userId){
   }
 }
 function closeUserProfile(){ document.getElementById('userProfileModal').style.display = 'none'; }
+
+// ---- Users-by-country table (built from already-loaded allUsers; no DB calls) ----
+function renderCountryStats(){
+  const el = document.getElementById('countryStats');
+  if(!el) return;
+  if(!allUsers || allUsers.length===0){ el.innerHTML = '<div class="empty">No users yet.</div>'; return; }
+
+  // count per country code; blank/invalid -> Unknown
+  const counts = {};
+  let unknown = 0;
+  for(const u of allUsers){
+    const code = (u.ip_country||'').toUpperCase();
+    if(/^[A-Z]{2}$/.test(code)) counts[code] = (counts[code]||0) + 1;
+    else unknown++;
+  }
+
+  // sort by count desc, then name asc
+  const rows = Object.keys(counts).map(code=>({ code, name: countryName(code)||code, n: counts[code] }));
+  rows.sort((a,b)=> b.n - a.n || a.name.localeCompare(b.name));
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:.86rem">'
+    + '<thead><tr>'
+    + '<th style="text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);color:var(--muted);font-weight:600">Country</th>'
+    + '<th style="text-align:right;padding:8px 6px;border-bottom:1px solid var(--border);color:var(--muted);font-weight:600">Users</th>'
+    + '</tr></thead><tbody>';
+
+  for(const r of rows){
+    const isUS = r.code === 'US';
+    const label = isUS
+      ? '<span style="color:var(--red);font-weight:700">🇺🇸 United States</span>'
+      : escapeHtml(r.name);
+    html += '<tr>'
+      + '<td style="padding:8px 6px;border-bottom:1px solid var(--border)">'+label+'</td>'
+      + '<td style="padding:8px 6px;border-bottom:1px solid var(--border);text-align:right;color:var(--text,#e8f0ee);font-weight:600">'+r.n+'</td>'
+      + '</tr>';
+  }
+
+  if(unknown > 0){
+    html += '<tr>'
+      + '<td style="padding:8px 6px;border-bottom:1px solid var(--border);color:#7a908b">Unknown</td>'
+      + '<td style="padding:8px 6px;border-bottom:1px solid var(--border);text-align:right;color:#7a908b;font-weight:600">'+unknown+'</td>'
+      + '</tr>';
+  }
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
 
 function showMsg(id, text, type){
   const m = document.getElementById(id);
@@ -1776,6 +1831,18 @@ async function deleteTask(id){
 }
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// country code (e.g. "GE") -> full English name (e.g. "Georgia"), using the browser's built-in list
+let _regionNames = null;
+try { _regionNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch(e) {}
+function countryName(code){
+  if(!code) return '';
+  var c = (''+code).toUpperCase();
+  if(_regionNames){
+    try { var n = _regionNames.of(c); if(n && n !== c) return n; } catch(e){}
+  }
+  return c; // fallback: show the code if the browser can't resolve it
+}
 
 async function logout(){ await db.auth.signOut(); window.location.href='/index.html'; }
 
