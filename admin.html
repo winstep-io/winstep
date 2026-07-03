@@ -554,6 +554,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   </div>
 </div>
 
+<!-- User profile preview (read-only) -->
+<div class="gate" id="userProfileModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
+  <div class="card" style="width:100%;max-width:460px;margin:0;max-height:90vh;overflow-y:auto">
+    <div class="card-title" id="upTitle">Player profile <span style="cursor:pointer" onclick="closeUserProfile()">✕</span></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">Read-only preview. Use the buttons in the list to change admin or ban status.</div>
+    <div id="upBody"></div>
+    <button class="btn btn-ghost" onclick="closeUserProfile()" style="width:100%;margin-top:16px">Close</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
@@ -1422,6 +1432,7 @@ function renderUsers(){
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
     html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
+      + '<button class="btn btn-ghost btn-sm" onclick="openUserProfile(\''+u.id+'\')">View</button>'
       + '<button class="btn btn-ghost btn-sm" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '<button class="btn btn-danger btn-sm" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
       + '</div></div>';
@@ -1447,6 +1458,53 @@ async function toggleBan(userId, isCurrentlyBanned){
   showMsg('userMsg', ban?'User banned.':'User unbanned.','ok');
   loadUsers();
 }
+
+// ---- read-only player profile preview (built from already-loaded admin_get_users data) ----
+function openUserProfile(userId){
+  const u = (allUsers||[]).find(x=>x.id===userId);
+  if(!u){ showMsg('userMsg','User not found. Try reloading the list.','err'); return; }
+
+  const badges = [];
+  if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
+  if(u.is_banned) badges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
+  const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
+
+  document.getElementById('upTitle').innerHTML =
+    escapeHtml(u.username||'(no name)')
+    + ' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'
+    + badgeHtml
+    + ' <span style="cursor:pointer;float:right" onclick="closeUserProfile()">✕</span>';
+
+  const cc = (u.cookie_consent==='accepted') ? 'Accept' : (u.cookie_consent==='rejected') ? 'Reject' : 'None';
+  const country = (u.ip_country==='US')
+    ? '<span style="color:var(--red);font-weight:700">🇺🇸 US</span>'
+    : escapeHtml(u.ip_country||'—');
+  const reg = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
+
+  const rows = [
+    ['Email', escapeHtml(u.email||'—')],
+    ['Player ID', '#'+escapeHtml(u.display_id||'—')],
+    ['Country', country],
+    ['Registered', reg],
+    ['Cookie consent', cc],
+    ['🏆 Championship points', (u.championship_points||0)],
+    ['🏁 Round points', (u.total_points||0)],
+    ['✅ Correct answers', (u.correct_answers||0)],
+    ['Admin', u.is_admin ? 'Yes' : 'No'],
+    ['Banned', u.is_banned ? 'Yes' : 'No']
+  ];
+
+  let html = '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:.86rem">';
+  for(const [k,v] of rows){
+    html += '<div style="color:var(--muted)">'+k+'</div>'
+          + '<div style="color:var(--text,#e8f0ee);word-break:break-word;text-align:right">'+v+'</div>';
+  }
+  html += '</div>';
+
+  document.getElementById('upBody').innerHTML = html;
+  document.getElementById('userProfileModal').style.display = 'flex';
+}
+function closeUserProfile(){ document.getElementById('userProfileModal').style.display = 'none'; }
 
 function showMsg(id, text, type){
   const m = document.getElementById(id);
