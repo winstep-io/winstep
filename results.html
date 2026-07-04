@@ -193,7 +193,7 @@ async function init(){
   if(round){
     if(round.championship_id){
       const { data: ch } = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
-      if(ch) document.getElementById('rhChampNum').textContent = ' #' + ch.number;
+      if(ch) document.getElementById('rhChampNum').textContent = ' ' + champIdLabel(ch.number);
     }
     document.getElementById('rhRound').textContent = 'Round ' + round.round_number + '/' + round.total_rounds;
     document.getElementById('rhSub').textContent = 'Standings through Round ' + round.round_number + ' — championship points decide the winners.';
