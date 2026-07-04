@@ -904,7 +904,7 @@ async function loadPayoutChampList(){
   }
   let opts = '';
   for(const c of champs){
-    opts += '<option value="'+c.id+'">Championship '+c.number+' ('+(c.start_date||'')+' → '+(c.end_date||'')+')</option>';
+    opts += '<option value="'+c.id+'">Championship '+champIdLabel(c.number)+' ('+(c.start_date||'')+' → '+(c.end_date||'')+')</option>';
   }
   sel.innerHTML = opts;
   loadPayouts();
@@ -999,7 +999,7 @@ async function loadChampionship(){
       const ce = new Date(cs.getTime() + (totalDays - 1) * 86400000);
       champEnd = ce.toISOString().split('T')[0];
     }
-    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+active.number+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+champEnd+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
+    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+champIdLabel(active.number)+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+champEnd+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
   } else {
     curBox.innerHTML = '<div class="empty">No active championship. Create one below.</div>';
   }
@@ -1036,7 +1036,7 @@ async function loadChampionship(){
         actions = '<div class="li-actions"><button class="btn btn-ghost btn-sm" onclick="editChampionship(\''+c.id+'\')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteChampionship(\''+c.id+'\','+c.number+')">Delete</button></div>';
       }
       const adminTag = c.ended_by_admin ? ' · <span style="color:var(--gold)">ended by admin</span>' : '';
-      html += '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+c.number+'</div><div class="li-sub">'+(c.start_date||'—')+(c.end_date?(' → '+c.end_date):'')+' · '+c.total_rounds+' rounds · '+c.round_duration_days+' days · <span style="color:'+statusColor+'">'+c.status+'</span>'+adminTag+'</div></div>'+actions+'</div>';
+      html += '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+champIdLabel(c.number)+'</div><div class="li-sub">'+(c.start_date||'—')+(c.end_date?(' → '+c.end_date):'')+' · '+c.total_rounds+' rounds · '+c.round_duration_days+' days · <span style="color:'+statusColor+'">'+c.status+'</span>'+adminTag+'</div></div>'+actions+'</div>';
     }
     list.innerHTML = html;
   }
@@ -1086,7 +1086,7 @@ async function createChampionship(){
 async function editChampionship(champId){
   const { data: c } = await db.from('championships').select('*').eq('id', champId).single();
   if(!c) return;
-  const newRounds = prompt('Rounds for Championship '+c.number+':', c.total_rounds);
+  const newRounds = prompt('Rounds for Championship '+champIdLabel(c.number)+':', c.total_rounds);
   if(newRounds===null) return;
   const newDur = prompt('Round length (days):', c.round_duration_days);
   if(newDur===null) return;
@@ -1098,17 +1098,17 @@ async function editChampionship(champId){
     start_date: newStart||c.start_date
   }).eq('id', champId);
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-  showMsg('champMsg','Championship '+c.number+' updated. ✅','ok');
+  showMsg('champMsg','Championship '+champIdLabel(c.number)+' updated. ✅','ok');
   loadChampionship();
 }
 
 async function deleteChampionship(champId, num){
-  if(!confirm('Delete upcoming Championship '+num+'?')) return;
+  if(!confirm('Delete upcoming Championship '+champIdLabel(num)+'?')) return;
   // also delete its rounds (if any)
   await db.from('rounds').delete().eq('championship_id', champId);
   const { error } = await db.from('championships').delete().eq('id', champId);
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-  showMsg('champMsg','Championship '+num+' deleted.','ok');
+  showMsg('champMsg','Championship '+champIdLabel(num)+' deleted.','ok');
   loadChampionship();
 }
 
@@ -1126,7 +1126,7 @@ async function loadRounds(){
   const active = rounds.find(r=>r.status==='active');
 
   // championship header
-  const champLabel = champ ? ('🏆 Championship '+champ.number+' · '+rounds.length+'/'+(champ.total_rounds||10)+' rounds created') : 'No active championship — create the first round to begin.';
+  const champLabel = champ ? ('🏆 Championship '+champIdLabel(champ.number)+' · '+rounds.length+'/'+(champ.total_rounds||10)+' rounds created') : 'No active championship — create the first round to begin.';
 
   // current round box
   const curBox = document.getElementById('currentRoundBox');
@@ -1838,6 +1838,8 @@ async function deleteTask(id){
   loadBoxes();
 }
 
+// display-only championship label: number -> "ID: 00174" (base untouched; 173 + number, 5 digits)
+function champIdLabel(number){ return 'ID: ' + String((parseInt(number,10)||0) + 173).padStart(5,'0'); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // country code (e.g. "GE") -> full English name (e.g. "Georgia"), using the browser's built-in list

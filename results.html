@@ -253,7 +253,7 @@ async function loadPastChampionships(){
     const period = (c.start_date||'') + (c.end_date?(' → '+c.end_date):'');
     html += '<div class="lb-row" style="cursor:pointer" onclick="viewPastResults(\''+c.id+'\','+c.number+')">'
       + '<span class="lb-rank">🏆</span>'
-      + '<div class="lb-info"><div class="lb-name">Championship '+c.number+'</div><div class="lb-stats">'+period+' · winner: '+escapeHtml(winnerName)+'</div></div>'
+      + '<div class="lb-info"><div class="lb-name">Championship '+champIdLabel(c.number)+'</div><div class="lb-stats">'+period+' · winner: '+escapeHtml(winnerName)+'</div></div>'
       + '<span class="lb-pts" style="font-size:.8rem">View ▾</span>'
       + '</div>';
   }
@@ -301,7 +301,7 @@ async function viewPastResults(champId, champNum){
       + '</div>';
   };
 
-  let html = '<div class="card" style="margin-top:10px"><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:.9rem;padding:6px 4px 12px">Championship '+champNum+' — Final Results</div>';
+  let html = '<div class="card" style="margin-top:10px"><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:.9rem;padding:6px 4px 12px">Championship '+champIdLabel(champNum)+' — Final Results</div>';
   prizeRows.forEach(r=>{ html += rowHtml(r); });
 
   // your own final result (visible only to you)
@@ -402,6 +402,8 @@ function avatarCell(p){
 }
 
 function dispName(n){ n = n || '—'; return n.length > 18 ? n.slice(0,18) : n; }
+// display-only championship label: number -> "ID: 00174" (base untouched; 173 + number, 5 digits)
+function champIdLabel(number){ return 'ID: ' + String((parseInt(number,10)||0) + 173).padStart(5,'0'); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 init();

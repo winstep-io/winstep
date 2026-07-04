@@ -258,10 +258,12 @@ async function loadStanding(){
   const { data: champ } = await db.from('championships').select('number').eq('status','active').order('number',{ascending:false}).limit(1).maybeSingle();
   const champNum = champ ? champ.number : null;
   document.getElementById('pRank').textContent = champRank>0
-    ? (champNum ? ('🏆 Championship #'+champNum+' — '+ordinal(champRank)+' place') : ('🏆 '+ordinal(champRank)+' place'))
+    ? (champNum ? ('🏆 Championship '+champIdLabel(champNum)+' — '+ordinal(champRank)+' place') : ('🏆 '+ordinal(champRank)+' place'))
     : '🏆 Unranked';
 }
 
+// display-only championship label: number -> "ID: 00174" (base untouched; 173 + number, 5 digits)
+function champIdLabel(number){ return 'ID: ' + String((parseInt(number,10)||0) + 173).padStart(5,'0'); }
 function ordinal(n){
   if(!n || n<1) return '—';
   const s=['th','st','nd','rd'], v=n%100;

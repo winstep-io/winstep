@@ -152,6 +152,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .box-name-txt{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.92rem}
 .box-time{font-family:'Space Grotesk',sans-serif;font-size:.66rem;color:var(--teal);letter-spacing:.08em}
 .box-status{display:flex;align-items:center;gap:5px;font-size:.64rem;color:var(--muted)}
+.box-status.active-status{gap:4px;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+.box-status.active-status .status-dot{animation:blink 1.5s infinite}
 .status-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .box-tasks{padding:11px;display:flex;flex-direction:column;gap:7px}
@@ -280,6 +282,8 @@ const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
+// display-only championship label: number -> "ID: 00174" (base untouched; 173 + number, 5 digits)
+function champIdLabel(number){ return 'ID: ' + String((parseInt(number,10)||0) + 173).padStart(5,'0'); }
 let myProfile = null;
 let isPreview = false;   // true when no one is logged in (guest preview)
 
@@ -468,7 +472,7 @@ async function loadRound(){
     const { data: champ } = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
     if(champ){
       const badge = document.getElementById('champBadge');
-      badge.textContent = '🏆 Championship #' + champ.number;
+      badge.textContent = '🏆 Championship ' + champIdLabel(champ.number);
       badge.style.display = 'inline-block';
     }
   }
@@ -497,10 +501,10 @@ async function showBetweenChampionships(){
   if(upcoming && upcoming.start_date){
     const dt = new Date(upcoming.start_date+'T00:00:00');
     const niceDate = dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    title = '🏆 Championship #' + nextNum + ' starts ' + niceDate;
+    title = '🏆 Championship ' + champIdLabel(nextNum) + ' starts ' + niceDate;
   } else {
     // Upcoming არ შექმნილა — fallback
-    title = '🏆 Championship #' + nextNum + ' starts soon!';
+    title = '🏆 Championship ' + champIdLabel(nextNum) + ' starts soon!';
   }
 
   document.getElementById('betweenTitle').innerHTML = title;
@@ -802,7 +806,7 @@ async function loadBoxes(){
 
 function renderBox(box, taskList, doneTaskIds, state, prog){
   let statusHtml, cardCls='';
-  if(state==='active'){ statusHtml = '<div class="box-status"><span class="status-dot"></span>Active</div>'; }
+  if(state==='active'){ statusHtml = '<div class="box-status active-status"><span class="status-dot"></span>Active</div>'; }
   else if(state==='completed'){ statusHtml = '<div class="box-status done-status">✓ Completed</div>'; cardCls=' completed'; }
   else { statusHtml = '<div class="box-status locked-status">🔒 Locked</div>'; cardCls=' locked'; }
 
