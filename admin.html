@@ -991,7 +991,15 @@ async function loadChampionship(){
   if(active){
     const { data: rs } = await db.from('rounds').select('id').eq('championship_id', active.id);
     const roundCount = (rs||[]).length;
-    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+active.number+'</div><div class="li-sub">'+(active.start_date||'—')+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
+    // planned full end date = start + (total_rounds × round_duration_days − 1) days (rounds are consecutive & inclusive)
+    let champEnd = '—';
+    if(active.start_date && active.total_rounds && active.round_duration_days){
+      const cs = new Date(active.start_date + 'T00:00:00');
+      const totalDays = active.total_rounds * active.round_duration_days;
+      const ce = new Date(cs.getTime() + (totalDays - 1) * 86400000);
+      champEnd = ce.toISOString().split('T')[0];
+    }
+    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+active.number+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+champEnd+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
   } else {
     curBox.innerHTML = '<div class="empty">No active championship. Create one below.</div>';
   }
