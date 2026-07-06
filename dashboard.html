@@ -140,9 +140,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
 .boxes{display:flex;flex-direction:column;gap:14px}
-/* CLS reserve: keep vertical space while boxes/leaderboard load */
+/* CLS reserve: keep vertical space while boxes load (real boxes exceed this,
+   so it only holds space during the "Loading..." → content swap) */
 #boxesContainer{min-height:320px}
-#leaderboardContainer{min-height:280px}
 .box-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
 .box-card.locked{opacity:.5}
 .box-card.completed{opacity:.6}
