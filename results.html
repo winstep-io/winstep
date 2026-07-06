@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="See the winstep championship standings and round results. Track who is leading the leaderboard and competing for Amazon.com Gift Card prizes.">
 <title>winstep.io — Giveaway Results</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://eybpnmplndedpnhuasyd.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -107,8 +112,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   .lb-prize{font-size:.7rem}
 }
 .ws-mini-foot{text-align:center;padding:18px 16px 26px;margin-top:34px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted)}
-.ws-mini-foot a{color:var(--muted);text-decoration:none;cursor:pointer;transition:color .2s}
-.ws-mini-foot a:hover{color:var(--teal)}
+.ws-mini-foot a,.ws-mini-foot button.ws-link{color:var(--muted);text-decoration:none;cursor:pointer;transition:color .2s;background:none;border:none;padding:0;font:inherit}
+.ws-mini-foot a:hover,.ws-mini-foot button.ws-link:hover{color:var(--teal)}
 .ws-mini-foot .sep{margin:0 9px;opacity:.55}
 </style>
   <script src="/cookie-consent.js"></script>
@@ -410,7 +415,7 @@ init();
 </script>
 
 <footer class="ws-mini-foot">
-  <a href="/privacy.html">Privacy</a><span class="sep">·</span><a onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</a>
+  <a href="/privacy.html">Privacy</a><span class="sep">·</span><button type="button" class="ws-link" onclick="if(window.winstepConsent)winstepConsent.open()">Cookie Settings</button>
 </footer>
 
 </body>
