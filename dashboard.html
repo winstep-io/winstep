@@ -295,12 +295,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   <div id="interstitialBarWrap" style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.12);z-index:2;pointer-events:none"><div id="interstitialBar" style="height:100%;width:0%;background:#f5c842;box-shadow:0 0 8px rgba(245,200,66,.6)"></div></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/avatars.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="/avatars.js"></script>
 <script>
 const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// db is created after the deferred supabase-js script has loaded (see bottom
+// of this script). Declared here as a global so all functions below can use it.
+let db = null;
 
 let currentUser = null;
 // display-only championship label: number -> "ID: 00174" (base untouched; 173 + number, 5 digits)
@@ -1060,7 +1062,22 @@ function showInterstitial(adCode){
   closeBtn.onclick=()=>{ ov.style.display='none'; };
 }
 
-init();
+// ---- bootstrap: runs after the deferred supabase-js + avatars.js are ready ----
+// Deferred external scripts finish before DOMContentLoaded fires, so by this
+// point window.supabase exists. We create the client, then start init().
+function bootstrap(){
+  if(!window.supabase || !window.supabase.createClient){
+    // extremely unlikely (defer guarantees order), but retry just in case
+    return setTimeout(bootstrap, 40);
+  }
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  init();
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', bootstrap);
+} else {
+  bootstrap();
+}
 </script>
 <div class="modal-overlay" id="roundInfoModal" onclick="if(event.target===this)closeRoundInfo()">
   <div class="modal-card">
