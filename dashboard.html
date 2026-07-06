@@ -196,13 +196,34 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .ws-mini-foot .sep{margin:0 9px;opacity:.55}
 </style>
   <script src="/cookie-consent.js"></script>
-  <!-- Google Analytics (GA4) — loaded after cookie-consent.js so it respects Consent Mode v2 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-G5KFKZTLMV"></script>
+  <!-- Google Analytics (GA4) — deferred until after the page has loaded so it
+       doesn't compete with critical rendering. Consent Mode v2 ordering is
+       preserved: cookie-consent.js (above) sets the default denied state first;
+       gtag.js is fetched later but still respects that stored consent. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-G5KFKZTLMV');
+    (function(){
+      var GA_ID = 'G-G5KFKZTLMV';
+      function loadGA(){
+        if(window.__gaLoaded) return;
+        window.__gaLoaded = true;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+        document.head.appendChild(s);
+      }
+      // load when the browser is idle, or right after full page load — whichever comes first
+      if(document.readyState === 'complete'){
+        (window.requestIdleCallback || function(cb){ setTimeout(cb, 1200); })(loadGA);
+      } else {
+        window.addEventListener('load', function(){
+          (window.requestIdleCallback || function(cb){ setTimeout(cb, 1200); })(loadGA);
+        });
+      }
+    })();
   </script>
 </head>
 <body>
