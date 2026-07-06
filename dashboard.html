@@ -103,6 +103,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 
 /* round banner */
 .round-banner{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px;position:relative;overflow:hidden;flex-wrap:wrap}
+/* CLS reserve: hold space for champ badge + round banner during load.
+   loadRound() removes .topmeta-reserve once it knows what to show. */
+#topMeta.topmeta-reserve{min-height:130px}
 .rb-left{display:flex;align-items:center;gap:14px}
 .rb-num{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--teal);letter-spacing:.08em;line-height:1}
 .rb-info .rb-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.15em}
@@ -237,18 +240,20 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
     <div class="welcome">Welcome, <span id="userName">...</span>!</div>
     <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
 
-    <div class="champ-badge" id="champBadge" style="display:none"></div>
+    <div id="topMeta" class="topmeta-reserve">
+      <div class="champ-badge" id="champBadge" style="display:none"></div>
 
-    <div class="round-banner" id="roundBanner" style="display:none">
-      <div class="rb-left">
-        <div class="rb-info">
-          <div class="rb-num" id="rbNum">Round 1 / 10</div>
-          <div class="rb-dates" id="rbDates">—</div>
+      <div class="round-banner" id="roundBanner" style="display:none">
+        <div class="rb-left">
+          <div class="rb-info">
+            <div class="rb-num" id="rbNum">Round 1 / 10</div>
+            <div class="rb-dates" id="rbDates">—</div>
+          </div>
         </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:9px">
-        <span style="font-size:.74rem;color:var(--soft);font-weight:600;letter-spacing:.03em">How Rounds Work</span>
-        <button class="rb-info-btn" onclick="openRoundInfo()" title="How rounds work">i</button>
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:.74rem;color:var(--soft);font-weight:600;letter-spacing:.03em">How Rounds Work</span>
+          <button class="rb-info-btn" onclick="openRoundInfo()" title="How rounds work">i</button>
+        </div>
       </div>
     </div>
 
@@ -478,9 +483,12 @@ function showAuthPrompt(){
 // ---- round banner ----
 let currentRound = null;
 async function loadRound(){
+  // once we know what to render, release the CLS space reservation
+  const releaseTopMeta = ()=>{ const tm=document.getElementById('topMeta'); if(tm) tm.classList.remove('topmeta-reserve'); };
   const { data: round } = await db.from('rounds').select('*').eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();
   if(!round){
     // აქტიური რაუნდი არ არის → ჩემპიონატებს შორის შუალედია
+    releaseTopMeta();
     await showBetweenChampionships();
     return;
   }
@@ -499,6 +507,7 @@ async function loadRound(){
       badge.style.display = 'inline-block';
     }
   }
+  releaseTopMeta();
 }
 
 // ჩემპიონატებს შორის შუალედი — დიდი შეტყობინება
@@ -1071,6 +1080,11 @@ function bootstrap(){
     return setTimeout(bootstrap, 40);
   }
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // safety net: never leave the top-meta space reserved if loadRound throws
+  setTimeout(function(){
+    var tm = document.getElementById('topMeta');
+    if(tm) tm.classList.remove('topmeta-reserve');
+  }, 6000);
   init();
 }
 if(document.readyState === 'loading'){
