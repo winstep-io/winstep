@@ -21,10 +21,7 @@
   --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;position:relative}
-/* ambient neural-mesh background layer (fixed, behind all content).
-   Static inline SVG + a soft bottom glow. No image, no JS, no layout cost. */
-.ws-mesh{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;background:linear-gradient(rgba(8,12,11,.32),rgba(8,12,11,.32)),url('/d7.webp') center/cover no-repeat;background-color:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
 
 header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.95);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
 .champ-badge{display:inline-block;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.95rem;color:var(--gold);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.25);padding:9px 20px;border-radius:100px;letter-spacing:.03em;white-space:nowrap;margin-bottom:14px}
@@ -235,9 +232,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   </script>
 </head>
 <body>
-<!-- ambient neural-mesh background (static, lightweight, no JS) -->
-<div class="ws-mesh" aria-hidden="true"></div>
-
 
 <header>
   <div class="logo" onclick="window.location.href='/dashboard.html'" style="cursor:pointer">
