@@ -146,6 +146,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 /* CLS reserve: keep vertical space while boxes load (real boxes exceed this,
    so it only holds space during the "Loading..." → content swap) */
 #boxesContainer{min-height:320px}
+/* empty state ("No boxes today") sizes to its content instead of the CLS
+   reserve, so no large gap is left. Reserve still applies while loading and
+   when real boxes are present, so CLS is unaffected. */
+#boxesContainer:has(.empty){min-height:0}
 .box-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
 .box-card.locked{opacity:.5}
 .box-card.completed{opacity:.6}
