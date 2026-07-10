@@ -430,7 +430,7 @@ async function init(){
 
   // banned? block access
   if(profile && profile.is_banned){
-    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:30px;font-family:Rajdhani,sans-serif;color:#e8f0ee;background:#080c0b"><div style="font-size:2.4rem">🚫</div><div style="font-size:1.2rem;font-weight:700">Account Suspended</div><div style="font-size:.9rem;color:#9fb5b0;max-width:340px">Your account has been suspended. If you think this is a mistake, contact support at winstep.team@gmail.com</div><button onclick="signOutBanned()" style="margin-top:10px;padding:10px 22px;background:#162220;border:1px solid rgba(46,196,182,.2);color:#9fb5b0;border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">Log Out</button></div>';
+    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:30px;font-family:Rajdhani,sans-serif;color:#e8f0ee;background:#080c0b"><div style="font-size:2.4rem">🚫</div><div style="font-size:1.2rem;font-weight:700">Account Suspended</div><div style="font-size:.9rem;color:#9fb5b0;max-width:340px">Your account has been suspended. If you think this is a mistake, contact support at team@winstep.io</div><button onclick="signOutBanned()" style="margin-top:10px;padding:10px 22px;background:#162220;border:1px solid rgba(46,196,182,.2);color:#9fb5b0;border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">Log Out</button></div>';
     window.signOutBanned = async ()=>{ await db.auth.signOut(); window.location.href='/index.html'; };
     return;
   }
