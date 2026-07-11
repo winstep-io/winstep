@@ -395,13 +395,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
         <div id="currentRoundBox"><div class="loading">Loading...</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">➕ Create Next Round</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Each new round is added to the queue automatically — its dates follow the previous round. Pre-create as many as you like; they activate on schedule.</div>
-        <div id="nextRoundPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">—</div>
-        <button class="btn btn-primary" onclick="createRound()">+ Add Next Round</button>
-      </div>
-
       <div class="card-title" style="margin-top:8px">📋 All Rounds</div>
       <div id="roundsList"><div class="loading">Loading...</div></div>
     </div>
@@ -1204,12 +1197,36 @@ async function createChampionship(){
   const { data: activeC } = await db.from('championships').select('id').eq('status','active');
   const status = (activeC && activeC.length>0) ? 'upcoming' : 'active';
 
-  const { error } = await db.from('championships').insert({
+  const { data: newChamp, error } = await db.from('championships').insert({
     number: nextNum, start_date: start, status, total_rounds: rounds, round_duration_days: duration
-  });
+  }).select('id').single();
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-  showMsg('champMsg','Championship '+nextNum+' created ('+status+') with its points table ✅','ok');
+
+  // ---- ყველა რაუნდის ავტომატური შექმნა ----
+  // თარიღები პარამეტრებიდან ითვლება (UTC, რომ დღე არ ჩამოცოცდეს).
+  // აქტიურ ჩემპიონატში პირველი რაუნდი მაშინვე 'active'-ია;
+  // upcoming ჩემპიონატში ყველა რაუნდი 'upcoming' — გააქტიურდება
+  // მაშინ, როცა ჩემპიონატი დაიწყება (activate_due_championship).
+  const rows = [];
+  const startMs = new Date(start + 'T00:00:00Z').getTime();
+  for(let i = 0; i < rounds; i++){
+    const rs = new Date(startMs + (i * duration) * 86400000);
+    const re = new Date(startMs + ((i + 1) * duration - 1) * 86400000);
+    rows.push({
+      round_number: i + 1,
+      total_rounds: rounds,
+      start_date: rs.toISOString().split('T')[0],
+      end_date:   re.toISOString().split('T')[0],
+      status: (status === 'active' && i === 0) ? 'active' : 'upcoming',
+      championship_id: newChamp.id
+    });
+  }
+  const { error: rErr } = await db.from('rounds').insert(rows);
+  if(rErr){ showMsg('champMsg','Championship created, but rounds failed: '+rErr.message,'err'); loadChampionship(); return; }
+
+  showMsg('champMsg','Championship '+nextNum+' created ('+status+') with '+rounds+' rounds ✅','ok');
   loadChampionship();
+  if(typeof loadRounds === 'function') loadRounds();
 }
 
 async function editChampionship(champId){
@@ -1282,106 +1299,8 @@ async function loadRounds(){
     }
     list.innerHTML = html;
   }
-
-  // preview next round
-  const prev = document.getElementById('nextRoundPreview');
-  if(prev){
-    const duration = await getSetting('round_duration_days', 3);
-    const totalRounds = champ ? (champ.total_rounds||10) : await getSetting('total_rounds', 10);
-    if(rounds.length>0){
-      const last = rounds.reduce((a,b)=>a.round_number>b.round_number?a:b);
-      if(last.round_number >= totalRounds){
-        prev.textContent = '✓ All '+totalRounds+' rounds created for this championship.';
-      } else {
-        const lastEnd = new Date(last.end_date+'T00:00:00Z');
-        const s = new Date(lastEnd.getTime()+86400000);
-        const e = new Date(s.getTime()+(duration-1)*86400000);
-        const f = (d)=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-        prev.textContent = '➕ Next: Round '+(last.round_number+1)+'/'+totalRounds+' · '+f(s)+' → '+f(e)+' (upcoming)';
-      }
-    } else {
-      prev.textContent = '➕ Next: Round 1/'+totalRounds+' (starts today, active)';
-    }
-  }
 }
 
-async function createRound(){
-  const duration = await getSetting('round_duration_days', 3);
-
-  // get the active championship (or create the very first one)
-  let { data: champ } = await db.from('championships').select('*').eq('status','active').order('number',{ascending:false}).limit(1).maybeSingle();
-  if(!champ){
-    const totalR = await getSetting('total_rounds', 10);
-    const today = new Date().toISOString().split('T')[0];
-    const { data: newChamp, error: cErr } = await db.from('championships')
-      .insert({ number: 1, start_date: today, status: 'active', total_rounds: totalR })
-      .select().single();
-    if(cErr){ showMsg('roundMsg', cErr.message, 'err'); return; }
-    champ = newChamp;
-  }
-
-  const totalRounds = champ.total_rounds || 10;
-
-  // rounds already in THIS championship
-  const { data: champRounds } = await db.from('rounds').select('*').eq('championship_id', champ.id).order('round_number',{ascending:false});
-
-  let nextNum, startDate, endDate;
-  if(champRounds && champRounds.length>0){
-    const last = champRounds[0];
-    nextNum = last.round_number + 1;
-    const lastEnd = new Date(last.end_date+'T00:00:00Z');
-    const s = new Date(lastEnd.getTime() + 86400000);
-    const e = new Date(s.getTime() + (duration-1)*86400000);
-    startDate = s.toISOString().split('T')[0];
-    endDate = e.toISOString().split('T')[0];
-  } else {
-    nextNum = 1;
-    const cs = champ.start_date ? new Date(champ.start_date+'T00:00:00Z') : new Date();
-    const e = new Date(cs.getTime() + (duration-1)*86400000);
-    startDate = cs.toISOString().split('T')[0];
-    endDate = e.toISOString().split('T')[0];
-  }
-
-  const status = (nextNum === 1) ? 'active' : 'upcoming';
-  if(nextNum > totalRounds){ showMsg('roundMsg','All '+totalRounds+' rounds already created for this championship.','err'); return; }
-
-  const { error } = await db.from('rounds').insert({
-    round_number: nextNum, total_rounds: totalRounds, start_date: startDate, end_date: endDate, status, championship_id: champ.id
-  });
-  if(error){ showMsg('roundMsg', error.message, 'err'); return; }
-  showMsg('roundMsg','Round '+nextNum+'/'+totalRounds+' created ('+startDate+' → '+endDate+') · '+status+' ✅','ok');
-  loadRounds();
-}
-
-// ---- POINTS TABLE EDITING ----
-async function openPointsModal(){
-  // blocked while a championship is active
-  const { data: activeC } = await db.from('championships').select('id').eq('status','active');
-  if(activeC && activeC.length>0){
-    showMsg('champMsg','🔒 Points can only be changed when no championship is active.','err');
-    return;
-  }
-  const { data: pts } = await db.from('round_points_table').select('*').order('place');
-  let html = '';
-  for(const p of (pts||[])){
-    html += '<div class="field"><label class="field-label">Place '+p.place+'</label><input class="field-input" type="number" id="pts_'+p.place+'" value="'+p.points+'"></div>';
-  }
-  document.getElementById('pointsInputs').innerHTML = html;
-  document.getElementById('pointsModal').style.display = 'flex';
-}
-function closePointsModal(){ document.getElementById('pointsModal').style.display = 'none'; }
-async function savePoints(){
-  const { data: pts } = await db.from('round_points_table').select('place');
-  for(const p of (pts||[])){
-    const el = document.getElementById('pts_'+p.place);
-    const val = parseInt(el.value);
-    if(isNaN(val)){ showMsg('pointsMsg','Please fill all places with numbers.','err'); return; }
-    const { error } = await db.from('round_points_table').update({ points: val }).eq('place', p.place);
-    if(error){ showMsg('pointsMsg', error.message, 'err'); return; }
-  }
-  showMsg('pointsMsg','Points updated! ✅','ok');
-  setTimeout(()=>{ closePointsModal(); loadChampionship(); }, 800);
-}
 
 async function deleteRound(roundId, roundNum){
   if(!confirm('Delete upcoming Round '+roundNum+'? You can only delete the latest upcoming round to keep the sequence intact.')) return;
