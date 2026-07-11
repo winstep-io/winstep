@@ -921,11 +921,10 @@ async function loadPrizes(){
   let prizes;
   if(BOOT && BOOT.prizes){                              // ერთი RPC-იდან
     prizes = BOOT.prizes;
-  } else {                                              // fallback — ძველი 2 მოთხოვნა
-    const { data: giveaway } = await db.from('giveaways').select('id').eq('is_active', true).order('created_at',{ascending:false}).limit(1).single();
-    if(!giveaway) return;
-    const r = await db.from('giveaway_prizes').select('*').eq('giveaway_id', giveaway.id).order('place_from');
-    prizes = r.data;
+  } else {                                              // fallback — ჩემპიონატის პრიზები
+    const champId = currentRound && currentRound.championship_id;
+    const { data: pz } = await db.rpc('get_championship_prizes', { p_champ_id: champId || null });
+    prizes = pz;
   }
   if(!prizes || prizes.length===0) return;
 

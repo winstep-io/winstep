@@ -344,12 +344,11 @@ async function init(){
     }
   }
 
-  // prize zones (active giveaway)
-  const { data: giveaway } = await db.from('giveaways').select('id').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
-  if(giveaway){
-    const { data: zones } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', giveaway.id).order('place_from');
-    prizeZones = zones || [];
-  }
+  // prize zones — მიმდინარე ჩემპიონატის საკუთარი პრიზები
+  // (RPC თავად აკეთებს fallback-ს გლობალურზე, თუ ჩემპიონატს თავისი არ აქვს)
+  const champIdForPrizes = round ? round.championship_id : null;
+  const { data: zones } = await db.rpc('get_championship_prizes', { p_champ_id: champIdForPrizes });
+  prizeZones = zones || [];
 
   // standings — champ pts → cumulative round pts → activity → correct → earliest last point (NO email — public safe)
   const { data: rawPlayers } = await db.from('public_profiles')

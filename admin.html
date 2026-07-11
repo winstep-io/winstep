@@ -402,9 +402,17 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <!-- ============ PRIZES ============ -->
     <div class="section" id="sec-prizes">
       <div class="page-title">Prizes</div>
-      <div class="page-sub">Set championship prizes — single places or ranges (zones).</div>
+      <div class="page-sub">Set championship prizes — single places or ranges (zones). Each championship has its own prizes.</div>
 
       <div class="msg" id="prizeMsg"></div>
+
+      <div class="card">
+        <div class="card-title">🏆 Championship</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">Pick which championship these prizes belong to. Upcoming championships can have completely different prizes.</div>
+        <select id="prizeChampSelect" onchange="loadPrizes()" style="width:100%;padding:11px 13px;background:var(--bg);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer">
+          <option>Loading…</option>
+        </select>
+      </div>
 
       <div class="card">
         <div class="card-title">➕ Add Prize</div>
@@ -1362,15 +1370,49 @@ async function getSetting(key, fallback){
   return data ? data.value : fallback;
 }
 
-// ==================== PRIZES (placeholder for next) ====================
-// ==================== PRIZES ====================
+// ==================== PRIZES (per championship) ====================
 let activeGiveawayId = null;
+let prizeChampId = null;
 
 async function loadPrizes(){
-  // get active giveaway (create one if none exists)
-  let { data: giveaway } = await db.from('giveaways').select('*').eq('is_active', true).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  // ---- ჩემპიონატების ამომრჩევი ----
+  const sel = document.getElementById('prizeChampSelect');
+  const { data: champs } = await db.from('championships')
+    .select('id, number, status, start_date')
+    .in('status', ['active','upcoming'])
+    .order('number', { ascending: true });
+
+  if(!champs || champs.length === 0){
+    sel.innerHTML = '<option>No championship yet</option>';
+    document.getElementById('prizesList').innerHTML = '<div class="empty">Create a championship first.</div>';
+    return;
+  }
+
+  // ამომრჩევის შევსება (მხოლოდ ერთხელ, ან თუ სია შეიცვალა)
+  const wanted = champs.map(c=>c.id).join(',');
+  if(sel._filled !== wanted){
+    sel.innerHTML = champs.map(c =>
+      '<option value="'+c.id+'">🏆 Championship '+champIdLabel(c.number)+
+      ' — '+c.status+(c.start_date ? ' (from '+c.start_date+')' : '')+'</option>'
+    ).join('');
+    sel._filled = wanted;
+    // ნაგულისხმევად: აქტიური ჩემპიონატი
+    const act = champs.find(c=>c.status==='active') || champs[0];
+    sel.value = act.id;
+  }
+  prizeChampId = sel.value;
+
+  // ---- ამ ჩემპიონატის giveaway (თუ არაა — ვქმნით) ----
+  let { data: giveaway } = await db.from('giveaways')
+    .select('*')
+    .eq('championship_id', prizeChampId)
+    .order('created_at',{ascending:false})
+    .limit(1).maybeSingle();
+
   if(!giveaway){
-    const { data: newG } = await db.from('giveaways').insert({ title:'Championship Prizes', is_active:true }).select().single();
+    const { data: newG } = await db.from('giveaways')
+      .insert({ title:'Championship Prizes', is_active:true, championship_id: prizeChampId })
+      .select().single();
     giveaway = newG;
   }
   activeGiveawayId = giveaway ? giveaway.id : null;
@@ -1384,9 +1426,9 @@ async function loadPrizes(){
 
   // list prizes
   const list = document.getElementById('prizesList');
-  if(!activeGiveawayId){ list.innerHTML = '<div class="empty">No active giveaway.</div>'; return; }
+  if(!activeGiveawayId){ list.innerHTML = '<div class="empty">No giveaway.</div>'; return; }
   const { data: prizes } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', activeGiveawayId).order('place_from');
-  if(!prizes || prizes.length===0){ list.innerHTML = '<div class="empty">No prizes yet. Add one above.</div>'; return; }
+  if(!prizes || prizes.length===0){ list.innerHTML = '<div class="empty">No prizes yet for this championship. Add one above.</div>'; return; }
 
   let html = '';
   for(const pr of prizes){
