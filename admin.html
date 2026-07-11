@@ -647,8 +647,8 @@ async function updateBoxPreview(){
   const date = document.getElementById('boxDate').value;
   const prev = document.getElementById('boxPreview');
   if(!date){ prev.textContent = '📅 —'; return; }
-  const dt = new Date(date+'T00:00:00');
-  const nice = dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const dt = new Date(date+'T00:00:00Z');
+  const nice = dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
   const { data: sameDay } = await db.from('boxes').select('id').eq('date', date);
   const nextOrder = (sameDay ? sameDay.length : 0) + 1;
   prev.textContent = '📅 ' + nice + '  ·  will create "Box ' + nextOrder + '"';
@@ -994,7 +994,9 @@ async function loadChampionship(){
     // planned full end date = start + (total_rounds × round_duration_days − 1) days (rounds are consecutive & inclusive)
     let champEnd = '—';
     if(active.start_date && active.total_rounds && active.round_duration_days){
-      const cs = new Date(active.start_date + 'T00:00:00');
+      // ⚠️ UTC-ში ვთვლით: 'T00:00:00Z' + getTime() → toISOString() აღარ ცოცავს
+      // ერთი დღით უკან ლოკალურ სარტყელში (თბილისი UTC+4).
+      const cs = new Date(active.start_date + 'T00:00:00Z');
       const totalDays = active.total_rounds * active.round_duration_days;
       const ce = new Date(cs.getTime() + (totalDays - 1) * 86400000);
       champEnd = ce.toISOString().split('T')[0];
@@ -1019,7 +1021,7 @@ async function loadChampionship(){
     let suggest = new Date();
     if(champs && champs.length>0){
       const latest = champs.reduce((a,b)=>a.number>b.number?a:b);
-      if(latest.end_date) suggest = new Date(new Date(latest.end_date+'T00:00:00').getTime()+86400000);
+      if(latest.end_date) suggest = new Date(new Date(latest.end_date+'T00:00:00Z').getTime()+86400000);
     }
     sd.value = suggest.toISOString().split('T')[0];
   }
@@ -1164,7 +1166,7 @@ async function loadRounds(){
       if(last.round_number >= totalRounds){
         prev.textContent = '✓ All '+totalRounds+' rounds created for this championship.';
       } else {
-        const lastEnd = new Date(last.end_date+'T00:00:00');
+        const lastEnd = new Date(last.end_date+'T00:00:00Z');
         const s = new Date(lastEnd.getTime()+86400000);
         const e = new Date(s.getTime()+(duration-1)*86400000);
         const f = (d)=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
@@ -1200,14 +1202,14 @@ async function createRound(){
   if(champRounds && champRounds.length>0){
     const last = champRounds[0];
     nextNum = last.round_number + 1;
-    const lastEnd = new Date(last.end_date+'T00:00:00');
+    const lastEnd = new Date(last.end_date+'T00:00:00Z');
     const s = new Date(lastEnd.getTime() + 86400000);
     const e = new Date(s.getTime() + (duration-1)*86400000);
     startDate = s.toISOString().split('T')[0];
     endDate = e.toISOString().split('T')[0];
   } else {
     nextNum = 1;
-    const cs = champ.start_date ? new Date(champ.start_date+'T00:00:00') : new Date();
+    const cs = champ.start_date ? new Date(champ.start_date+'T00:00:00Z') : new Date();
     const e = new Date(cs.getTime() + (duration-1)*86400000);
     startDate = cs.toISOString().split('T')[0];
     endDate = e.toISOString().split('T')[0];
@@ -1292,7 +1294,7 @@ async function endRound(roundId, roundNum){
   }
 
   // 7. auto-create the next round (starts day after this one ended)
-  const prevEnd = new Date(endedRound.end_date+'T00:00:00');
+  const prevEnd = new Date(endedRound.end_date+'T00:00:00Z');
   const newStart = new Date(prevEnd.getTime() + 86400000); // +1 day
   const newEnd = new Date(newStart.getTime() + (roundDuration-1)*86400000);
   const fmtDate = (d)=>d.toISOString().split('T')[0];
@@ -1670,7 +1672,7 @@ async function loadBoxes(){
         : '';
       tasksHtml += '<div class="list-item" style="margin-left:20px;background:var(--bg2)"><span class="badge '+t.type+'">'+t.type+'</span><div class="li-info"><div class="li-title">'+escapeHtml(t.title)+'</div><div class="li-sub">+'+t.points+' points</div></div><div class="li-actions">'+editBtn+delBtn+'</div></div>';
     }
-    const niceDate = new Date(box.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const niceDate = new Date(box.date+'T00:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
     // History-ში "+ Task" ღილაკი არ ჩანს (წარსულს ვერ შეცვლი)
     const taskBtn = (boxTab==='history') ? '' : '<button class="btn btn-ghost btn-sm" onclick="openTaskModal(\''+box.id+'\')">+ Task</button>';
     html += '<div class="list-item"><div class="li-info"><div class="li-title">📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div></div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';

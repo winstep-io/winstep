@@ -452,7 +452,7 @@ async function init(){
     // Total Round Points = authoritative sum of finished rounds + live (matches profile & round table)
     let _trp = (profile.season_points||0) + (profile.total_points||0);
     try{
-      const { data: _ar } = await db.from('rounds').select('championship_id').eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();
+      const { data: _ar } = await db.from('rounds').select('championship_id').eq('status','active').gte('end_date', new Date().toISOString().split('T')[0]).order('created_at',{ascending:false}).limit(1).maybeSingle();
       if(_ar && _ar.championship_id){
         const { data: _h } = await db.from('user_round_stats').select('round_points').eq('user_id', currentUser.id).eq('championship_id', _ar.championship_id);
         _trp = (_h||[]).reduce((s,r)=>s+(r.round_points||0),0) + (profile.total_points||0);
@@ -519,7 +519,12 @@ let currentRound = null;
 async function loadRound(){
   // once we know what to render, release the CLS space reservation
   const releaseTopMeta = ()=>{ const tm=document.getElementById('topMeta'); if(tm) tm.classList.remove('topmeta-reserve'); };
-  const { data: round } = await db.from('rounds').select('*').eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();
+  // ვადაგასული რაუნდი არ ჩაითვალოს აქტიურად (თუ cron ჯერ არ გაშვებულა)
+  const todayUTC = new Date().toISOString().split('T')[0];
+  const { data: round } = await db.from('rounds').select('*')
+    .eq('status','active')
+    .gte('end_date', todayUTC)
+    .order('created_at',{ascending:false}).limit(1).maybeSingle();
   if(!round){
     // აქტიური რაუნდი არ არის → ჩემპიონატებს შორის შუალედია
     releaseTopMeta();
@@ -528,7 +533,7 @@ async function loadRound(){
   }
   currentRound = round;
   document.getElementById('rbNum').textContent = 'Round ' + round.round_number + ' / ' + round.total_rounds;
-  const fmt = (d)=>{ const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+  const fmt = (d)=>{ const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}); };
   document.getElementById('rbDates').textContent = fmt(round.start_date) + ' — ' + fmt(round.end_date);
   document.getElementById('roundBanner').style.display = 'flex';
 
@@ -565,8 +570,8 @@ async function showBetweenChampionships(){
 
   let title;
   if(upcoming && upcoming.start_date){
-    const dt = new Date(upcoming.start_date+'T00:00:00');
-    const niceDate = dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const dt = new Date(upcoming.start_date+'T00:00:00Z');
+    const niceDate = dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'});
     title = '🏆 Championship ' + champIdLabel(nextNum) + ' starts ' + niceDate;
   } else {
     // Upcoming არ შექმნილა — fallback
