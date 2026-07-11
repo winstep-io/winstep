@@ -1038,7 +1038,18 @@ async function loadChampionship(){
         actions = '<div class="li-actions"><button class="btn btn-ghost btn-sm" onclick="editChampionship(\''+c.id+'\')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteChampionship(\''+c.id+'\','+c.number+')">Delete</button></div>';
       }
       const adminTag = c.ended_by_admin ? ' · <span style="color:var(--gold)">ended by admin</span>' : '';
-      html += '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+champIdLabel(c.number)+'</div><div class="li-sub">'+(c.start_date||'—')+(c.end_date?(' → '+c.end_date):'')+' · '+c.total_rounds+' rounds · '+c.round_duration_days+' days · <span style="color:'+statusColor+'">'+c.status+'</span>'+adminTag+'</div></div>'+actions+'</div>';
+      // დასრულებულს რეალური end_date აქვს; აქტიურს/მომავალს ჯერ არა —
+      // ვთვლით: start + (rounds × days − 1). UTC-ში, რომ თარიღი არ ჩამოცოცდეს.
+      let endTxt = '';
+      if(c.end_date){
+        endTxt = ' → ' + c.end_date;
+      } else if(c.start_date && c.total_rounds && c.round_duration_days){
+        const cs0 = new Date(c.start_date + 'T00:00:00Z');
+        const totalDays0 = c.total_rounds * c.round_duration_days;
+        const ce0 = new Date(cs0.getTime() + (totalDays0 - 1) * 86400000);
+        endTxt = ' → ' + ce0.toISOString().split('T')[0];
+      }
+      html += '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+champIdLabel(c.number)+'</div><div class="li-sub">'+(c.start_date||'—')+endTxt+' · '+c.total_rounds+' rounds · '+c.round_duration_days+' days · <span style="color:'+statusColor+'">'+c.status+'</span>'+adminTag+'</div></div>'+actions+'</div>';
     }
     list.innerHTML = html;
   }
