@@ -153,10 +153,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 /* CLS reserve: keep vertical space while boxes load (real boxes exceed this,
    so it only holds space during the "Loading..." → content swap) */
 #boxesContainer{min-height:320px}
-/* empty state ("No boxes today") sizes to its content instead of the CLS
-   reserve, so no large gap is left. Reserve still applies while loading and
-   when real boxes are present, so CLS is unaffected. */
-#boxesContainer:has(.empty){min-height:0}
+/* empty state fills the reserve — see .empty below */
 .box-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
 .box-card.locked{opacity:.5}
 .box-card.completed{opacity:.6}
@@ -199,8 +196,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .task-btn:hover{background:rgba(46,196,182,.2)}
 .task-btn.done-btn{background:transparent;border-color:rgba(46,196,182,.2);color:var(--teal2);cursor:default}
 
-.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem}
-.empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem;min-height:320px;display:flex;align-items:center;justify-content:center}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-height:320px;display:flex;align-items:center;justify-content:center}
 .ws-mini-foot{text-align:center;padding:18px 16px 26px;margin-top:34px;border-top:1px solid var(--border);font-size:.72rem;color:var(--soft)}
 .ws-mini-foot a,.ws-mini-foot button.ws-link{color:var(--soft);text-decoration:none;cursor:pointer;transition:color .2s;background:none;border:none;padding:0;font:inherit}
 .ws-mini-foot a:hover,.ws-mini-foot button.ws-link:hover{color:var(--teal)}
