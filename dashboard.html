@@ -862,26 +862,40 @@ async function loadBoxes(){
     if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
   }
 
-  // today's boxes in order
-  const { data: boxes, error } = await db
-    .from('boxes')
-    .select('*')
-    .eq('date', today)
-    .order('sequence_order');
+  // ---- boxes + tasks + my activity + my progress: ერთი RPC ----
+  let boxes, doneTaskIds = [], progressByBox = {};
+  let boxesFromRpc = false;
 
-  if(error){ container.innerHTML = '<div class="empty">Error loading boxes: '+error.message+'</div>'; return; }
-  if(!boxes || boxes.length===0){ container.innerHTML = '<div class="empty">No boxes scheduled for today yet. 📦 Check back soon!</div>'; return; }
-
-  // my completed tasks (none in preview)
-  let doneTaskIds = [];
-  let progressByBox = {};
-  if(currentUser){
-    const { data: activity } = await db.from('user_activity').select('task_id, activity_type').eq('user_id', currentUser.id);
-    // pending-იც ითვლება "შესრულებულად" — ვიქტორინაში შესვლა = მონაწილეობა (ვერ დაბრუნდები)
-    doneTaskIds = (activity||[]).map(a=>a.task_id);
-    const { data: progress } = await db.from('user_box_progress').select('*').eq('user_id', currentUser.id).eq('day', today);
-    (progress||[]).forEach(p=>{ progressByBox[p.box_id] = p; });
+  try{
+    const { data: bx, error: bxErr } = await db.rpc('get_dashboard_boxes');
+    if(bxErr || !bx) throw bxErr || new Error('no data');
+    boxes = bx.boxes || [];
+    doneTaskIds = (bx.activity || []).map(a=>a.task_id);
+    (bx.progress || []).forEach(p=>{ progressByBox[p.box_id] = p; });
+    boxesFromRpc = true;
+  }catch(e){
+    console.warn('boxes RPC failed, using legacy queries', e);
   }
+
+  if(!boxesFromRpc){
+    // ---- fallback — ძველი, ცალკეული მოთხოვნები ----
+    const { data: bs, error } = await db
+      .from('boxes')
+      .select('*')
+      .eq('date', today)
+      .order('sequence_order');
+    if(error){ container.innerHTML = '<div class="empty">Error loading boxes: '+error.message+'</div>'; return; }
+    boxes = bs || [];
+
+    if(currentUser){
+      const { data: activity } = await db.from('user_activity').select('task_id, activity_type').eq('user_id', currentUser.id);
+      doneTaskIds = (activity||[]).map(a=>a.task_id);
+      const { data: progress } = await db.from('user_box_progress').select('*').eq('user_id', currentUser.id).eq('day', today);
+      (progress||[]).forEach(p=>{ progressByBox[p.box_id] = p; });
+    }
+  }
+
+  if(!boxes || boxes.length===0){ container.innerHTML = '<div class="empty">No boxes scheduled for today yet. 📦 Check back soon!</div>'; return; }
 
   let html = '';
 
@@ -927,8 +941,14 @@ async function loadBoxes(){
 
   for(let i=0; i<boxes.length; i++){
     const box = boxes[i];
-    const { data: tasks } = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
-    html += renderBox(box, tasks||[], doneTaskIds, states[i], progressByBox[box.id]);
+    let tasks;
+    if(boxesFromRpc){
+      tasks = box.tasks || [];              // ✅ RPC-იდან ჩაშენებული — მოთხოვნა აღარაა
+    } else {
+      const t = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
+      tasks = t.data || [];                 // fallback — ძველი, ციკლში (N+1)
+    }
+    html += renderBox(box, tasks, doneTaskIds, states[i], progressByBox[box.id]);
   }
   html += '</div>';
   container.innerHTML = html;
