@@ -388,7 +388,32 @@ function showTermsGate(){
   };
 }
 
+// ============================================================
+// BOOTSTRAP — 6 მოთხოვნა → 1 RPC (get_dashboard_bootstrap)
+// უსაფრთხოა: თუ RPC ვერ იმუშავა, ყველა ფუნქცია ავტომატურად
+// ძველ, ცალკეულ მოთხოვნებზე გადადის (fallback).
+// ============================================================
+let BOOT = null;          // RPC-ის შედეგი (ან null, თუ ჩავარდა)
+let bootPromise = null;   // რომ ერთხელ გაეშვას, პარალელური გამოძახებებისთვის
+
+function loadBootstrap(){
+  if(bootPromise) return bootPromise;
+  bootPromise = (async ()=>{
+    try{
+      const { data, error } = await db.rpc('get_dashboard_bootstrap');
+      if(error || !data) throw error || new Error('no data');
+      BOOT = data;
+    }catch(e){
+      BOOT = null;   // fallback: ძველი მოთხოვნები იმუშავებს
+      console.warn('bootstrap RPC failed, using legacy queries', e);
+    }
+    return BOOT;
+  })();
+  return bootPromise;
+}
+
 async function init(){
+  loadBootstrap();   // ერთი მოთხოვნა ყველასთვის — ადრევე ვიწყებთ
   const { data: { session } } = await db.auth.getSession();
 
   if(!session){
@@ -519,12 +544,27 @@ let currentRound = null;
 async function loadRound(){
   // once we know what to render, release the CLS space reservation
   const releaseTopMeta = ()=>{ const tm=document.getElementById('topMeta'); if(tm) tm.classList.remove('topmeta-reserve'); };
-  // ვადაგასული რაუნდი არ ჩაითვალოს აქტიურად (თუ cron ჯერ არ გაშვებულა)
-  const todayUTC = new Date().toISOString().split('T')[0];
-  const { data: round } = await db.from('rounds').select('*')
-    .eq('status','active')
-    .gte('end_date', todayUTC)
-    .order('created_at',{ascending:false}).limit(1).maybeSingle();
+
+  await loadBootstrap();
+
+  let round, champ;
+  if(BOOT){
+    round = BOOT.round;                 // ერთი RPC-იდან
+    champ = BOOT.championship;
+  } else {
+    // fallback — ძველი, ცალკეული მოთხოვნები
+    const todayUTC = new Date().toISOString().split('T')[0];
+    const r = await db.from('rounds').select('*')
+      .eq('status','active')
+      .gte('end_date', todayUTC)
+      .order('created_at',{ascending:false}).limit(1).maybeSingle();
+    round = r.data;
+    if(round && round.championship_id){
+      const c = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
+      champ = c.data;
+    }
+  }
+
   if(!round){
     // აქტიური რაუნდი არ არის → ჩემპიონატებს შორის შუალედია
     releaseTopMeta();
@@ -538,35 +578,38 @@ async function loadRound(){
   document.getElementById('roundBanner').style.display = 'flex';
 
   // championship badge in header
-  if(round.championship_id){
-    const { data: champ } = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
-    if(champ){
-      const badge = document.getElementById('champBadge');
-      badge.textContent = '🏆 Championship ' + champIdLabel(champ.number);
-      badge.style.display = 'inline-block';
-    }
+  if(champ){
+    const badge = document.getElementById('champBadge');
+    badge.textContent = '🏆 Championship ' + champIdLabel(champ.number);
+    badge.style.display = 'inline-block';
   }
   releaseTopMeta();
 }
 
 // ჩემპიონატებს შორის შუალედი — დიდი შეტყობინება
 async function showBetweenChampionships(){
-  // შემდეგი (upcoming) championship-ის ძებნა
-  const { data: upcoming } = await db.from('championships')
-    .select('number, start_date')
-    .eq('status','upcoming')
-    .order('start_date',{ascending:true})
-    .limit(1)
-    .maybeSingle();
+  await loadBootstrap();
 
-  // ბოლო championship-ის ნომერი (რომ ვიცოდეთ შემდეგი #N)
-  const { data: lastChamp } = await db.from('championships')
-    .select('number')
-    .order('number',{ascending:false})
-    .limit(1)
-    .maybeSingle();
+  let upcoming, lastNum;
+  if(BOOT){
+    upcoming = BOOT.upcoming;                 // ერთი RPC-იდან
+    lastNum  = BOOT.last_champ_number;
+  } else {
+    // fallback — ძველი მოთხოვნები
+    const u = await db.from('championships')
+      .select('number, start_date')
+      .eq('status','upcoming')
+      .order('start_date',{ascending:true})
+      .limit(1).maybeSingle();
+    upcoming = u.data;
+    const l = await db.from('championships')
+      .select('number')
+      .order('number',{ascending:false})
+      .limit(1).maybeSingle();
+    lastNum = l.data ? l.data.number : null;
+  }
 
-  const nextNum = upcoming ? upcoming.number : (lastChamp ? lastChamp.number + 1 : 1);
+  const nextNum = upcoming ? upcoming.number : (lastNum ? lastNum + 1 : 1);
 
   let title;
   if(upcoming && upcoming.start_date){
@@ -695,7 +738,10 @@ function clearAdReserve(){
 
 async function loadAds(){
   try{
-    const { data: rows } = await db.from('ad_settings').select('*');
+    await loadBootstrap();
+    let rows;
+    if(BOOT && BOOT.ads){ rows = BOOT.ads; }            // ერთი RPC-იდან
+    else { const r = await db.from('ad_settings').select('*'); rows = r.data; }  // fallback
     if(!rows){ clearAdReserve(); return; }
     const byKey = {};
     rows.forEach(r => byKey[r.slot_key] = r);
@@ -757,9 +803,16 @@ function activateScripts(container){
 
 // ---- prizes ----
 async function loadPrizes(){
-  const { data: giveaway } = await db.from('giveaways').select('id').eq('is_active', true).order('created_at',{ascending:false}).limit(1).single();
-  if(!giveaway) return;
-  const { data: prizes } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', giveaway.id).order('place_from');
+  await loadBootstrap();
+  let prizes;
+  if(BOOT && BOOT.prizes){                              // ერთი RPC-იდან
+    prizes = BOOT.prizes;
+  } else {                                              // fallback — ძველი 2 მოთხოვნა
+    const { data: giveaway } = await db.from('giveaways').select('id').eq('is_active', true).order('created_at',{ascending:false}).limit(1).single();
+    if(!giveaway) return;
+    const r = await db.from('giveaway_prizes').select('*').eq('giveaway_id', giveaway.id).order('place_from');
+    prizes = r.data;
+  }
   if(!prizes || prizes.length===0) return;
 
   const medals = {1:'🥇',2:'🥈',3:'🥉'};
@@ -801,8 +854,13 @@ async function loadBoxes(){
   const container = document.getElementById('boxesContainer');
 
   // load settings (interval + bridge unlock)
-  const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
-  if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
+  await loadBootstrap();
+  if(BOOT && BOOT.settings){                            // ერთი RPC-იდან
+    Object.assign(pointSettings, BOOT.settings);
+  } else {                                              // fallback
+    const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
+    if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
+  }
 
   // today's boxes in order
   const { data: boxes, error } = await db
