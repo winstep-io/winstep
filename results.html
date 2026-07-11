@@ -308,7 +308,15 @@ async function init(){
   if(session) me = session.user;
 
   // current round (for header label)
-  const { data: round } = await db.from('rounds').select('*').eq('status','active').maybeSingle();
+  // ვადაგასული რაუნდი არ ჩაითვალოს აქტიურად (როგორც dashboard-ზე)
+  const todayUTC = new Date().toISOString().split('T')[0];
+  const { data: round } = await db.from('rounds').select('*')
+    .eq('status','active')
+    .gte('end_date', todayUTC)
+    .order('created_at',{ascending:false})
+    .limit(1)
+    .maybeSingle();
+
   if(round){
     if(round.championship_id){
       const { data: ch } = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
@@ -316,6 +324,24 @@ async function init(){
     }
     document.getElementById('rhRound').textContent = 'Round ' + round.round_number + '/' + round.total_rounds;
     document.getElementById('rhSub').textContent = 'Standings through Round ' + round.round_number + ' — championship points decide the winners.';
+  } else {
+    // ჩემპიონატებს შორის შუალედი — არ არის აქტიური რაუნდი
+    const { data: up } = await db.from('championships')
+      .select('number, start_date')
+      .eq('status','upcoming')
+      .order('start_date',{ascending:true})
+      .limit(1).maybeSingle();
+
+    document.getElementById('rhRound').textContent = 'Between championships';
+    if(up && up.start_date){
+      const dt = new Date(up.start_date + 'T00:00:00Z');
+      const nice = dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'});
+      document.getElementById('rhSub').textContent =
+        'The championship has ended. Championship ' + champIdLabel(up.number) + ' starts ' + nice + '. See the past results below.';
+    } else {
+      document.getElementById('rhSub').textContent =
+        'The championship has ended. A new one starts soon — see the past results below.';
+    }
   }
 
   // prize zones (active giveaway)
