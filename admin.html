@@ -1411,7 +1411,7 @@ async function loadPrizes(){
 
   if(!giveaway){
     const { data: newG } = await db.from('giveaways')
-      .insert({ title:'Championship Prizes', is_active:true, championship_id: prizeChampId })
+      .insert({ is_active:true, championship_id: prizeChampId })
       .select().single();
     giveaway = newG;
   }
