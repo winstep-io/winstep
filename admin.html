@@ -1378,7 +1378,7 @@ async function loadPrizes(){
   // ---- ჩემპიონატების ამომრჩევი ----
   const sel = document.getElementById('prizeChampSelect');
   const { data: champs } = await db.from('championships')
-    .select('id, number, status, start_date')
+    .select('id, number, status, start_date, total_rounds, round_duration_days')
     .in('status', ['active','upcoming'])
     .order('number', { ascending: true });
 
@@ -1410,9 +1410,19 @@ async function loadPrizes(){
     .limit(1).maybeSingle();
 
   if(!giveaway){
-    const { data: newG } = await db.from('giveaways')
-      .insert({ is_active:true, championship_id: prizeChampId })
+    // start_date / end_date ჩემპიონატიდან — ცხრილს ისინი სავალდებულოდ აქვს.
+    // (SQL-ით NOT NULL მოვხსენით, მაგრამ თარიღების შევსება მაინც აზრიანია.)
+    const champ = champs.find(c => c.id === prizeChampId);
+    const cStart = champ && champ.start_date ? champ.start_date : new Date().toISOString().split('T')[0];
+    const totalDays = (champ && champ.total_rounds && champ.round_duration_days)
+      ? champ.total_rounds * champ.round_duration_days : 30;
+    const cEnd = new Date(new Date(cStart + 'T00:00:00Z').getTime() + (totalDays - 1) * 86400000)
+      .toISOString().split('T')[0];
+
+    const { data: newG, error: gErr } = await db.from('giveaways')
+      .insert({ is_active: true, championship_id: prizeChampId, start_date: cStart, end_date: cEnd })
       .select().single();
+    if(gErr){ showMsg('prizeMsg','Could not create prize container: '+gErr.message,'err'); }
     giveaway = newG;
   }
   activeGiveawayId = giveaway ? giveaway.id : null;
