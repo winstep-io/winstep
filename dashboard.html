@@ -149,7 +149,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .boxes{display:flex;flex-direction:column;gap:14px}
 /* CLS reserve: keep vertical space while boxes load (real boxes exceed this,
    so it only holds space during the "Loading..." → content swap) */
-#boxesContainer{min-height:320px}
+/* CLS reserve — ადაპტური: ბოლო ვიზიტის რეალური სიმაღლე გამოიყენება,
+   რომ 30 ქუიზის ჩატვირთვისას გვერდი აღარ ხტებოდეს. */
+#boxesContainer{min-height:var(--boxes-reserve,320px)}
+/* ჩემპიონატებს შორის შუალედი — მხოლოდ შეტყობინება ჩანს.
+   კლასი <body>-ზე ჯდება, ამიტომ ასინქრონული ჩატვირთვები ვეღარ გადაფარავენ. */
+body.gap-mode .ad-slot,
+body.gap-mode .sidebar-col,
+body.gap-mode .sec-title,
+body.gap-mode #boxesContainer,
+body.gap-mode #roundBanner,
+body.gap-mode #champBadge{display:none!important}
+body.gap-mode .layout{grid-template-columns:1fr!important}
+body.gap-mode #boxesContainer{min-height:0!important}
+/* ეკრანს გარეთ მყოფი ბოქსები ბრაუზერმა ზედმეტად არ დახატოს */
+.box-card{content-visibility:auto;contain-intrinsic-size:auto 700px}
 /* empty state fills the reserve — see .empty below */
 .box-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
 /* bonus-game unlock hint — sits under the quiz list, same width as the quiz rows */
@@ -196,8 +210,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .task-btn:hover{background:rgba(46,196,182,.2)}
 .task-btn.done-btn{background:transparent;border-color:rgba(46,196,182,.2);color:var(--teal2);cursor:default}
 
-.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem;min-height:320px;display:flex;align-items:center;justify-content:center}
-.empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-height:320px;display:flex;align-items:center;justify-content:center}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem;min-height:var(--boxes-reserve,320px);display:flex;align-items:center;justify-content:center}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-height:220px;display:flex;align-items:center;justify-content:center}
 .ws-mini-foot{text-align:center;padding:18px 16px 26px;margin-top:34px;border-top:1px solid var(--border);font-size:.72rem;color:var(--soft)}
 .ws-mini-foot a,.ws-mini-foot button.ws-link{color:var(--soft);text-decoration:none;cursor:pointer;transition:color .2s;background:none;border:none;padding:0;font:inherit}
 .ws-mini-foot a:hover,.ws-mini-foot button.ws-link:hover{color:var(--teal)}
@@ -346,6 +360,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   </script>
 </head>
 <body>
+<script>
+/* CLS: წინა ვიზიტის რეალური სიმაღლით ვიჭერთ ადგილს ჯერ კიდევ
+   რენდერამდე — ასე ბოქსების ჩამოსვლისას გვერდი აღარ ხტება.
+   (inline და სინქრონული განზრახ: სტილი პირველ დახატვამდე უნდა დაჯდეს) */
+(function(){
+  try{
+    var hpx = parseInt(localStorage.getItem('ws_boxes_h') || '0', 10);
+    if(hpx > 200 && hpx < 6000){
+      document.documentElement.style.setProperty('--boxes-reserve', hpx + 'px');
+    }
+  }catch(_){}
+})();
+</script>
 
 
 <header>
@@ -400,9 +427,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 
     <!-- ჩემპიონატებს შორის შუალედის შეტყობინება -->
     <div id="betweenChamps" style="display:none;text-align:center;padding:60px 24px;background:var(--card-bg,rgba(255,255,255,.02));border:1px solid var(--border,rgba(255,255,255,.08));border-radius:18px;margin:10px 0">
-      <div style="font-size:3.4rem;margin-bottom:16px">🏆</div>
-      <div id="betweenTitle" style="font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:var(--teal,#2ec4b6);margin-bottom:10px">New Championship starts soon!</div>
-      <div id="betweenSub" style="font-size:.95rem;color:var(--soft,#9fb5b0);max-width:360px;margin:0 auto;line-height:1.5">The next season is coming. Check back soon to compete!</div>
+      <div style="font-size:3.4rem;margin-bottom:20px;line-height:1">🏆</div>
+      <!-- სამი ცალკე ხაზი — ტექსტი აღარ გადადის და აღარ ხტუნავს -->
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:var(--teal,#2ec4b6);line-height:1.25">New championship</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:var(--teal,#2ec4b6);line-height:1.25;margin-bottom:8px">starts in</div>
+      <!-- font-variant-numeric: ციფრებს ერთნაირი სიგანე აქვთ → ხაზი არ ცოცავს -->
+      <div id="betweenTitle" style="font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;color:var(--gold,#f5c842);line-height:1.2;font-variant-numeric:tabular-nums;font-feature-settings:'tnum'">—</div>
+      <div id="betweenSub" style="font-size:.95rem;color:var(--soft,#9fb5b0);max-width:360px;margin:18px auto 0;line-height:1.5">The next season is coming. Check back soon to compete!</div>
     </div>
 
     <div class="sec-title">Today's Boxes</div>
@@ -649,6 +680,7 @@ function showAuthPrompt(){
 // ---- round banner ----
 let currentRound = null;
 let betweenTimer = null;   // ჩემპიონატებს შორის countdown-ის ტაიმერი
+let inGap = false;         // true = ჩემპიონატებს შორის შუალედი (მხოლოდ შეტყობინება ჩანს)
 async function loadRound(){
   // once we know what to render, release the CLS space reservation
   const releaseTopMeta = ()=>{ const tm=document.getElementById('topMeta'); if(tm) tm.classList.remove('topmeta-reserve'); };
@@ -719,22 +751,23 @@ async function showBetweenChampionships(){
 
   const nextNum = upcoming ? upcoming.number : (lastNum ? lastNum + 1 : 1);
 
+  inGap = true;   // შუალედი — რეკლამა და დანარჩენი აღარ გამოჩნდეს
+
   const titleEl = document.getElementById('betweenTitle');
+  const subEl   = document.getElementById('betweenSub');
 
   if(upcoming && upcoming.start_date){
     // ჩემპიონატი იწყება 00:00 UTC-ზე იმ თარიღისა.
     // Countdown ჯობს თარიღს — ის ყველა დროის სარტყელში ცალსახაა.
     const startMs = new Date(upcoming.start_date + 'T00:00:00Z').getTime();
-
     const pad = (n)=> String(n).padStart(2,'0');
 
     const tick = ()=>{
       const diff = startMs - Date.now();
 
       if(diff <= 0){
-        // დრო დადგა — ჩემპიონატი უნდა დაიწყოს
         clearInterval(betweenTimer);
-        titleEl.innerHTML = '🏆 Championship ' + champIdLabel(nextNum) + ' is starting…';
+        titleEl.textContent = 'starting…';
         setTimeout(()=>location.reload(), 3000);
         return;
       }
@@ -745,14 +778,11 @@ async function showBetweenChampionships(){
       const mins = Math.floor((totalSec % 3600) / 60);
       const secs = totalSec % 60;
 
-      // 24 საათზე მეტი → დღეებიც ვაჩვენოთ, თორემ hh:mm:ss
-      const clock = (days > 0)
+      // მხოლოდ საათი — ტექსტი ("New championship / starts in") HTML-შია,
+      // ამიტომ ხაზი აღარ იცვლება და აღარ ხტუნავს.
+      titleEl.textContent = (days > 0)
         ? days + 'd ' + pad(hrs) + ':' + pad(mins) + ':' + pad(secs)
         : pad(hrs) + ':' + pad(mins) + ':' + pad(secs);
-
-      titleEl.innerHTML =
-        '🏆 Championship ' + champIdLabel(nextNum) + ' starts in ' +
-        '<b style="color:var(--gold);font-family:\'Space Grotesk\',sans-serif">' + clock + '</b>';
     };
 
     clearInterval(betweenTimer);
@@ -761,16 +791,15 @@ async function showBetweenChampionships(){
 
   } else {
     // Upcoming არ შექმნილა — fallback
-    titleEl.innerHTML = '🏆 Championship ' + champIdLabel(nextNum) + ' starts soon!';
+    titleEl.textContent = 'soon';
   }
 
   document.getElementById('betweenChamps').style.display = 'block';
-  // banner და boxes დავმალოთ
-  document.getElementById('roundBanner').style.display = 'none';
-  const bc = document.getElementById('boxesContainer');
-  const st = document.querySelector('.sec-title');
-  if(bc) bc.style.display = 'none';
-  if(st) st.style.display = 'none';
+
+  // ---- შუალედში მხოლოდ ეს შეტყობინება ჩანს, სხვა არაფერი ----
+  // ერთი კლასი <body>-ზე — CSS ყველაფერს მალავს (!important-ით),
+  // ასე ასინქრონული ჩატვირთვები ვეღარ გადაფარავენ.
+  document.body.classList.add('gap-mode');
 }
 
 // ---- round info modal ----
@@ -908,6 +937,8 @@ function renderAdSlot(cfg, slotId, boxId, globalScript){
   const slot = document.getElementById(slotId);
   const box = document.getElementById(boxId);
   if(!slot || !box) return;
+  // ჩემპიონატებს შორის შუალედში რეკლამა არ ჩანს — მხოლოდ შეტყობინება
+  if(inGap){ slot.style.display = 'none'; return; }
   // once we know the ad state, drop the CLS reserve class so the slot
   // either shows its real content or collapses cleanly.
   slot.classList.remove('ad-reserve');
@@ -967,7 +998,7 @@ async function loadPrizes(){
     html += '<div class="pi-row"><span class="pi-place">'+m+' '+label+'</span><span class="pi-amt">'+amt+'</span></div>';
   }
   document.getElementById('prizeRows').innerHTML = html;
-  document.getElementById('prizeCard').style.display = 'block';
+  if(!inGap) document.getElementById('prizeCard').style.display = 'block';
 }
 
 function fmtAmount(a){
@@ -1093,6 +1124,16 @@ async function loadBoxes(){
   }
   html += '</div>';
   container.innerHTML = html;
+
+  // რეალური სიმაღლე დავიმახსოვროთ — შემდეგ ჩატვირთვაზე რეზერვი
+  // ზუსტად ამდენი იქნება და კონტენტი აღარ ახტება (CLS ≈ 0).
+  requestAnimationFrame(()=>{
+    const hpx = container.scrollHeight;
+    if(hpx > 200){
+      try{ localStorage.setItem('ws_boxes_h', String(hpx)); }catch(_){}
+    }
+    container.style.minHeight = '0px';   // რეზერვი აღარ სჭირდება — კონტენტი უკვე დგას
+  });
 
   // if an interval is running, render the banner into its slot (between the boxes)
   if(intervalActive){
