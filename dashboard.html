@@ -161,9 +161,17 @@ body.gap-mode #boxesContainer,
 body.gap-mode #roundBanner,
 body.gap-mode #champBadge,
 body.gap-mode #betweenSub,
+body.gap-mode .welcome,
+body.gap-mode .welcome-sub,
 body.gap-mode .ws-mini-foot{display:none!important}
-body.gap-mode .layout{grid-template-columns:1fr!important}
+body.gap-mode .layout{grid-template-columns:1fr!important;
+  /* შეტყობინება ვერტიკალურად ეკრანის შუაში (ჰედერის გამოკლებით) */
+  display:flex!important;align-items:center;justify-content:center;
+  min-height:calc(100vh - 140px)}
+body.gap-mode .main-col{width:100%}
+body.gap-mode #betweenChamps{margin:0 auto;width:100%}
 body.gap-mode #boxesContainer{min-height:0!important}
+body.gap-mode #topMeta{min-height:0!important}
 /* ეკრანს გარეთ მყოფი ბოქსები ბრაუზერმა ზედმეტად არ დახატოს */
 .box-card{content-visibility:auto;contain-intrinsic-size:auto 700px}
 /* empty state fills the reserve — see .empty below */
