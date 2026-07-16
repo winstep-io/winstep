@@ -1300,9 +1300,11 @@ async function loadRounds(){
     for(const r of rounds){
       const statusColor = r.status==='active'?'var(--green)':r.status==='finished'?'var(--muted)':'var(--gold)';
       let actions = '';
-      if(r.status==='upcoming'){
-        actions = '<div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deleteRound(\''+r.id+'\','+r.round_number+')">Delete</button></div>';
-      }
+      // Round Delete ღილაკი განზრახ დამალულია: ჩემპიონატის სტრუქტურა
+      // შექმნისას რეგულირდება. (deleteRound ფუნქცია ქვემოთ რჩება, თუ ოდესმე დაგჭირდა.)
+      // if(r.status==='upcoming'){
+      //   actions = '<div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deleteRound(\''+r.id+'\','+r.round_number+')">Delete</button></div>';
+      // }
       html += '<div class="list-item"><div class="li-info"><div class="li-title">Round '+r.round_number+'/'+r.total_rounds+'</div><div class="li-sub">'+r.start_date+' → '+r.end_date+' · <span style="color:'+statusColor+'">'+r.status+'</span></div></div>'+actions+'</div>';
     }
     list.innerHTML = html;
