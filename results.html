@@ -381,7 +381,13 @@ async function init(){
   loadPastChampionships();
 }
 
+// ⚙️ ტესტ-რეჟიმი: "Past Championships" სექცია დამალულია სანამ საკმარისი
+//    რეალური ჩემპიონატის მონაცემი დაგროვდება. გამოსაჩენად → შეცვალე true-თი.
+//    (ლოგიკა და RLS უკვე გამართულია — ეს მხოლოდ ჩვენებას აკონტროლებს.)
+const SHOW_PAST_CHAMPIONSHIPS = false;
+
 async function loadPastChampionships(){
+  if(!SHOW_PAST_CHAMPIONSHIPS) return; // ტესტ-რეჟიმში სექცია საერთოდ არ ჩნდება
   const { data: champs } = await db.from('championships').select('*').eq('status','finished').order('number',{ascending:false});
   if(!champs || champs.length===0) return; // no past championships → section stays hidden
 
