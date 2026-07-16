@@ -434,14 +434,12 @@ async function viewPastResults(champId, champNum){
   const rowHtml = (r)=>{
     const prof = profById[r.user_id]||{};
     const isMe = me && r.user_id===me.id;
-    const medal = r.place===1?'🥇':r.place===2?'🥈':r.place===3?'🥉':r.place;
     const isWinner = r.place<=3;
     return '<div class="lb-row'+(isWinner?' winner':'')+(isMe?' me':'')+'">'
-      + '<span class="lb-rank'+(isWinner?' medal':'')+'">'+medal+'</span>'
+      + '<span class="lb-rank">'+r.place+'</span>'
       + avatarCell(prof)
       + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(prof.username))+'</div></div>'
       + (r.prize_amount ? '<span class="lb-prize">'+escapeHtml(r.prize_amount)+'</span>' : '')
-      + '<span class="lb-pts">'+(r.championship_points||0)+' <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
       + '</div>';
   };
 
