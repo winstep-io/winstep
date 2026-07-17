@@ -147,9 +147,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
 .boxes{display:flex;flex-direction:column;gap:14px}
-/* CLS reserve — ტესტ: 0-ზე დაბრუნებული (ადრინდელი მდგომარეობა).
-   დასაბრუნებლად: 0px → 320px აქ, .loading-ში, და ქვემოთ ადაპტური სკრიპტის კომენტარის მოხსნა. */
-#boxesContainer{min-height:var(--boxes-reserve,0px)}
+/* CLS reserve — შუალედი 180px: აღქმას თითქმის არ ცვლის (კონტენტი ისევ მალე ჩანს),
+   magram პირველი ეკრანის ხტუნვის დიდ ნაწილს იჭერს.
+   0-ზე დასაბრუნებლად: 180px → 0px აქ + .loading-ში, და ადაპტური სკრიპტი გათიშული დატოვე. */
+#boxesContainer{min-height:var(--boxes-reserve,180px)}
 /* ჩემპიონატებს შორის შუალედი — მხოლოდ შეტყობინება ჩანს.
    კლასი <body>-ზე ჯდება, ამიტომ ასინქრონული ჩატვირთვები ვეღარ გადაფარავენ. */
 body.gap-mode .ad-slot,
@@ -218,7 +219,7 @@ body.gap-mode #topMeta{min-height:0!important}
 .task-btn:hover{background:rgba(46,196,182,.2)}
 .task-btn.done-btn{background:transparent;border-color:rgba(46,196,182,.2);color:var(--teal2);cursor:default}
 
-.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem;min-height:var(--boxes-reserve,0px);display:flex;align-items:center;justify-content:center}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:.9rem;min-height:var(--boxes-reserve,180px);display:flex;align-items:center;justify-content:center}
 .empty{text-align:center;padding:30px;color:var(--muted);font-size:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-height:220px;display:flex;align-items:center;justify-content:center}
 .ws-mini-foot{text-align:center;padding:18px 16px 26px;margin-top:34px;border-top:1px solid var(--border);font-size:.72rem;color:var(--soft)}
 .ws-mini-foot a,.ws-mini-foot button.ws-link{color:var(--soft);text-decoration:none;cursor:pointer;transition:color .2s;background:none;border:none;padding:0;font:inherit}
