@@ -374,6 +374,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 
       <div class="card">
         <div class="card-title">🏆 Select Championship</div>
+        <input class="field-input" id="payoutChampSearch" placeholder="🔎 Search by Championship ID (e.g. 174)…" oninput="filterChampOptions()" style="margin-bottom:10px">
         <select class="field-input" id="payoutChampSelect" onchange="loadPayouts()">
           <option value="">Loading...</option>
         </select>
@@ -1010,22 +1011,49 @@ async function loadTaxWarnings(){
   box.innerHTML = html;
 }
 
+let _payoutChamps = []; // ფილტრისთვის სრული სია ინახება
+
 async function loadPayoutChampList(){
   loadTaxWarnings();
   const { data: champs } = await db.from('championships').select('*').eq('status','finished').order('number',{ascending:false});
   const sel = document.getElementById('payoutChampSelect');
   if(!champs || champs.length===0){
+    _payoutChamps = [];
     sel.innerHTML = '<option value="">No finished championships yet</option>';
     document.getElementById('payoutsBox').innerHTML = '<div class="empty">Championship results appear here once a championship finishes.</div>';
     return;
   }
+  _payoutChamps = champs;
+  renderChampOptions(champs);
+  loadPayouts();
+}
+
+// ვარიანტების დახატვა (ფილტრი ამასვე იძახებს)
+function renderChampOptions(list){
+  const sel = document.getElementById('payoutChampSelect');
+  if(!list || list.length===0){
+    sel.innerHTML = '<option value="">No match</option>';
+    document.getElementById('payoutsBox').innerHTML = '<div class="empty">No championship matches that ID.</div>';
+    return;
+  }
   let opts = '';
-  for(const c of champs){
+  for(const c of list){
     opts += '<option value="'+c.id+'">Championship '+champIdLabel(c.number)+' ('+(c.start_date||'')+' → '+(c.end_date||'')+')</option>';
   }
   sel.innerHTML = opts;
+}
+
+// Championship ID-ით ძებნა (client-side, dropdown-ს ფილტრავს)
+function filterChampOptions(){
+  const q = (document.getElementById('payoutChampSearch').value||'').trim().toLowerCase();
+  if(!q){ renderChampOptions(_payoutChamps); loadPayouts(); return; }
+  const filtered = _payoutChamps.filter(c => champIdLabel(c.number).toLowerCase().includes(q) || String(c.number).includes(q));
+  renderChampOptions(filtered);
   loadPayouts();
 }
+
+let _paidFilter = 'all'; // 'all' | 'paid' | 'unpaid'
+function setPaidFilter(f){ _paidFilter = f; loadPayouts(); }
 
 async function loadPayouts(){
   const champId = document.getElementById('payoutChampSelect').value;
@@ -1052,14 +1080,35 @@ async function loadPayouts(){
   const totalPaid = payouts.filter(p=>p.paid).length;
   const withPrize = payouts.filter(p=>p.prize_amount).length;
 
-  let html = adminBadge + '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+  let html = adminBadge + '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">'
     + '<div class="card-title" style="margin:0">Final Results · '+withPrize+' prize winners</div>'
-    + '<div style="font-size:.74rem;color:var(--muted)">'+totalPaid+'/'+withPrize+' paid</div></div>';
+    + '<div style="display:flex;align-items:center;gap:10px">'
+    + '<div id="paidFilterBox" style="display:flex;gap:4px">'
+    +   '<button class="btn btn-sm '+(_paidFilter==='all'?'btn-primary':'btn-ghost')+'" onclick="setPaidFilter(\'all\')">All</button>'
+    +   '<button class="btn btn-sm '+(_paidFilter==='paid'?'btn-primary':'btn-ghost')+'" onclick="setPaidFilter(\'paid\')">Paid</button>'
+    +   '<button class="btn btn-sm '+(_paidFilter==='unpaid'?'btn-primary':'btn-ghost')+'" onclick="setPaidFilter(\'unpaid\')">Unpaid</button>'
+    + '</div>'
+    + '<div style="font-size:.74rem;color:var(--muted)">'+totalPaid+'/'+withPrize+' paid</div>'
+    + '</div></div>';
 
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem">'
     + '<tr style="text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase"><th style="padding:8px 6px">#</th><th style="padding:8px 6px">Player</th><th style="padding:8px 6px">Email</th><th style="padding:8px 6px">IP Country</th><th style="padding:8px 6px">Points</th><th style="padding:8px 6px">Prize</th><th style="padding:8px 6px">Status</th></tr>';
 
-  for(const p of payouts){
+  // Paid ფილტრი — ცხრილში მხოლოდ საპრიზო row-ები ჩანს, არჩეული სტატუსით
+  const visibleRows = payouts.filter(p => {
+    if(!p.prize_amount) return _paidFilter==='all'; // "no prize" მხოლოდ All-ში ჩანს
+    if(_paidFilter==='paid')   return !!p.paid;
+    if(_paidFilter==='unpaid') return !p.paid;
+    return true;
+  });
+
+  if(visibleRows.length===0){
+    html += '<div class="empty" style="padding:18px">No '+_paidFilter+' winners.</div></div>';
+    box.innerHTML = html;
+    return;
+  }
+
+  for(const p of visibleRows){
     const prof = pById[p.user_id] || {};
     const medal = p.place===1?'🥇':p.place===2?'🥈':p.place===3?'🥉':('#'+p.place);
     const prize = p.prize_amount ? fmtAmount(p.prize_amount) : '<span style="color:var(--muted)">—</span>';
