@@ -1959,8 +1959,13 @@ async function saveTask(){
   const points = setting ? setting.value : 10;
 
   const url = document.getElementById('taskUrl').value.trim();
+  // ბოქსის ბოლო sort_order-ს ვპოულობთ — ახალი task ბოლოში, სწორი ნომრით ჩაემატოს
+  // (თუ ყველას 0 ჰქონდა, tie-ს ვერ არჩევდა და რიგი ირღვეოდა)
+  const { data: last } = await db.from('tasks').select('sort_order')
+    .eq('box_id', boxId).order('sort_order',{ascending:false}).limit(1).maybeSingle();
+  const nextSort = (last && typeof last.sort_order === 'number') ? last.sort_order + 1 : 1;
   const { data: newTask, error } = await db.from('tasks').insert({
-    box_id: boxId, type, title, points, url: url||null, sort_order: 0
+    box_id: boxId, type, title, points, url: url||null, sort_order: nextSort
   }).select().single();
 
   if(error){ showMsg('taskMsg', error.message, 'err'); return; }
