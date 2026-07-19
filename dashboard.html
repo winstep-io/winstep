@@ -79,6 +79,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .lb-stats{font-size:.7rem;color:#9fb5b0;margin-top:2px}
 .lb-pts{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;color:var(--text);flex-shrink:0}
 #leaderboardContainer.champ-mode .lb-pts{color:var(--gold)}
+.lb-pts .lb-sep{color:var(--muted);font-weight:400;margin:0 1px}
+.lb-pts .lb-round{color:#c9d4d1;font-weight:700}
+.lb-pts .lb-lbl{font-size:.6rem;color:#9fb5b0;font-weight:400}
 .lb-dots{text-align:center;padding:5px;color:var(--muted);font-size:.7rem;border-bottom:1px solid rgba(255,255,255,.03)}
 .gold2{--gold2:rgba(245,200,66,.15)}
 .pi-card{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:16px;padding:16px 18px}
@@ -632,6 +635,7 @@ async function init(){
       }
     }catch(_){}
     document.getElementById('userPoints').textContent = _trp;
+    myRoundTotal = _trp;   // leaderboard-ის ჩემი რიგი იგივე რიცხვს აჩვენებს, რაც ჰედერი
     document.getElementById('userChampPoints').textContent = profile.championship_points || 0;
     const av = avatarSVG(profile.avatar_id, 38);
     const avEl = document.getElementById('userAvatar');
@@ -830,6 +834,7 @@ async function openRoundInfo(){
 function closeRoundInfo(){
   document.getElementById('roundInfoModal').classList.remove('show');
 }
+let myRoundTotal = null;   // ჰედერში დათვლილი რაუნდების ჯამი (ჩემი)
 let lbMode = 'championship';
 function switchLb(mode){
   lbMode = mode;
@@ -879,7 +884,20 @@ async function loadLeaderboard(){
   const myId = currentUser ? currentUser.id : null;
   let myRank = players.findIndex(p=>p.id===myId);
 
-  const ptsOf = (p)=> isChamp ? (p.championship_points||0) : (p.total_points||0);
+  // Championship tab: "champPts / roundPts PTS" (იგივე ლოგიკა, რაც ჰედერის pill-ში).
+  // roundPts = season_points + total_points (ზუსტად ის რიცხვი, რომელსაც tiebreaker იყენებს).
+  // ჩემი რიგისთვის ვიყენებ myRoundTotal-ს, რომ ჰედერს ზუსტად დაემთხვეს.
+  const roundOf = (p)=> (p.id===myId && myRoundTotal !== null)
+    ? myRoundTotal
+    : ((p.season_points||0)+(p.total_points||0));
+  const ptsCell = (p)=>{
+    const lbl = ' <span class="lb-lbl">PTS</span>';
+    if(!isChamp) return '<span class="lb-pts">'+(p.total_points||0)+lbl+'</span>';
+    return '<span class="lb-pts">'+(p.championship_points||0)
+      + '<span class="lb-sep">/</span>'
+      + '<span class="lb-round">'+roundOf(p)+'</span>'
+      + lbl+'</span>';
+  };
   const avOf = (p)=>{
     const s=avatarSVG(p.avatar_id,30);
     if(s) return '<div class="lb-avatar">'+s+'</div>';
@@ -892,13 +910,13 @@ async function loadLeaderboard(){
     const p = players[i];
     const rank = '<span class="lb-rank">'+(i+1)+'</span>';
     const meClass = (p.id===myId) ? ' me' : '';
-    html += '<div class="lb-row'+meClass+'">'+rank+avOf(p)+'<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div><span class="lb-pts">'+ptsOf(p)+' <span style="font-size:.6rem;color:#9fb5b0;font-weight:400">PTS</span></span></div>';
+    html += '<div class="lb-row'+meClass+'">'+rank+avOf(p)+'<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'+ptsCell(p)+'</div>';
   }
 
   if(myRank >= 5){
     html += '<div class="lb-dots">· · ·</div>';
     const p = players[myRank];
-    html += '<div class="lb-row me"><span class="lb-rank">'+(myRank+1)+'</span>'+avOf(p)+'<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div><span class="lb-pts">'+ptsOf(p)+' <span style="font-size:.6rem;color:#9fb5b0;font-weight:400">PTS</span></span></div>';
+    html += '<div class="lb-row me"><span class="lb-rank">'+(myRank+1)+'</span>'+avOf(p)+'<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'+ptsCell(p)+'</div>';
   }
 
   container.innerHTML = html;
