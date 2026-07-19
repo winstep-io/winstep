@@ -365,14 +365,38 @@ body.gap-mode #topMeta{min-height:0!important}
 
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
-  /* ერთ სვეტად დაწყობისას row-gap აკონტროლებს ბოლო ბოქსსა და Leaderboard-ს
-     შორის სივრცეს. 24px = ზუსტად ის დაშორება, რაც "Day ends in" ზოლსა და
-     პირველ ბოქსს შორისაა (10px margin-bottom + 14px .boxes gap). */
-  .layout{grid-template-columns:1fr;max-width:640px;row-gap:24px}
+  /* ── მობილურის რიგი ───────────────────────────────────────────
+     სასურველი თანმიმდევრობაა: ბოქსები → Leaderboard → რეკლამა → პრიზები.
+     პრობლემა: რეკლამა .layout-ის გარეთაა, პრიზები კი .sidebar-col-ის
+     შიგნით — ანუ სხვადასხვა მშობელში, და order მხოლოდ ძმებს აწესრიგებს.
+     ამიტომ ორივე კონტეინერს display:contents ვაძლევთ: ისინი ყუთებად
+     წყვეტენ არსებობას და მათი შვილები პირდაპირ body-ის flex-ბავშვები
+     ხდებიან — მერე უკვე order მუშაობს. მარკაპი უცვლელია. */
+  body{display:flex;flex-direction:column}
+  .layout{display:contents}
+  .sidebar-col{display:contents}
+
+  /* .layout-ის სიგანე და padding ახლა თითოეულმა ბლოკმა თვითონ უნდა იტვირთოს.
+     flex-ში margin:auto აუქმებს გაწელვას, ამიტომ სიგანე პირდაპირ ეწერება —
+     თორემ სარეკლამო სლოტი შიგთავსის ზომამდე იკუმშება. */
+  .main-col,.card,.pi-card,.ad-slot{width:calc(100% - 48px);max-width:640px;
+    margin-left:auto;margin-right:auto}
+  .ad-slot{padding-left:0;padding-right:0}
+  .main-col{padding:22px 0 0}
+  .card{margin-top:24px}
+  .pi-card{margin-top:0}
+
+  header{order:1}
+  .ad-slot.top{order:2}
+  .main-col{order:3}
+  .card{order:4}          /* Leaderboard */
+  .ad-slot.bottom{order:5;margin-top:24px;margin-bottom:24px}
+  .pi-card{order:6}
+  .ws-mini-foot{order:7}
+
   .lb-name{font-size:.98rem}
   .lb-pts{font-size:1.02rem}
   .ad-slot{max-width:640px}
-  .sidebar-col{position:static;margin-top:0}
 }
 @media(max-width:560px){
   header{padding:12px 12px}
