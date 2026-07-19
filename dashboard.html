@@ -365,11 +365,14 @@ body.gap-mode #topMeta{min-height:0!important}
 
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
-  .layout{grid-template-columns:1fr;max-width:640px}
+  /* ერთ სვეტად დაწყობისას row-gap აკონტროლებს ბოლო ბოქსსა და Leaderboard-ს
+     შორის სივრცეს. 24px = ზუსტად ის დაშორება, რაც "Day ends in" ზოლსა და
+     პირველ ბოქსს შორისაა (10px margin-bottom + 14px .boxes gap). */
+  .layout{grid-template-columns:1fr;max-width:640px;row-gap:24px}
   .lb-name{font-size:.98rem}
   .lb-pts{font-size:1.02rem}
   .ad-slot{max-width:640px}
-  .sidebar-col{position:static;margin-top:26px}
+  .sidebar-col{position:static;margin-top:0}
 }
 @media(max-width:560px){
   header{padding:12px 12px}
