@@ -153,6 +153,16 @@ header{display:flex;align-items:center;justify-content:space-between;
              0 10px 26px -18px rgba(46,196,182,.5)}
 .box-card.locked{opacity:.55}
 .box-card.completed{opacity:.72}
+/* დასრულებული ბოქსი ჩაკეცილია — სათაური ღილაკად მუშაობს */
+.box-card.completed .box-header{cursor:pointer;user-select:none}
+.box-card.completed .box-header:hover{background:rgba(255,255,255,.03)}
+.box-card.collapsed .box-tasks,
+.box-card.collapsed .bridge-notice{display:none}
+.box-card.collapsed .box-header{border-bottom:0}
+.box-count{font-size:.74rem;font-weight:700;color:var(--muted);margin-left:8px}
+.box-chev{margin-left:10px;font-size:.8rem;color:var(--muted);
+  transition:transform .18s;display:inline-block;flex-shrink:0}
+.box-card.collapsed .box-chev{transform:rotate(-90deg)}
 .box-header{display:flex;align-items:center;justify-content:space-between;
   padding:16px 20px 14px;border-bottom:1px solid var(--border);background:transparent}
 .box-name{display:flex;align-items:center;gap:9px}
@@ -380,6 +390,7 @@ body.gap-mode #topMeta{min-height:0!important}
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+
 </style>
   <!-- cookie-consent (inlined: removes a render-blocking request; must still
        run BEFORE the GA4 block below so Consent Mode v2 defaults apply first) -->
@@ -1167,15 +1178,15 @@ async function loadPrizes(){
   }
   if(!prizes || prizes.length===0) return;
 
-  const medals = {1:'🥇',2:'🥈',3:'🥉'};
   let html = '';
   for(const pr of prizes){
     const from = pr.place_from || pr.place;
     const to = pr.place_to || pr.place;
-    const m = medals[from] || '🏅';
-    const label = (from===to) ? (ordinal(from)+' Place') : (from+'–'+to);
+    // ერთი ადგილი → "1st Place"; დიაპაზონი → "1st – 3rd Places" (მრავლობითში)
+    const label = (from===to) ? (ordinal(from)+' Place')
+                             : (ordinal(from)+' – '+ordinal(to)+' Places');
     const amt = fmtAmount(pr.amount);
-    html += '<div class="pi-row"><span class="pi-place">'+m+' '+label+'</span><span class="pi-amt">'+amt+'</span></div>';
+    html += '<div class="pi-row"><span class="pi-place">'+label+'</span><span class="pi-amt">'+amt+'</span></div>';
   }
   document.getElementById('prizeRows').innerHTML = html;
   if(!inGap) document.getElementById('prizeCard').style.display = 'block';
@@ -1318,6 +1329,14 @@ async function loadBoxes(){
   // if an interval is running, render the banner into its slot (between the boxes)
   if(intervalActive){
     renderInterval(intervalActive);
+  } else if(states.length && states.every(st => st === 'completed')){
+    // ინტერვალი უკვე გასულია, მაგრამ დღევანდელი ყველა ბოქსი დახურულია —
+    // შეტყობინება უნდა დარჩეს ახალი ბოქსების გამოჩენამდე (00:00 UTC).
+    const slot = document.getElementById('intervalSlot');
+    const doneBanner = '<div class="interval-banner"><div class="interval-title">✅ All boxes complete for today!</div>'
+      + '<div style="font-size:.8rem;color:var(--soft);margin-top:4px">Come back after the daily reset for more.</div></div>';
+    if(slot) slot.innerHTML = doneBanner;
+    else container.insertAdjacentHTML('afterbegin', doneBanner);
   }
 
   startDayCountdown();
@@ -1330,12 +1349,19 @@ async function loadBoxes(){
 function renderBox(box, taskList, doneTaskIds, state, prog){
   let statusHtml, cardCls='';
   if(state==='active'){ statusHtml = '<div class="box-status active-status"><span class="status-dot"></span>Active</div>'; }
-  else if(state==='completed'){ statusHtml = '<div class="box-status done-status">✓ Completed</div>'; cardCls=' completed'; }
+  else if(state==='completed'){ statusHtml = '<div class="box-status done-status">✓ Completed</div>'; cardCls=' completed collapsed'; }
   else { statusHtml = '<div class="box-status locked-status">Locked</div>'; cardCls=' locked'; }
 
   // დაბლოკილ ბოქსზე ბოქლომი, სხვაგან ყუთი
   const boxIcon = (state === 'locked') ? '🔒' : '📦';
-  let html = '<div class="box-card'+cardCls+'"><div class="box-header"><div class="box-name"><span class="box-name-txt">'+boxIcon+' '+escapeHtml(box.name)+'</span></div>'+statusHtml+'</div>';
+  // დასრულებული ბოქსი ჩაკეცილია — სათაურზე დაჭერით იშლება
+  const isDoneBox = (state === 'completed');
+  const headAttrs = isDoneBox
+    ? ' onclick="toggleBox(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleBox(this);}" role="button" tabindex="0" aria-expanded="false" title="Show tasks"'
+    : '';
+  const chev = isDoneBox ? '<span class="box-chev" aria-hidden="true">▾</span>' : '';
+  const cnt  = isDoneBox ? '<span class="box-count">'+taskList.length+' task'+(taskList.length===1?'':'s')+'</span>' : '';
+  let html = '<div class="box-card'+cardCls+'"><div class="box-header"'+headAttrs+'><div class="box-name"><span class="box-name-txt">'+boxIcon+' '+escapeHtml(box.name)+'</span>'+cnt+'</div>'+statusHtml+chev+'</div>';
 
   if(state==='locked'){
     html += '<div class="locked-msg">🔒 Complete the previous box to unlock</div></div>';
@@ -1362,6 +1388,15 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
   }
   html += '</div></div>';
   return html;
+}
+
+// დასრულებული ბოქსის გაშლა/ჩაკეცვა
+function toggleBox(el){
+  const card = el.closest('.box-card');
+  if(!card) return;
+  const open = card.classList.toggle('collapsed') === false;
+  el.setAttribute('aria-expanded', open ? 'true' : 'false');
+  el.setAttribute('title', open ? 'Hide tasks' : 'Show tasks');
 }
 
 // game metadata

@@ -435,7 +435,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     <div style="margin-bottom:18px">
       <div class="sr-label" style="margin-bottom:8px">Username</div>
       <div style="display:flex;gap:8px">
-        <input id="accUsername" class="acc-input" placeholder="Username" autocomplete="off" maxlength="18">
+        <input id="accUsername" name="ws_display_name" class="acc-input" placeholder="Username" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" maxlength="18">
         <button class="acc-btn" onclick="saveUsername()">Save</button>
       </div>
     </div>
@@ -444,7 +444,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     <div style="margin-bottom:18px">
       <div class="sr-label" style="margin-bottom:8px">Email</div>
       <div style="display:flex;gap:8px">
-        <input id="accEmail" class="acc-input" type="email" placeholder="Email" autocomplete="off">
+        <input id="accEmail" name="ws_contact_email" class="acc-input" type="email" placeholder="Email" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other">
         <button class="acc-btn" onclick="saveEmail()">Save</button>
       </div>
       <div style="font-size:.68rem;color:var(--muted);margin-top:6px">Changing email may require confirmation via a link sent to the new address.</div>
@@ -453,9 +453,9 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     <!-- Password -->
     <div>
       <div class="sr-label" style="margin-bottom:8px">New Password</div>
-      <input id="accPassword" class="acc-input" type="password" placeholder="New password (min 6 chars)" autocomplete="off" style="width:100%;margin-bottom:8px">
+      <input id="accPassword" name="ws_new_password" class="acc-input" type="password" placeholder="New password (min 6 chars)" autocomplete="new-password" data-lpignore="true" data-1p-ignore style="width:100%;margin-bottom:8px">
       <div style="display:flex;gap:8px">
-        <input id="accPassword2" class="acc-input" type="password" placeholder="Confirm new password" autocomplete="off">
+        <input id="accPassword2" name="ws_new_password2" class="acc-input" type="password" placeholder="Confirm new password" autocomplete="new-password" data-lpignore="true" data-1p-ignore>
         <button class="acc-btn" onclick="savePassword()">Save</button>
       </div>
     </div>
