@@ -243,8 +243,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
   --teal-btn:#2ec4b6; --teal-lip:#15756c; --teal-hi:#48ded0;
   --teal3:rgba(46,196,182,.15); --teal4:rgba(46,196,182,.07);
   --gold:#f5c842; --gold2:rgba(245,200,66,.13); --gold-lip:#a8831c;
-  --green:#6fd8cc; --silver:#c9d2d0; --bronze:#d69a5c;
-  --red:#e6707a;
+  --green:#3ddc84; --green2:rgba(61,220,132,.16);
+  --silver:#c9d2d0; --bronze:#d69a5c;
+  --red:#ff6b78; --red2:rgba(255,107,120,.16);
   --on-accent:#04100e;
   --text:#e8f0ee; --text2:#c9d4d1; --muted:#7e9a94; --soft:#9fb5b0;
   --paper:#f6ecd9; --paper-ink:#241a08;
@@ -269,29 +270,28 @@ header,.topbar,.app-top{background:rgba(10,15,14,.9)!important;border-bottom:1px
 
 /* ── chunky plastic keys (pressable, with a lip) ────────── */
 .back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.next-btn,.continue-btn,
-.btn,.btn-lg,.btn-solid,.btn-ghost,.btn-hero,.submit-btn,.google-btn,.verify-btn,
-.guess-btn,.h-btn,.over-btn,.spin-btn,.task-b,.bridge-b,.verify-resend{
+.btn,.btn-lg,.btn-solid,.btn-ghost,.btn-hero,.submit-btn,.verify-btn,
+.guess-btn,.h-btn,.over-btn,.spin-btn,.task-b,.bridge-b,.verify-resend,.btns .btn{
   font-family:var(--disp)!important;font-weight:600!important;letter-spacing:0!important;
   border-radius:13px!important;transition:transform .08s,box-shadow .08s,background .15s!important}
-.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.btn-ghost{
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.btn-ghost,.h-btn{
   background:var(--bg3)!important;border:0!important;color:var(--text2)!important;
   box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
 .back-btn:hover,.back-link:hover,.back:hover,.logout-btn:hover,.logout-btn2:hover,
-.acc-btn:hover,.btn-ghost:hover{background:var(--bg4)!important;color:var(--text)!important}
+.acc-btn:hover,.btn-ghost:hover,.h-btn:hover{background:var(--bg4)!important;color:var(--text)!important}
 .btn,.btn-lg,.btn-solid,.btn-hero,.submit-btn,.next-btn,.continue-btn,.verify-btn,
-.guess-btn,.h-btn,.over-btn,.spin-btn,.task-b,.bridge-b{
+.guess-btn,.over-btn,.spin-btn,.task-b,.bridge-b{
   background:var(--teal-btn)!important;border:0!important;color:var(--on-accent)!important;
   box-shadow:0 2px 0 var(--teal-lip),0 5px 12px -9px rgba(46,196,182,.45)!important}
 .btn:hover,.btn-lg:hover,.btn-solid:hover,.btn-hero:hover,.submit-btn:hover,
-.next-btn:hover,.continue-btn:hover,.guess-btn:hover,.h-btn:hover,.spin-btn:hover{
+.next-btn:hover,.continue-btn:hover,.guess-btn:hover,.spin-btn:hover{
   background:var(--teal-hi)!important}
 .back-btn:active,.back-link:active,.back:active,.logout-btn:active,.logout-btn2:active,
 .acc-btn:active,.btn:active,.btn-lg:active,.btn-solid:active,.btn-hero:active,
 .submit-btn:active,.next-btn:active,.continue-btn:active,.guess-btn:active,
 .h-btn:active,.over-btn:active,.spin-btn:active{transform:translateY(2px)!important;
   box-shadow:0 0 0 currentColor!important}
-.google-btn{background:var(--bg3)!important;border:0!important;color:var(--text)!important;
-  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+/* .google-btn is intentionally NOT restyled here — see crate-index.css */
 
 /* ── surfaces ───────────────────────────────────────────── */
 .card,.stat-card,.standing-card,.auth-card,.quiz-card,.result-card,.over-card,
@@ -312,7 +312,7 @@ header,.topbar,.app-top{background:rgba(10,15,14,.9)!important;border-bottom:1px
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
 .input-field:focus,.acc-input:focus,input:focus{outline:0!important;
   box-shadow:0 0 0 2px var(--teal)!important}
-.input-label,.field-label,.s-label,.sp-label,.stat-lbl,.sr-label,.eyebrow,.timer-label{
+.input-label,.field-label,.s-label,.sp-label,.stat-lbl,.sr-label,.timer-label{
   font-family:var(--body)!important;font-weight:700!important;color:var(--muted)!important}
 
 /* ── headings + section titles ──────────────────────────── */
@@ -324,7 +324,7 @@ header,.topbar,.app-top{background:rgba(10,15,14,.9)!important;border-bottom:1px
 .section-title::after{content:none!important}
 
 /* ── pills, badges, tags ────────────────────────────────── */
-.profile-rank-pill,.rh-tag,.quiz-tag,.rs-live-badge,.pts,.champ-badge,.eyebrow{
+.profile-rank-pill,.rh-tag,.quiz-tag,.rs-live-badge,.pts,.champ-badge{
   border:0!important;border-radius:999px!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
 
