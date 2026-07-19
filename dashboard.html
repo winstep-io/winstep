@@ -231,25 +231,28 @@ header{display:flex;align-items:center;justify-content:space-between;
 .bridge-play-btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--gold-lip)}
 
 /* ── leaderboard card ───────────────────────────────────── */
-.card{background:var(--bg2);border:0;border-radius:24px;overflow:hidden;box-shadow:var(--lift)}
-.card-head{padding:16px 18px 6px;border-bottom:0;font-family:var(--disp);
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:24px;
+  overflow:hidden;box-shadow:0 8px 18px -16px rgba(0,0,0,.7)}
+.card-head{padding:15px 18px 13px;border-bottom:1px solid var(--border);font-family:var(--disp);
   font-size:1.08rem;letter-spacing:-.01em;color:var(--text);text-transform:none;
   font-weight:600;display:flex;align-items:center;justify-content:space-between}
 .live-badge{font-size:.68rem;font-weight:700;color:var(--teal);letter-spacing:.06em;
   display:flex;align-items:center;gap:5px;text-transform:uppercase}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);
   animation:blink 1.5s infinite}
-.lb-tabs{display:flex;gap:4px;padding:8px;border-bottom:0;background:transparent}
+.lb-tabs{display:flex;gap:4px;padding:10px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.015)}
 .lb-tab{flex:1;padding:11px 4px;border:0;background:transparent;color:var(--muted);
   font-family:var(--disp);font-size:.86rem;font-weight:600;letter-spacing:0;
   cursor:pointer;border-radius:13px;transition:all .15s;white-space:nowrap}
 .lb-tab:hover{color:var(--text2)}
 .lb-tab.active{background:var(--teal-btn);color:var(--on-accent);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
-.lb-row{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:0 8px;
-  border-bottom:0;border-radius:16px;transition:background .15s}
-.lb-row.me{background:rgba(46,196,182,.13)}
-.lb-row:last-child{margin-bottom:10px}
+/* რიგები თხელი ხაზით იყოფა — კიდიდან კიდემდე, ცხრილის ლოგიკით */
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 16px;margin:0;
+  border-bottom:1px solid rgba(255,255,255,.045);border-radius:0;transition:background .15s}
+.lb-row.me{background:rgba(46,196,182,.10)}
+.lb-row:last-child{border-bottom:0}
 .lb-rank{font-family:var(--disp);font-size:1.02rem;font-weight:700;color:var(--muted);
   width:21px;flex-shrink:0;text-align:center}
 .lb-rank.medal{font-size:1.05rem}
@@ -365,38 +368,14 @@ body.gap-mode #topMeta{min-height:0!important}
 
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
-  /* ── მობილურის რიგი ───────────────────────────────────────────
-     სასურველი თანმიმდევრობაა: ბოქსები → Leaderboard → რეკლამა → პრიზები.
-     პრობლემა: რეკლამა .layout-ის გარეთაა, პრიზები კი .sidebar-col-ის
-     შიგნით — ანუ სხვადასხვა მშობელში, და order მხოლოდ ძმებს აწესრიგებს.
-     ამიტომ ორივე კონტეინერს display:contents ვაძლევთ: ისინი ყუთებად
-     წყვეტენ არსებობას და მათი შვილები პირდაპირ body-ის flex-ბავშვები
-     ხდებიან — მერე უკვე order მუშაობს. მარკაპი უცვლელია. */
-  body{display:flex;flex-direction:column}
-  .layout{display:contents}
-  .sidebar-col{display:contents}
-
-  /* .layout-ის სიგანე და padding ახლა თითოეულმა ბლოკმა თვითონ უნდა იტვირთოს.
-     flex-ში margin:auto აუქმებს გაწელვას, ამიტომ სიგანე პირდაპირ ეწერება —
-     თორემ სარეკლამო სლოტი შიგთავსის ზომამდე იკუმშება. */
-  .main-col,.card,.pi-card,.ad-slot{width:calc(100% - 48px);max-width:640px;
-    margin-left:auto;margin-right:auto}
-  .ad-slot{padding-left:0;padding-right:0}
-  .main-col{padding:22px 0 0}
-  .card{margin-top:24px}
-  .pi-card{margin-top:0}
-
-  header{order:1}
-  .ad-slot.top{order:2}
-  .main-col{order:3}
-  .card{order:4}          /* Leaderboard */
-  .ad-slot.bottom{order:5;margin-top:24px;margin-bottom:24px}
-  .pi-card{order:6}
-  .ws-mini-foot{order:7}
-
+  /* ერთ სვეტად დაწყობისას row-gap აკონტროლებს ბოლო ბოქსსა და Leaderboard-ს
+     შორის სივრცეს. 24px = ზუსტად ის დაშორება, რაც "Day ends in" ზოლსა და
+     პირველ ბოქსს შორისაა (10px margin-bottom + 14px .boxes gap). */
+  .layout{grid-template-columns:1fr;max-width:640px;row-gap:24px}
   .lb-name{font-size:.98rem}
   .lb-pts{font-size:1.02rem}
   .ad-slot{max-width:640px}
+  .sidebar-col{position:static;margin-top:0}
 }
 @media(max-width:560px){
   header{padding:12px 12px}
