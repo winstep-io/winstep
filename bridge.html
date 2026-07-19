@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>winstep.io — The Bridge</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preload" href="/fonts/rajdhani-v17-latin-600.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/space-grotesk-v22-latin-600.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/space-grotesk-v22-latin-700.woff2" as="font" type="font/woff2" crossorigin>
-  <!-- self-hosted @font-face (inlined: removes the last render-blocking
+<link rel="preload" href="/fonts/fredoka-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/nunito-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<!-- self-hosted @font-face (inlined: removes the last render-blocking
        request; the .woff2 files are still fetched & cached normally) -->
-  <style>@font-face{font-family:'Rajdhani';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/rajdhani-v17-latin-regular.woff2') format('woff2');}@font-face{font-family:'Rajdhani';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/rajdhani-v17-latin-500.woff2') format('woff2');}@font-face{font-family:'Rajdhani';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/rajdhani-v17-latin-600.woff2') format('woff2');}@font-face{font-family:'Rajdhani';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/rajdhani-v17-latin-700.woff2') format('woff2');}@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/space-grotesk-v22-latin-regular.woff2') format('woff2');}@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/space-grotesk-v22-latin-500.woff2') format('woff2');}@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/space-grotesk-v22-latin-600.woff2') format('woff2');}@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/space-grotesk-v22-latin-700.woff2') format('woff2');}@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/bebas-neue-v16-latin-regular.woff2') format('woff2');}</style>
+  <style>@font-face{font-family:'Fredoka';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2');}@font-face{font-family:'Fredoka';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/fredoka-latin-700-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/nunito-latin-400-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/nunito-latin-700-normal.woff2') format('woff2');}</style>
 <style>
 :root{
   --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
@@ -20,17 +19,17 @@
   --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
 
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.95);backdrop-filter:blur(20px);width:100%;position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-badge{width:38px;height:38px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(46,196,182,.3)}
-.logo-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.01em}
+.logo-name{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.01em}
 .logo-name,.logo-name *{color:var(--text)}
 .logo-name span{color:var(--teal)}
-.back-btn{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;letter-spacing:.05em;padding:8px 16px;border-radius:8px;transition:all .2s}
+.back-btn{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;letter-spacing:.05em;padding:8px 16px;border-radius:8px;transition:all .2s}
 .back-btn:hover{border-color:var(--teal);color:var(--teal)}
 
 #wrap{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:480px;padding:20px 16px}
@@ -38,11 +37,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 /* info bar */
 
 .hud{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--bg3);border-radius:14px;padding:12px 18px;border:1px solid var(--border)}
-.hud-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.15em;color:var(--text)}
+.hud-title{font-family:'Fredoka',sans-serif;font-size:1.4rem;letter-spacing:.15em;color:var(--text)}
 .hud-title span{color:var(--teal)}
 .hud-r{display:flex;gap:16px}
 .hs .l{font-size:.55rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;display:block;text-align:right}
-.hs .v{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--teal);letter-spacing:.1em;display:block;text-align:right}
+.hs .v{font-family:'Fredoka',sans-serif;font-size:1.1rem;color:var(--teal);letter-spacing:.1em;display:block;text-align:right}
 .hs .v.g{color:var(--gold)}
 #cw{width:100%;position:relative;border-radius:16px;overflow:hidden;border:1.5px solid var(--border2);box-shadow:0 4px 24px rgba(0,0,0,.5)}
 canvas{display:block;width:100%;height:auto}
@@ -51,7 +50,7 @@ canvas{display:block;width:100%;height:auto}
 .step-timer.show{display:block}
 .st-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .st-label{font-size:.66rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-.st-val{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--teal);letter-spacing:.05em}
+.st-val{font-family:'Fredoka',sans-serif;font-size:1.2rem;color:var(--teal);letter-spacing:.05em}
 .st-val.warn{color:var(--gold)}
 .st-val.danger{color:#e63946}
 .st-track{width:100%;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
@@ -65,16 +64,16 @@ canvas{display:block;width:100%;height:auto}
 .pip.cur{background:rgba(46,196,182,.5);animation:pp 1s infinite}
 @keyframes pp{0%,100%{opacity:.4}50%{opacity:1}}
 .btns{display:flex;gap:10px;width:100%}
-.btn{flex:1;padding:14px;border:1.5px solid var(--border2);background:var(--bg3);border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.12em;color:var(--teal);cursor:pointer;transition:all .15s}
+.btn{flex:1;padding:14px;border:1.5px solid var(--border2);background:var(--bg3);border-radius:12px;font-family:'Fredoka',sans-serif;font-size:1rem;letter-spacing:.12em;color:var(--teal);cursor:pointer;transition:all .15s}
 .btn:hover:not(:disabled){background:var(--teal);color:#000}
 .btn:active:not(:disabled){transform:scale(.97)}
 .btn:disabled{opacity:.25;cursor:not-allowed}
 #ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,12,11,.93);backdrop-filter:blur(6px);gap:12px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:20;padding:24px}
 #ov.show{opacity:1;pointer-events:all}
-#ovT{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.12em;color:var(--text);text-align:center;line-height:1.2}
+#ovT{font-family:'Fredoka',sans-serif;font-size:2rem;letter-spacing:.12em;color:var(--text);text-align:center;line-height:1.2}
 #ovS{font-size:.82rem;letter-spacing:.08em;color:var(--muted);text-align:center;line-height:1.6;padding:0 16px}
-#ovP{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--teal);letter-spacing:.1em;display:none}
-#ovB{margin-top:6px;padding:12px 32px;background:var(--teal);color:#000;border:none;border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.05em}
+#ovP{font-family:'Fredoka',sans-serif;font-size:1.8rem;color:var(--teal);letter-spacing:.1em;display:none}
+#ovB{margin-top:6px;padding:12px 32px;background:var(--teal);color:#000;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.05em}
 #ovB:hover{background:#44ffe8;box-shadow:0 4px 16px rgba(46,196,182,.3)}
 .demo-note{font-size:.64rem;color:var(--muted);text-align:center;letter-spacing:.05em;margin-top:2px;max-width:300px;line-height:1.5}
 </style>
@@ -134,7 +133,7 @@ canvas{display:block;width:100%;height:auto}
       'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
       'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
       'box-shadow:0 -8px 30px rgba(0,0,0,.45);padding:16px 20px;' +
-      "font-family:Rajdhani,'Segoe UI',sans-serif;color:#c9d4d1";
+      "font-family:Nunito,'Segoe UI',sans-serif;color:#c9d4d1";
     b.innerHTML =
       '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
       'gap:18px;flex-wrap:wrap;justify-content:center">' +
@@ -190,6 +189,236 @@ canvas{display:block;width:100%;height:auto}
   }
 })();
   </script>
+<style>
+/* ============================================================
+   winstep — "crate" skin, shared override layer
+   Appended AFTER each page's own stylesheet, so it only reshapes
+   what it names. Anything not covered keeps its original rule
+   (in the new colours, because the tokens below are overridden).
+   ============================================================ */
+:root{
+  --bg:#0a0f0e; --bg2:#111a18; --bg3:#182421; --bg4:#20302c;
+  --teal:#2ec4b6; --teal2:#6fd8cc;
+  --teal-btn:#2ec4b6; --teal-lip:#15756c; --teal-hi:#48ded0;
+  --teal3:rgba(46,196,182,.15); --teal4:rgba(46,196,182,.07);
+  --gold:#f5c842; --gold2:rgba(245,200,66,.13); --gold-lip:#a8831c;
+  --green:#3ddc84; --green2:rgba(61,220,132,.16);
+  --silver:#c9d2d0; --bronze:#d69a5c;
+  --red:#ff6b78; --red2:rgba(255,107,120,.16);
+  --on-accent:#04100e;
+  --text:#e8f0ee; --text2:#c9d4d1; --muted:#7e9a94; --soft:#9fb5b0;
+  --paper:#f6ecd9; --paper-ink:#241a08;
+  --border:rgba(255,255,255,.06); --border2:rgba(46,196,182,.34);
+  --lift:inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px -14px rgba(0,0,0,.75);
+  --disp:'Fredoka',system-ui,sans-serif;
+  --body:'Nunito',system-ui,sans-serif;
+}
+
+/* ── ground ─────────────────────────────────────────────── */
+body{background:var(--bg);font-family:var(--body)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),
+    radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)}
+
+/* ── header + logo ──────────────────────────────────────── */
+header,.topbar,.app-top{background:rgba(10,15,14,.9)!important;border-bottom:1px solid var(--border)!important}
+.logo-badge{border-radius:13px!important;
+  box-shadow:0 4px 12px -7px rgba(46,196,182,.55),inset 0 1px 0 rgba(255,255,255,.28)!important}
+.logo-name{font-family:var(--disp)!important;font-weight:700!important;letter-spacing:-.01em!important}
+
+/* ── chunky plastic keys (pressable, with a lip) ────────── */
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.next-btn,.continue-btn,
+.btn,.btn-lg,.btn-solid,.btn-ghost,.btn-hero,.submit-btn,.google-btn,.verify-btn,
+.guess-btn,.h-btn,.over-btn,.spin-btn,.task-b,.bridge-b,.verify-resend,.btns .btn{
+  font-family:var(--disp)!important;font-weight:600!important;letter-spacing:0!important;
+  border-radius:13px!important;transition:transform .08s,box-shadow .08s,background .15s!important}
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.btn-ghost,.h-btn{
+  background:var(--bg3)!important;border:0!important;color:var(--text2)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+.back-btn:hover,.back-link:hover,.back:hover,.logout-btn:hover,.logout-btn2:hover,
+.acc-btn:hover,.btn-ghost:hover,.h-btn:hover{background:var(--bg4)!important;color:var(--text)!important}
+.btn,.btn-lg,.btn-solid,.btn-hero,.submit-btn,.next-btn,.continue-btn,.verify-btn,
+.guess-btn,.over-btn,.spin-btn,.task-b,.bridge-b{
+  background:var(--teal-btn)!important;border:0!important;color:var(--on-accent)!important;
+  box-shadow:0 2px 0 var(--teal-lip),0 5px 12px -9px rgba(46,196,182,.45)!important}
+.btn:hover,.btn-lg:hover,.btn-solid:hover,.btn-hero:hover,.submit-btn:hover,
+.next-btn:hover,.continue-btn:hover,.guess-btn:hover,.spin-btn:hover{
+  background:var(--teal-hi)!important}
+.back-btn:active,.back-link:active,.back:active,.logout-btn:active,.logout-btn2:active,
+.acc-btn:active,.btn:active,.btn-lg:active,.btn-solid:active,.btn-hero:active,
+.submit-btn:active,.next-btn:active,.continue-btn:active,.guess-btn:active,
+.h-btn:active,.over-btn:active,.spin-btn:active{transform:translateY(2px)!important;
+  box-shadow:0 0 0 currentColor!important}
+.google-btn{background:var(--bg3)!important;border:0!important;color:var(--text)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+
+/* ── surfaces ───────────────────────────────────────────── */
+.card,.stat-card,.standing-card,.auth-card,.quiz-card,.result-card,.over-card,
+.modal-card,.boxc,.c,.frame,.callout,.current-box,.score-box,.hud,.scoreboard,
+.msg-box,.settings-row,.history-row,.verify-card,.task,.champ,.faq{
+  border:0!important;box-shadow:var(--lift)!important}
+.card,.auth-card,.quiz-card,.result-card,.over-card,.modal-card,.boxc,.c,.frame,
+.verify-card,.champ,.faq{border-radius:24px!important}
+.stat-card,.standing-card,.callout,.current-box,.score-box,.hud,.scoreboard,
+.msg-box,.settings-row,.history-row,.task{border-radius:18px!important}
+.card,.stat-card,.standing-card,.auth-card,.quiz-card,.over-card,.modal-card,
+.boxc,.verify-card{background:var(--bg2)!important}
+
+/* ── form fields ────────────────────────────────────────── */
+.input-field,.acc-input,input[type=text],input[type=email],input[type=password]{
+  background:var(--bg3)!important;border:0!important;border-radius:14px!important;
+  font-family:var(--body)!important;font-weight:600!important;color:var(--text)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
+.input-field:focus,.acc-input:focus,input:focus{outline:0!important;
+  box-shadow:0 0 0 2px var(--teal)!important}
+.input-label,.field-label,.s-label,.sp-label,.stat-lbl,.sr-label,.timer-label{
+  font-family:var(--body)!important;font-weight:700!important;color:var(--muted)!important}
+
+/* ── headings + section titles ──────────────────────────── */
+.section-title,.sec-h,.title,.hud-title,.modal-title,.q-text,.result-title,
+.over-title,.next-title,.rh-title,.profile-name,.quiz-tag,.hero{
+  font-family:var(--disp)!important;letter-spacing:-.015em!important}
+.section-title{font-size:1.2rem!important;letter-spacing:-.01em!important;
+  text-transform:none!important;color:var(--text)!important;font-weight:600!important}
+.section-title::after{content:none!important}
+
+/* ── pills, badges, tags ────────────────────────────────── */
+.profile-rank-pill,.rh-tag,.quiz-tag,.rs-live-badge,.pts,.champ-badge{
+  border:0!important;border-radius:999px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+
+/* ── numbers that used to be Bebas (condensed) ──────────── */
+/* Fredoka is wider, so the sizes tuned for Bebas are stepped down */
+.stat-val{font-family:var(--disp)!important;font-weight:700!important;font-size:1.75rem!important;
+  letter-spacing:-.02em!important}
+.standing-rank{font-family:var(--disp)!important;font-weight:700!important;font-size:2rem!important}
+.profile-avatar{font-family:var(--disp)!important;font-weight:700!important;font-size:1.9rem!important;
+  color:var(--on-accent)!important;
+  background:linear-gradient(150deg,var(--teal-hi),var(--teal))!important;
+  box-shadow:0 6px 18px -10px rgba(46,196,182,.6)!important}
+.rh-title{font-family:var(--disp)!important;font-weight:700!important;font-size:2.1rem!important;
+  letter-spacing:-.025em!important}
+.podium-avatar{font-family:var(--disp)!important;font-weight:700!important;color:var(--on-accent)!important}
+.p1 .podium-avatar{font-size:1.9rem!important}
+.p2 .podium-avatar,.p3 .podium-avatar{font-size:1.5rem!important}
+.podium-pts{font-family:var(--disp)!important;font-weight:700!important;font-size:1rem!important}
+.podium-bar{font-family:var(--disp)!important;font-weight:700!important;font-size:1.1rem!important;
+  border-radius:14px 14px 0 0!important}
+.podium-name,.podium-prize,.lb-pts,.lb-rank,.s-pts,.sp-val,.rs-round,.rs-pts,
+.history-pts,.result-pts,.q-pts,.over-score,.result-num,.st-val,.tt-val,.timer-value{
+  font-family:var(--disp)!important;font-weight:700!important}
+.lb-avatar,.lb-avatar-initial{font-family:var(--disp)!important;font-weight:700!important}
+.lb-avatar-initial{background:linear-gradient(150deg,var(--teal-hi),var(--teal))!important;
+  color:var(--on-accent)!important}
+.next-title{font-family:var(--disp)!important;font-weight:600!important;font-size:1.3rem!important;
+  letter-spacing:-.02em!important}
+
+/* ── tables + rows ──────────────────────────────────────── */
+.rs-table th{font-family:var(--body)!important;font-weight:700!important;
+  font-size:.7rem!important;color:var(--muted)!important;border-bottom:1px solid var(--border)!important}
+.rs-table td{font-size:.92rem!important;font-weight:600!important;border-bottom:1px solid var(--border)!important}
+.lb-row,.history-row,.settings-row{border-bottom:0!important;border-radius:16px!important}
+.lb-row.me{background:rgba(46,196,182,.13)!important}
+
+/* ── footers ────────────────────────────────────────────── */
+.ws-mini-foot,.footer,.foot-links,.legal,.foot-disclaimer{border-top:0!important;
+  font-family:var(--body)!important;font-weight:600!important;color:var(--muted)!important}
+.ws-mini-foot a,.ws-mini-foot button.ws-link,.footer a,.foot-links a{
+  color:var(--muted)!important;padding:6px 2px!important;display:inline-block!important}
+.ws-mini-foot a:hover,.footer a:hover,.foot-links a:hover{color:var(--teal)!important}
+
+/* ── small fixes found by measuring, not by eye ─────────── */
+/* results.html: the decorative hero glow is a fixed 400px pseudo-element and
+   pushed 5px past the viewport on a 390px phone (pre-existing, fixed here) */
+.results-hero::after{width:min(400px,100%)!important}
+/* nothing below 11px — these three were 10.2–10.9px */
+.rh-tag{font-size:.74rem!important}
+.prize-note .disclaimer,.prize-note a{font-size:.78rem!important}
+.sr-desc,.acc-note,div[style*="font-size:.68rem"],
+div[style*="font-size:.66rem"]{font-size:.78rem!important}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── games: page-specific ────────────────────────────────── */
+
+/* quiz — answers keep their green/red semantics, only the shape changes */
+.answer{border:0!important;border-radius:16px!important;background:var(--bg3)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;
+  font-family:var(--body)!important;font-weight:600!important}
+.answer:hover:not(.disabled){background:var(--bg4)!important;transform:translateX(3px)!important}
+.answer-letter{border:0!important;border-radius:11px!important;font-family:var(--disp)!important;
+  font-weight:700!important;background:var(--teal3)!important;color:var(--teal)!important}
+.answer-text{font-weight:600!important;font-size:1rem!important}
+.answer.correct{background:var(--green2)!important;
+  box-shadow:0 0 0 1.5px var(--green),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.answer.correct .answer-letter{background:var(--green)!important;color:#04140a!important}
+.answer.correct .answer-text{color:var(--green)!important}
+.answer.wrong{background:var(--red2)!important;
+  box-shadow:0 0 0 1.5px var(--red),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.answer.wrong .answer-letter{background:var(--red)!important;color:#2a0508!important}
+.answer.wrong .answer-text{color:var(--red)!important}
+.timer-section{border-bottom:0!important;background:transparent!important}
+.timer-track,.st-track,.tt-track{border-radius:99px!important;background:rgba(255,255,255,.07)!important}
+.timer-fill,.st-fill,.tt-fill{border-radius:99px!important}
+.q-text{font-size:1.3rem!important;font-weight:600!important;line-height:1.3!important}
+.quiz-tag{background:var(--teal3)!important;color:var(--teal)!important;
+  font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
+
+/* hilo — the playing card must stay a real white card, untouched by the
+   card/shadow rules above; only its corner type is restyled */
+.playing-card{border-radius:20px!important;background:#f6f4ef!important;
+  box-shadow:0 12px 30px -12px rgba(0,0,0,.75)!important;
+  /* the card ships without .red/.black until JS deals — without this the
+     placeholder pips inherit the light page text colour on a white card */
+  color:var(--card-black,#1a2422)!important}
+.pc-corner,.pc-rank,.pc-center{font-family:var(--disp)!important;font-weight:700!important}
+.guess-btn.low{background:var(--bg3)!important;color:var(--text)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+.guess-btn.low:hover:not(:disabled){background:var(--bg4)!important;color:var(--text)!important}
+.guess-btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+.score-box .k{font-family:var(--body)!important;font-weight:700!important;
+  font-size:.7rem!important;color:var(--muted)!important}
+.score-box .v{font-family:var(--disp)!important;font-weight:700!important;font-size:1.5rem!important}
+.eyebrow{font-family:var(--body)!important;font-weight:700!important;color:var(--teal)!important;
+  font-size:.74rem!important}
+.title{font-size:1.9rem!important;font-weight:600!important}
+.subtitle{font-size:.95rem!important;color:var(--muted)!important;font-weight:600!important}
+.feedback{font-family:var(--disp)!important;font-weight:600!important;font-size:1rem!important}
+.over-card{border-radius:24px!important}
+.over-title{font-family:var(--disp)!important;font-weight:600!important}
+.over-score{font-size:2rem!important}
+
+/* spin wheel — the wheel itself is canvas/SVG, only its frame is restyled */
+.wheel-ring{box-shadow:0 0 0 4px var(--bg3),0 0 0 6px rgba(46,196,182,.3),
+  0 12px 34px -14px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.55)!important}
+.wheel-ring.spinning{box-shadow:0 0 0 4px var(--bg3),0 0 0 6px var(--teal),
+  0 0 30px var(--teal3),0 12px 34px -14px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.55)!important}
+.hub{border:0!important;background:var(--bg3)!important;
+  box-shadow:0 3px 10px -4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)!important}
+.result-num{font-family:var(--disp)!important;font-weight:700!important;font-size:2.1rem!important}
+.result-label{font-weight:600!important;color:var(--soft)!important}
+
+/* bridge — HUD, pips and the two pick buttons */
+.demo-note{font-size:.78rem!important;font-weight:600!important}
+.hud{background:var(--bg2)!important}
+.hud-title{font-family:var(--disp)!important;font-weight:700!important;
+  font-size:1.15rem!important;letter-spacing:0!important}
+.hs .l{font-family:var(--body)!important;font-weight:700!important;font-size:.74rem!important;
+  color:var(--muted)!important}
+.hs .v{font-family:var(--disp)!important;font-weight:700!important;font-size:1.05rem!important;
+  letter-spacing:0!important}
+#cw{border:0!important;border-radius:20px!important;
+  box-shadow:0 8px 22px -14px rgba(0,0,0,.8)!important}
+.pip{border-radius:99px!important;background:rgba(255,255,255,.08)!important}
+.pip.done{background:var(--teal)!important}
+.pip.cur{background:rgba(46,196,182,.5)!important}
+.step-timer{background:var(--bg2)!important;border:0!important;border-radius:18px!important;
+  box-shadow:var(--lift)!important}
+.st-label{font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
+.btns .btn{font-size:.95rem!important;letter-spacing:0!important;padding:15px!important}
+.btns .btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+</style>
 </head>
 <body>
 
@@ -283,7 +512,7 @@ async function bridgeInit(){
 
   if(!live){
     // not eligible — show message, block game
-    document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🌉</div><div style="font-family:Space Grotesk,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Bridge not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">The bridge unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Rajdhani,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
+    document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🌉</div><div style="font-family:Fredoka,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Bridge not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">The bridge unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Nunito,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
     return;
   }
 
@@ -361,8 +590,8 @@ function draw(){
   drawRails();drawFinish();drawStart();drawPanels();drawShards();drawParts();if(G)drawMannequin(G.x,G.y,G.alpha);drawVig();
 }
 function drawRails(){var lx=CX-PGAP/2-PW-14,rx=CX+PGAP/2+PW+14;ctx.strokeStyle='rgba(46,196,182,0.2)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lx,BOT_Y-22);ctx.lineTo(lx-5,TOP_Y+22);ctx.stroke();ctx.beginPath();ctx.moveTo(rx,BOT_Y-22);ctx.lineTo(rx+5,TOP_Y+22);ctx.stroke();for(var r=0;r<TOTAL;r++){var y=sY(r);ctx.strokeStyle='rgba(46,196,182,0.07)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(lx-3,y);ctx.lineTo(rx+3,y);ctx.stroke();}}
-function drawFinish(){var fw=200,fh=34,fy=TOP_Y;ctx.fillStyle='rgba(46,196,182,0.12)';ctx.strokeStyle='#2ec4b6';ctx.lineWidth=1.5;ctx.beginPath();ctx.rect(CX-fw/2,fy-fh/2,fw,fh);ctx.fill();ctx.stroke();ctx.fillStyle='#2ec4b6';ctx.font="bold 12px 'Bebas Neue',sans-serif";ctx.textAlign='center';ctx.fillText('✦  FINISH  ✦',CX,fy+5);}
-function drawStart(){var sw=200,sh=34,sy=BOT_Y;ctx.fillStyle='rgba(255,255,255,0.03)';ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(CX-sw/2,sy-sh/2,sw,sh);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font="bold 12px 'Bebas Neue',sans-serif";ctx.textAlign='center';ctx.fillText('START',CX,sy+5);}
+function drawFinish(){var fw=200,fh=34,fy=TOP_Y;ctx.fillStyle='rgba(46,196,182,0.12)';ctx.strokeStyle='#2ec4b6';ctx.lineWidth=1.5;ctx.beginPath();ctx.rect(CX-fw/2,fy-fh/2,fw,fh);ctx.fill();ctx.stroke();ctx.fillStyle='#2ec4b6';ctx.font="bold 12px 'Fredoka',sans-serif";ctx.textAlign='center';ctx.fillText('✦  FINISH  ✦',CX,fy+5);}
+function drawStart(){var sw=200,sh=34,sy=BOT_Y;ctx.fillStyle='rgba(255,255,255,0.03)';ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(CX-sw/2,sy-sh/2,sw,sh);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font="bold 12px 'Fredoka',sans-serif";ctx.textAlign='center';ctx.fillText('START',CX,sy+5);}
 function drawPanels(){
   if(!G)return;
   for(var r=0;r<TOTAL;r++){for(var s=0;s<2;s++){
@@ -375,11 +604,11 @@ function drawPanels(){
     if(glow){ctx.shadowColor=glow;ctx.shadowBlur=12;}
     ctx.fillStyle=fill;ctx.strokeStyle=stroke;ctx.lineWidth=1.3;ctx.beginPath();ctx.rect(rc.x,rc.y,rc.w,rc.h);ctx.fill();ctx.stroke();
     ctx.shadowBlur=0;var sh2=ctx.createLinearGradient(rc.x,rc.y,rc.x+rc.w*.6,rc.y+rc.h*.6);sh2.addColorStop(0,'rgba(255,255,255,0.1)');sh2.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=sh2;ctx.beginPath();ctx.rect(rc.x+2,rc.y+2,rc.w*.55,rc.h*.4);ctx.fill();
-    ctx.fillStyle='rgba(46,196,182,0.25)';ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText(r+1,rc.x+rc.w/2,rc.y+rc.h-5);
-    if(isCur){ctx.fillStyle='rgba(46,196,182,0.55)';ctx.font='bold 18px Bebas Neue,sans-serif';ctx.textAlign='center';ctx.fillText('?',rc.x+rc.w/2,rc.y+rc.h/2+6);}
+    ctx.fillStyle='rgba(46,196,182,0.25)';ctx.font='bold 9px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText(r+1,rc.x+rc.w/2,rc.y+rc.h-5);
+    if(isCur){ctx.fillStyle='rgba(46,196,182,0.55)';ctx.font='bold 18px Fredoka,sans-serif';ctx.textAlign='center';ctx.fillText('?',rc.x+rc.w/2,rc.y+rc.h/2+6);}
     ctx.restore();
   }}
-  if(G.phase==='play'&&G.step<TOTAL){var lr=pRect(G.step,0),rr=pRect(G.step,1);ctx.fillStyle='rgba(46,196,182,0.45)';ctx.font='700 8px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText('LEFT',lr.x+lr.w/2,lr.y-5);ctx.fillText('RIGHT',rr.x+rr.w/2,rr.y-5);}
+  if(G.phase==='play'&&G.step<TOTAL){var lr=pRect(G.step,0),rr=pRect(G.step,1);ctx.fillStyle='rgba(46,196,182,0.45)';ctx.font='700 8px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText('LEFT',lr.x+lr.w/2,lr.y-5);ctx.fillText('RIGHT',rr.x+rr.w/2,rr.y-5);}
 }
 function drawMannequin(x,y,alpha){
   ctx.save();ctx.globalAlpha=alpha||1;ctx.translate(x,y);
