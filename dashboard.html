@@ -90,7 +90,7 @@ header{display:flex;align-items:center;justify-content:space-between;
 
 /* ── layout — single column, phone-shaped (this audience plays on mobile) ── */
 .layout{max-width:1200px;margin:0 auto;padding:22px 24px;display:grid;
-  grid-template-columns:1fr 330px;gap:20px;align-items:start}
+  grid-template-columns:1fr 380px;gap:20px;align-items:start}
 .main-col{min-width:0}
 .sidebar-col{display:flex;flex-direction:column;gap:14px;position:sticky;top:84px}
 .welcome{font-family:var(--disp);font-size:1.72rem;font-weight:600;
@@ -244,30 +244,31 @@ header{display:flex;align-items:center;justify-content:space-between;
 .lb-tab:hover{color:var(--text2)}
 .lb-tab.active{background:var(--teal-btn);color:var(--on-accent);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
-.lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;margin:0 8px;
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:0 8px;
   border-bottom:0;border-radius:16px;transition:background .15s}
 .lb-row.me{background:rgba(46,196,182,.13)}
 .lb-row:last-child{margin-bottom:10px}
 .lb-rank{font-family:var(--disp);font-size:1.02rem;font-weight:700;color:var(--muted);
-  width:24px;flex-shrink:0;text-align:center}
+  width:21px;flex-shrink:0;text-align:center}
 .lb-rank.medal{font-size:1.05rem}
 .lb-row:first-child .lb-rank{color:var(--gold)}
-.lb-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;
+.lb-avatar{width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;background:var(--bg4);
   font-family:var(--disp);font-weight:700;font-size:.95rem;color:var(--teal)}
 .lb-avatar svg{width:100%;height:100%}
 .lb-avatar-initial{background:linear-gradient(150deg,var(--teal-hi),var(--teal));color:var(--on-accent)}
 .lb-info{flex:1;min-width:0}
-.lb-name{font-size:.98rem;font-weight:700;color:var(--text);white-space:nowrap;
+.lb-name{font-size:.92rem;font-weight:700;color:var(--text);white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
 .lb-row .lb-name{color:var(--text);font-weight:700}
 .lb-row.me .lb-name{color:var(--teal);font-weight:700}
 .lb-stats{font-size:.76rem;color:var(--muted);margin-top:1px;font-weight:600}
-.lb-pts{font-family:var(--disp);font-weight:700;font-size:1.02rem;color:var(--text);
-  flex-shrink:0}
-.lb-pts .lb-sep{color:var(--muted);font-weight:600;margin:0 2px}
+.lb-pts{font-family:var(--disp);font-weight:700;font-size:.98rem;color:var(--text);
+  flex-shrink:0;white-space:nowrap}
+.lb-pts .lb-sep{color:var(--muted);font-weight:600;margin:0 1px}
 .lb-pts .lb-round{color:var(--text2);font-weight:700}
-.lb-pts .lb-lbl{font-family:var(--body);font-size:.72rem;color:var(--muted);font-weight:700}
+.lb-pts .lb-lbl{font-family:var(--body);font-size:.72rem;color:var(--muted);font-weight:700;
+  margin-left:1px}
 #leaderboardContainer.champ-mode .lb-pts{color:var(--gold)}
 .lb-dots{text-align:center;padding:4px;color:var(--muted);font-size:.75rem;border-bottom:0}
 
@@ -351,6 +352,8 @@ body.gap-mode #topMeta{min-height:0!important}
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
   .layout{grid-template-columns:1fr;max-width:640px}
+  .lb-name{font-size:.98rem}
+  .lb-pts{font-size:1.02rem}
   .ad-slot{max-width:640px}
   .sidebar-col{position:static;margin-top:26px}
 }
