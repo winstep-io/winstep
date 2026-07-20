@@ -52,9 +52,17 @@ a{color:inherit}
 ::selection{background:var(--gold);color:var(--on-gold)}
 
 /* ── header ─────────────────────────────────────────────── */
+/* ჰედერი გვერდის ნათებას აგრძელებს, არა წყვეტს.
+   background-color მუქ ფენას იძლევა (რომ ქვეშ გამავალი კონტენტი არ გამოჩნდეს),
+   background-image კი იმავე გრადიენტს იმეორებს, რაც body::before-შია.
+   ზომა 100vw×100vh და პოზიცია ზემოდან — ჰედერი ხომ ყოველთვის ეკრანის
+   თავშია (sticky), ამიტომ გეომეტრია ზუსტად ემთხვევა. */
 header{display:flex;align-items:center;justify-content:space-between;
-  padding:16px 24px;background:rgba(10,15,14,.9);backdrop-filter:blur(20px);
-  position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border)}
+  padding:16px 24px;position:sticky;top:0;z-index:100;
+  border-bottom:1px solid var(--border);backdrop-filter:blur(20px);
+  background-color:rgba(10,15,14,.9);
+  background-image:radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%);
+  background-size:100% 100vh;background-repeat:no-repeat;background-position:top center}
 .logo{display:flex;align-items:center;gap:11px}
 .logo-badge{width:42px;height:42px;background:var(--teal);border-radius:13px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
