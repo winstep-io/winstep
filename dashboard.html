@@ -143,6 +143,22 @@ header{display:flex;align-items:center;justify-content:space-between;
   transition:background .15s}
 .rb-info-btn:hover{background:var(--teal-btn);color:var(--on-accent)}
 
+/* ── რაუნდების პროგრესი ─────────────────────────────────────
+   width:100% აიძულებს ბარს ცალკე ხაზზე გადავიდეს (ბანერი flex-ია),
+   max-width კი მის რეალურ სიგრძეს ზღუდავს — რაც არ უნდა განიერი იყოს
+   ბანერი დესკტოპზე, ბარი 230px-ს არ სცდება.
+   უჯრები flex:1-ია, ამიტომ რაოდენობის ცვლილებაზე მათი სიგანე იცვლება,
+   სიმაღლე კი ფიქსირებული 13px რჩება. */
+.rb-prog{display:flex;gap:5px;width:100%;max-width:230px;margin-top:12px}
+.rb-prog i{flex:1;min-width:0;height:13px;border-radius:4px;
+  background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.rb-prog i.done{background:var(--gold);box-shadow:none}
+.rb-prog i.now{background:var(--gold);box-shadow:0 0 0 2px rgba(245,200,66,.30)}
+/* ბევრ რაუნდზე ღრიჭო ვიწროვდება, რომ უჯრებს მეტი ადგილი დარჩეთ */
+.rb-prog:has(i:nth-child(13)){gap:3px}
+.rb-prog:has(i:nth-child(19)){gap:2px}
+
+
 /* ── section title ──────────────────────────────────────── */
 .sec-title{font-family:var(--disp);font-size:1.28rem;letter-spacing:-.01em;
   color:var(--text);text-transform:none;font-weight:600;margin:26px 0 14px;
@@ -628,6 +644,7 @@ body.gap-mode #topMeta{min-height:0!important}
           <span style="font-size:.74rem;color:var(--soft);font-weight:600;letter-spacing:.03em">How Rounds Work</span>
           <button class="rb-info-btn" onclick="openRoundInfo()" title="How rounds work">i</button>
         </div>
+        <div class="rb-prog" id="rbProg" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -920,6 +937,17 @@ async function loadRound(){
   }
   currentRound = round;
   document.getElementById('rbNum').textContent = 'Round ' + round.round_number + ' / ' + round.total_rounds;
+  // პროგრესის უჯრები — რაოდენობა total_rounds-ზეა მიბმული
+  const _prog = document.getElementById('rbProg');
+  if(_prog){
+    const _tot = parseInt(round.total_rounds, 10) || 0;
+    const _cur = parseInt(round.round_number, 10) || 0;
+    let _ph = '';
+    for(let i = 1; i <= _tot; i++){
+      _ph += '<i class="' + (i < _cur ? 'done' : (i === _cur ? 'now' : '')) + '"></i>';
+    }
+    _prog.innerHTML = _ph;
+  }
   const fmt = (d)=>{ const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}); };
   document.getElementById('rbDates').textContent = fmt(round.start_date) + ' — ' + fmt(round.end_date);
   document.getElementById('roundBanner').style.display = 'flex';
