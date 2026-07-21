@@ -126,7 +126,7 @@ header{display:flex;align-items:center;justify-content:space-between;
   margin-bottom:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .round-banner{background:var(--bg2);border:0;border-radius:22px;
   padding:18px 20px 20px;display:flex;align-items:center;justify-content:space-between;
-  gap:14px;margin-bottom:22px;position:relative;overflow:hidden;flex-wrap:wrap;
+  gap:14px;row-gap:0;margin-bottom:22px;position:relative;overflow:hidden;flex-wrap:wrap;
   box-shadow:var(--lift)}
 .rb-left{display:flex;align-items:center;gap:14px}
 .rb-num{font-family:var(--disp);font-weight:600;font-size:1.22rem;color:var(--text);
@@ -154,11 +154,11 @@ header{display:flex;align-items:center;justify-content:space-between;
    ამიტომ ვქმნით ცარიელ სრულსიგანიან გამყოფს, რომელიც ბარს ყოველთვის
    ახალ ხაზზე ჩამოიყვანს — ეკრანის ზომის მიუხედავად. */
 .round-banner::before{content:"";flex:0 0 100%;height:0;order:1}
-.rb-prog{order:2;display:flex;gap:5px;width:100%;max-width:184px;margin-top:12px}
+.rb-prog{order:2;display:flex;gap:5px;width:100%;max-width:184px;margin-top:10px}
 .rb-prog i{flex:1;min-width:0;height:13px;border-radius:4px;
   background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.rb-prog i.done{background:var(--gold);box-shadow:none}
-.rb-prog i.now{background:var(--gold);box-shadow:0 0 0 2px rgba(245,200,66,.30)}
+/* მიმდინარე რაუნდი გასულების იდენტურია — ცალკე მონიშვნის გარეშე */
+.rb-prog i.done,.rb-prog i.now{background:var(--gold);box-shadow:none}
 /* ბევრ რაუნდზე ღრიჭო ვიწროვდება, რომ უჯრებს მეტი ადგილი დარჩეთ */
 .rb-prog:has(i:nth-child(13)){gap:3px}
 .rb-prog:has(i:nth-child(19)){gap:2px}
