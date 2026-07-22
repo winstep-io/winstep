@@ -419,6 +419,18 @@ body.gap-mode #betweenChamps{margin:0 auto;width:100%}
 body.gap-mode #boxesContainer{min-height:0!important}
 body.gap-mode #topMeta{min-height:0!important}
 
+/* ── championship countdown — per-digit slide transition ──────
+   მხოლოდ შეცვლილი ციფრი ცოცდება ზემოდან თავის ადგილზე; unchanged
+   ციფრები და ორწერტილები უძრავად რჩება. tabular-nums უკვე betweenTitle-ზეა,
+   ამიტომ ყველა ციფრი ერთი სიგანისაა და ხაზი არ ცახცახებს. */
+@keyframes bt-slide{from{transform:translateY(-72%);opacity:0}to{transform:translateY(0);opacity:1}}
+.bt-ch{display:inline-block}
+.bt-anim{animation:bt-slide .4s cubic-bezier(.2,.8,.2,1)}
+/* dayCountdown პატარა inline <b>-ია, გვერდით ტექსტი უდგას → tabular-nums
+   ციფრებს ერთ სიგანეზე აჩერებს და ხაზი აღარ ცახცახებს */
+#dayCountdown{font-variant-numeric:tabular-nums;font-feature-settings:'tnum'}
+@media (prefers-reduced-motion:reduce){.bt-anim{animation:none}}
+
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
   /* ერთ სვეტად დაწყობისას row-gap აკონტროლებს ბოლო ბოქსსა და Leaderboard-ს
@@ -1055,9 +1067,11 @@ async function showBetweenChampionships(){
 
       // მხოლოდ საათი — ტექსტი ("New championship / starts in") HTML-შია,
       // ამიტომ ხაზი აღარ იცვლება და აღარ ხტუნავს.
-      titleEl.textContent = (days > 0)
+      // per-digit slide: paintCountdown მხოლოდ შეცვლილ ციფრს განაახლებს.
+      const str = (days > 0)
         ? days + 'd ' + pad(hrs) + ':' + pad(mins) + ':' + pad(secs)
         : pad(hrs) + ':' + pad(mins) + ':' + pad(secs);
+      paintCountdown(titleEl, str);
     };
 
     clearInterval(betweenTimer);
@@ -1181,6 +1195,34 @@ async function loadLeaderboard(){
   }
 
   container.innerHTML = html;
+}
+
+// countdown-ს ცალკეულ ციფრებად ხატავს და მხოლოდ შეცვლილ ციფარს ანიმაციას უკეთებს.
+// prev მდგომარეობა თავად ელემენტზე ინახება (el._cdChars) — ცალკე ცვლადი არ სჭირდება.
+function paintCountdown(el, str){
+  const prev = el._cdChars;
+  if(!prev || prev.length !== str.length){
+    // პირველი ხატვა ან ფორმატის ცვლილება (მაგ. days გაქრა) — თავიდან, ანიმაციის გარეშე
+    let html = '';
+    for(const ch of str){
+      const shown = (ch === ' ') ? '\u00a0' : ch;
+      html += '<span class="bt-ch">'+shown+'</span>';
+    }
+    el.innerHTML = html;
+    el._cdChars = str.split('');
+    return;
+  }
+  const kids = el.children;
+  for(let i=0;i<str.length;i++){
+    if(str[i] !== prev[i]){
+      const sp = kids[i];
+      sp.textContent = str[i];
+      prev[i] = str[i];
+      sp.classList.remove('bt-anim');
+      void sp.offsetWidth;              // reflow — ანიმაცია თავიდან გაეშვას
+      sp.classList.add('bt-anim');
+    }
+  }
 }
 
 function dispName(n){ n = n || '—'; return n.length > 18 ? n.slice(0,18) : n; }
@@ -1552,7 +1594,7 @@ function startDayCountdown(){
     let diff = Math.floor((midnight - now)/1000);
     if(diff<0) diff=0;
     const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60), s=diff%60;
-    el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    paintCountdown(el, String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'));
   }
   tick();
   setInterval(tick, 1000);
