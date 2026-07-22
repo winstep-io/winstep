@@ -424,14 +424,9 @@ body.gap-mode #topMeta{min-height:0!important}
    ციფრები და ორწერტილები უძრავად რჩება. tabular-nums უკვე betweenTitle-ზეა,
    ამიტომ ყველა ციფრი ერთი სიგანისაა და ხაზი არ ცახცახებს. */
 @keyframes bt-slide{from{transform:translateY(-72%);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes bt-fade{from{opacity:0}to{opacity:1}}
-.bt-ch{display:inline-block}
-.bt-anim{animation:bt-slide .4s cubic-bezier(.2,.8,.2,1)}
-.bt-fade-anim{animation:bt-fade .45s ease}
-/* dayCountdown პატარა inline <b>-ია, გვერდით ტექსტი უდგას → tabular-nums
-   ციფრებს ერთ სიგანეზე აჩერებს და ხაზი აღარ ცახცახებს */
-#dayCountdown{font-variant-numeric:tabular-nums;font-feature-settings:'tnum'}
-@media (prefers-reduced-motion:reduce){.bt-anim,.bt-fade-anim{animation:none}}
+#betweenTitle .bt-ch{display:inline-block}
+#betweenTitle .bt-anim{animation:bt-slide .4s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){#betweenTitle .bt-anim{animation:none}}
 
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
@@ -1200,10 +1195,8 @@ async function loadLeaderboard(){
 }
 
 // countdown-ს ცალკეულ ციფრებად ხატავს და მხოლოდ შეცვლილ ციფარს ანიმაციას უკეთებს.
-// anim = ანიმაციის კლასი: 'bt-anim' (slide, default) ან 'bt-fade-anim' (fade).
 // prev მდგომარეობა თავად ელემენტზე ინახება (el._cdChars) — ცალკე ცვლადი არ სჭირდება.
-function paintCountdown(el, str, anim){
-  const cls = anim || 'bt-anim';
+function paintCountdown(el, str){
   const prev = el._cdChars;
   if(!prev || prev.length !== str.length){
     // პირველი ხატვა ან ფორმატის ცვლილება (მაგ. days გაქრა) — თავიდან, ანიმაციის გარეშე
@@ -1222,9 +1215,9 @@ function paintCountdown(el, str, anim){
       const sp = kids[i];
       sp.textContent = str[i];
       prev[i] = str[i];
-      sp.classList.remove(cls);
+      sp.classList.remove('bt-anim');
       void sp.offsetWidth;              // reflow — ანიმაცია თავიდან გაეშვას
-      sp.classList.add(cls);
+      sp.classList.add('bt-anim');
     }
   }
 }
@@ -1598,7 +1591,7 @@ function startDayCountdown(){
     let diff = Math.floor((midnight - now)/1000);
     if(diff<0) diff=0;
     const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60), s=diff%60;
-    paintCountdown(el, String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'), 'bt-fade-anim');
+    el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   }
   tick();
   setInterval(tick, 1000);
