@@ -546,6 +546,10 @@ let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0, quiz_tim
 // get task id from URL
 const params = new URLSearchParams(window.location.search);
 taskId = params.get('task');
+// ჩვენების ნომერი dashboard-ის რიგიდან. მხოლოდ წარწერაა — შეფასებაზე გავლენა
+// არ აქვს, ამიტომ URL-ში ყოფნა უსაფრთხოა. შენახული სათაური აღარ იხატება,
+// რომ არეული რიგი ეკრანზე არ გამოჩნდეს.
+const dispNum = parseInt(params.get('n'), 10);
 
 async function init(){
   const { data: { session } } = await db.auth.getSession();
@@ -570,7 +574,7 @@ async function init(){
   const { data: qData, error: qErr } = await db.rpc('get_quiz_question', { p_task_id: taskId });
   if(qErr || !qData){ document.getElementById('quizContent').innerHTML = '<div class="loading">Quiz not found.</div>'; return; }
   question = qData;
-  document.getElementById('quizTag').textContent = question.task_title || 'Quiz';
+  document.getElementById('quizTag').textContent = (dispNum > 0) ? ('Quiz ' + dispNum) : 'Quiz';
 
   // load global point settings
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
@@ -590,7 +594,7 @@ function renderQuestion(){
       <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
     </div>
     <div class="question-section">
-      <div class="q-number">${question.task_title}</div>
+      <div class="q-number">${(dispNum > 0) ? ('Quiz ' + dispNum) : 'Quiz'}</div>
       <div class="q-text">${question.question}</div>
       <div class="q-pts">🎁 +${pointSettings.quiz_correct} points for correct answer</div>
     </div>

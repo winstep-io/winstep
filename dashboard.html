@@ -1297,6 +1297,38 @@ function wsPoints(el, val, key){
   requestAnimationFrame(step);
 }
 
+/* ===== კითხვების რიგის არევა =====
+   მიზანი: ორმა მომხმარებელმა ერთი და იმავე ბოქსში კითხვები სხვადასხვა
+   რიგით ნახოს, რომ „მესამე კითხვის პასუხია B" ტიპის კარნახი აღარ მუშაობდეს.
+   რიგი გამოითვლება user_id + box_id-ის ჰეშიდან — ანუ ერთი მომხმარებლისთვის
+   ყოველთვის ერთი და იგივეა (refresh-ზე არ იცვლება), სხვადასხვასთვის კი
+   ერთმანეთისგან დამოუკიდებელი. task_id არსად არ იცვლება — მხოლოდ ჩვენების
+   რიგი და ნომერი. სერვერზე შეფასება, ბოქსის დასრულება და ბონუსის განბლოკვა
+   რიგზე არ არის დამოკიდებული, ამიტომ არაფერი ირღვევა. */
+function wsSeed(str){                      // FNV-1a + საბოლოო არევა
+  let h = 2166136261 >>> 0;
+  for(let i=0; i<str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  // მარტო FNV-1a მსგავს სტრიქონებზე კორელირებულ შედეგს იძლევა და რიგი
+  // არათანაბრდება. ეს ბიტების საბოლოო არევაა (murmur3 finalizer).
+  h ^= h >>> 16; h = Math.imul(h, 2246822507) >>> 0;
+  h ^= h >>> 13; h = Math.imul(h, 3266489909) >>> 0;
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+function wsShuffleTasks(list){
+  if(!currentUser || !Array.isArray(list) || list.length < 2) return list || [];
+  // თითოეული დავალება საკუთარ გასაღებს იღებს (user_id + task_id) და რიგი
+  // ამ გასაღებით ლაგდება. ეს Fisher–Yates-ზე მდგრადია: კითხვის დამატება ან
+  // წაშლა დანარჩენების ურთიერთრიგს არ ცვლის, sort_order-ის რედაქტირება კი
+  // საერთოდ არაფერზე მოქმედებს. task_id უნიკალურია, ე.ი. ბოქსებიც განცალკევებულია.
+  return list.slice().sort(function(a, b){
+    const ka = wsSeed(currentUser.id + ':' + a.id);
+    const kb = wsSeed(currentUser.id + ':' + b.id);
+    if(ka !== kb) return ka - kb;
+    return String(a.id).localeCompare(String(b.id));   // იშვიათი დამთხვევა
+  });
+}
+
 // #2 + #5 — ბოქსის მდგომარეობის ცვლილება წინა ვიზიტიდან
 function wsBoxTransitions(boxes, states){
   const prevSnap = wsPrev();
@@ -1542,6 +1574,7 @@ async function loadBoxes(){
       const t = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
       tasks = t.data || [];                 // fallback — ძველი, ციკლში (N+1)
     }
+    tasks = wsShuffleTasks(tasks);          // მომხმარებელზე მიბმული რიგი
     html += renderBox(box, tasks, doneTaskIds, states[i], progressByBox[box.id]);
   }
   html += '</div>';
@@ -1600,15 +1633,21 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
   if(state==='completed'){ return html + '</div>'; }
 
   html += '<div class="box-tasks">';
+  let qNum = 0;
   for(const task of taskList){
     const isDone = doneTaskIds.includes(task.id);
     const icon = task.type==='quiz'?'❓':task.type==='video'?'📺':'🌐';
     const iconCls = task.type==='quiz'?'icon-quiz':task.type==='video'?'icon-video':'icon-web';
     const desc = task.type==='quiz'?'Tap to answer · 20s timer':task.type==='video'?'Watch sponsored video':'Visit partner site';
     const btnLabel = task.type==='quiz'?'Answer':task.type==='video'?'Watch':'Start';
-    html += '<div class="task-row'+(isDone?' done':'')+'"><div class="task-icon '+iconCls+'">'+icon+'</div><div class="task-info"><div class="task-name">'+escapeHtml(task.title)+'</div><div class="task-desc">'+desc+'</div></div><div class="task-right"><span class="task-pts">+'+task.points+'</span>';
+    // ჩვენების ნომერი პოზიციიდან გამომდინარეობს, არა შენახული სათაურიდან.
+    // ეს კრიტიკულია: თუ სათაური კითხვას მიჰყვებოდა, არეული რიგი ეკრანზე
+    // გამოჩნდებოდა (Quiz 5, Quiz 3, Quiz 6…) და პერმუტაცია საჯარო გახდებოდა.
+    let label = task.title;
+    if(task.type === 'quiz'){ qNum++; label = 'Quiz ' + qNum; }
+    html += '<div class="task-row'+(isDone?' done':'')+'"><div class="task-icon '+iconCls+'">'+icon+'</div><div class="task-info"><div class="task-name">'+escapeHtml(label)+'</div><div class="task-desc">'+desc+'</div></div><div class="task-right"><span class="task-pts">+'+task.points+'</span>';
     if(isDone){ html += '<button class="task-btn done-btn">✓ Done</button>'; }
-    else if(state==='active'){ html += '<button class="task-btn" onclick="startTask(\''+task.id+'\',\''+task.type+'\')">'+btnLabel+'</button>'; }
+    else if(state==='active'){ html += '<button class="task-btn" onclick="startTask(\''+task.id+'\',\''+task.type+'\','+(task.type==='quiz'?qNum:0)+')">'+btnLabel+'</button>'; }
     else { html += '<button class="task-btn done-btn" style="opacity:.5">—</button>'; }
     html += '</div></div>';
   }
@@ -1719,10 +1758,11 @@ function playBridge(){
   window.location.href = '/bridge.html';
 }
 
-function startTask(taskId, type){
+function startTask(taskId, type, n){
   if(requireAuth()) return; // preview mode → prompt sign up
   if(type==='quiz'){
-    window.location.href = '/quiz.html?task=' + taskId;
+    // n = ჩვენების ნომერი ამ მომხმარებლის რიგში (მხოლოდ წარწერისთვის)
+    window.location.href = '/quiz.html?task=' + taskId + (n ? '&n=' + n : '');
   } else {
     alert('Task type "'+type+'" — coming soon in the build!');
   }
