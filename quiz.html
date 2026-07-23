@@ -643,10 +643,36 @@ async function pick(btn){
 
   const chosen = btn.getAttribute('data-letter');
   // გზა B — სერვერი ამოწმებს პასუხს და ანიჭებს ქულას
-  const { data: res } = await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: chosen });
-  const correctLetter = res ? res.correct_answer : null;
-  const isCorrect = !!(res && res.is_correct === true);
-  const points = res ? res.points : 0;
+  const { data: res, error: rpcErr } = await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: chosen });
+
+  // თუ RPC ჩავარდა, პასუხი არ ჩაწერილა — ე.ი. მომხმარებელს არ შეიძლება
+  // ვუთხრათ, რომ შეცდა. ადრე error გადაგდებული იყო და ჩავარდნა ჩუმად
+  // „არასწორ პასუხად + 0 ქულად" გადაიქცეოდა.
+  if(rpcErr || !res){
+    console.error('submit_quiz_answer:', rpcErr);
+    btn.classList.remove('press','pending');
+    document.querySelectorAll('.answer').forEach(a=>{
+      a.classList.remove('disabled','faded');
+      a.style.transitionDelay = '';
+    });
+    const icon=document.getElementById('resultIcon'), title=document.getElementById('resultTitle'),
+          sub=document.getElementById('resultSub'), pts=document.getElementById('resultPts');
+    icon.className='result-icon wrong'; icon.textContent='!';
+    title.className='result-title wrong'; title.textContent='Connection problem';
+    sub.textContent='Your answer was not saved. Please tap it again.';
+    pts.className='result-pts wrong'; pts.textContent='';
+    document.getElementById('resultMsg').classList.add('show');
+    answered = false;                 // ხელახლა პასუხის საშუალება
+    return;
+  }
+
+  const correctLetter = res.correct_answer;
+  const isCorrect = (res.is_correct === true);
+  const points = res.points || 0;
+  // already: პასუხი უკვე ჩაწერილია (მაგ. ქსელმა პირველი პასუხი დაკარგა და
+  // მომხმარებელმა ხელახლა დააჭირა). სერვერი ვერდიქტს აღარ აბრუნებს, ამიტომ
+  // „Not quite" ჩვენება მცდარი იქნებოდა — პასუხი შეიძლება სწორიც ყოფილიყო.
+  const already = (res.already === true);
 
   // ეტაპი 2 — გამოვლენა
   btn.classList.remove('press','pending');
@@ -659,7 +685,7 @@ async function pick(btn){
   });
 
   // interstitial ტრიგერი დაშბორდზე გადავიდა (გზა-დამოუკიდებლობისთვის)
-  showResult(isCorrect ? 'correct' : 'wrong', points);
+  showResult(already ? 'already' : (isCorrect ? 'correct' : 'wrong'), points);
 }
 
 async function timeOut(){
@@ -704,6 +730,11 @@ function showResult(type, points){
     title.className='result-title wrong';title.textContent='Not quite!';
     sub.textContent='The correct answer is in green.';
     pts.className='result-pts wrong';pts.textContent='+'+points;
+  } else if(type==='already'){
+    icon.className='result-icon wrong';icon.textContent='✓';
+    title.className='result-title wrong';title.textContent='Already answered';
+    sub.textContent='This one was already recorded. The correct answer is in green.';
+    pts.className='result-pts wrong';pts.textContent='';
   } else {
     icon.className='result-icon wrong';icon.textContent='⏱️';
     title.className='result-title wrong';title.textContent="Time's up!";
