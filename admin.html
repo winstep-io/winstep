@@ -1831,6 +1831,9 @@ async function loadBoxes(){
 }
 
 // History-ის გასუფთავება — შლის ყველა წარსულ ბოქსს (და მათ task-ებს)
+// History-ის გასუფთავება — შლის ყველა წარსულ ბოქსს (და მათ task-ებს).
+// განზრახ შლის პასუხებიანებსაც: ქულები profiles-ში და რაუნდის სტატისტიკა
+// user_round_stats-ში ინახება, ე.ი. შედეგებს ეს არ ეხება.
 async function clearHistory(){
   const today = todayStr();
   const { data: pastBoxes } = await db.from('boxes').select('id').lt('date', today);
@@ -1847,7 +1850,14 @@ async function clearHistory(){
 
 async function deleteBox(id){
   if(!confirm('Delete this box and all its tasks?')) return;
-  await db.from('boxes').delete().eq('id', id);
+  const { data, error } = await db.rpc('admin_delete_box', { p_box_id: id });
+  if(error){ showMsg('boxMsg', error.message, 'err'); return; }
+  if(!data || data.ok !== true){
+    showMsg('boxMsg', 'Cannot delete — this box has ' + (data ? data.answers : '?') +
+      ' recorded user record(s). Deleting would corrupt point totals.', 'err');
+    return;
+  }
+  showMsg('boxMsg', 'Box deleted. ✅', 'ok');
   loadBoxes();
 }
 
@@ -1988,9 +1998,19 @@ async function saveTask(){
   loadBoxes();
 }
 
+// წაშლა სერვერზე მოწმდება: user_activity-ზე RLS მოქმედებს, ამიტომ ბრაუზერიდან
+// შემოწმება მხოლოდ საკუთარ პასუხებს დაინახავდა და ცრუ „უსაფრთხოა"-ს დააბრუნებდა.
+// FK არის CASCADE — წაშლა ჩუმად წაშლიდა ყველა პასუხს, ქულა კი profiles-ში დარჩებოდა.
 async function deleteTask(id){
   if(!confirm('Delete this task?')) return;
-  await db.from('tasks').delete().eq('id', id);
+  const { data, error } = await db.rpc('admin_delete_task', { p_task_id: id });
+  if(error){ showMsg('boxMsg', error.message, 'err'); return; }
+  if(!data || data.ok !== true){
+    showMsg('boxMsg', 'Cannot delete — ' + (data ? data.answers : '?') +
+      ' user answer(s) recorded. Deleting would erase them and corrupt point totals.', 'err');
+    return;
+  }
+  showMsg('boxMsg', 'Task deleted. ✅', 'ok');
   loadBoxes();
 }
 
