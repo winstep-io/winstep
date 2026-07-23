@@ -439,11 +439,50 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .st-label{font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
 .btns .btn{font-size:.95rem!important;letter-spacing:0!important;padding:15px!important}
 .btns .btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+
+/* ============ ვიზუალური ეფექტები ============
+   crate-ფენა !important-ს ხშირად იყენებს, ამიტომ ეს ბლოკი ბოლოშია
+   და საჭირო ადგილებში თავადაც !important-ით იწერება. */
+
+/* #4 — გვერდის შემოსვლა */
+@keyframes ws-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.quiz-wrap.ws-in{animation:ws-in .34s ease both}
+
+/* #7 — კითხვის skeleton */
+@keyframes ws-shim{0%{background-position:-340px 0}100%{background-position:340px 0}}
+.sk{background:var(--bg4);background-image:linear-gradient(90deg,var(--bg4) 0,var(--bg3) 44px,var(--bg4) 88px);
+  background-size:340px 100%;animation:ws-shim 1.15s infinite linear;border-radius:7px;display:block}
+.sk-ans{height:60px;border-radius:12px;margin-bottom:10px}
+.sk-ans:last-child{margin-bottom:0}
+
+/* #6 ეტაპი 1 — მყისიერი უკუკავშირი, სერვერის პასუხამდე */
+.answer.press{transform:scale(.975)!important}
+.answer.pending{background:var(--bg4)!important;
+  box-shadow:0 0 0 1.5px var(--teal),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.answer.pending .answer-letter{background:var(--teal)!important;color:#04140a!important}
+.answer.pending .answer-mark{opacity:1}
+.answer.pending .answer-mark::after{content:'';display:inline-block;width:12px;height:12px;
+  border:2px solid rgba(46,196,182,.3);border-top-color:var(--teal);border-radius:50%;
+  animation:ws-sp .6s linear infinite;vertical-align:-1px}
+@keyframes ws-sp{to{transform:rotate(360deg)}}
+
+/* #6 ეტაპი 2 — გამოვლენა */
+@keyframes ws-pop{0%{transform:scale(1)}30%{transform:scale(1.035)}100%{transform:scale(1)}}
+@keyframes ws-shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}
+  30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+.answer.ws-pop{animation:ws-pop .48s cubic-bezier(.2,.9,.3,1.3)}
+.answer.ws-shake{animation:ws-shake .42s cubic-bezier(.36,.07,.19,.97)}
+.answer.faded{transition:opacity .3s ease}
+
+@media (prefers-reduced-motion:reduce){
+  .quiz-wrap.ws-in,.sk,.answer.ws-pop,.answer.ws-shake,.answer.pending .answer-mark::after{animation:none}
+  .answer.press{transform:none!important}
+}
 </style>
 </head>
 <body>
 
-<div class="quiz-wrap">
+<div class="quiz-wrap ws-in">
   <div class="top-bar">
     <button class="back-btn" onclick="abandonQuiz().then(()=>window.location.href='/dashboard.html')">◀ Back to tasks</button>
     <span class="quiz-tag" id="quizTag">Quiz</span>
@@ -453,7 +492,27 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 
   <div class="quiz-card">
     <div id="quizContent">
-      <div class="loading">Loading question... ⏳</div>
+      <!-- #7 — კითხვის skeleton. სტატიკური markup: JS-ზე ადრე იხატება.
+           renderQuestion() სრულად ანაცვლებს, როცა get_quiz_question დაბრუნდება. -->
+      <div class="timer-section">
+        <div class="timer-top">
+          <span class="sk" style="height:11px;width:118px"></span>
+          <span class="sk" style="height:11px;width:34px"></span>
+        </div>
+        <div class="timer-track"><div class="timer-fill"></div></div>
+      </div>
+      <div class="question-section">
+        <span class="sk" style="height:9px;width:92px;margin-bottom:12px"></span>
+        <span class="sk" style="height:18px;width:93%;margin-bottom:8px"></span>
+        <span class="sk" style="height:18px;width:62%;margin-bottom:12px"></span>
+        <span class="sk" style="height:9px;width:196px"></span>
+      </div>
+      <div class="answers">
+        <span class="sk sk-ans"></span>
+        <span class="sk sk-ans"></span>
+        <span class="sk sk-ans"></span>
+        <span class="sk sk-ans"></span>
+      </div>
     </div>
   </div>
 
@@ -572,6 +631,12 @@ async function pick(btn){
   answered = true;
   clearInterval(timerInterval);
 
+  // ეტაპი 1 — მყისიერი, სერვერის პასუხამდე. ეს არაფერს აყოვნებს:
+  // მომხმარებელი მაშინვე ხედავს, რომ შეხება დაფიქსირდა.
+  document.querySelectorAll('.answer').forEach(a=>a.classList.add('disabled'));
+  btn.classList.add('press');
+  setTimeout(()=>{ btn.classList.remove('press'); btn.classList.add('pending'); }, 110);
+
   const chosen = btn.getAttribute('data-letter');
   // გზა B — სერვერი ამოწმებს პასუხს და ანიჭებს ქულას
   const { data: res } = await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: chosen });
@@ -579,12 +644,14 @@ async function pick(btn){
   const isCorrect = !!(res && res.is_correct === true);
   const points = res ? res.points : 0;
 
-  document.querySelectorAll('.answer').forEach(a=>{
+  // ეტაპი 2 — გამოვლენა
+  btn.classList.remove('press','pending');
+  document.querySelectorAll('.answer').forEach((a,i)=>{
     a.classList.add('disabled');
     const letter = a.getAttribute('data-letter');
-    if(letter===correctLetter){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
-    else if(a===btn){ a.classList.add('wrong'); a.querySelector('.answer-mark').textContent='✗'; }
-    else a.classList.add('faded');
+    if(letter===correctLetter){ a.classList.add('correct','ws-pop'); a.querySelector('.answer-mark').textContent='✓'; }
+    else if(a===btn){ a.classList.add('wrong','ws-shake'); a.querySelector('.answer-mark').textContent='✗'; }
+    else { a.style.transitionDelay = (i*55)+'ms'; a.classList.add('faded'); }
   });
 
   // interstitial ტრიგერი დაშბორდზე გადავიდა (გზა-დამოუკიდებლობისთვის)

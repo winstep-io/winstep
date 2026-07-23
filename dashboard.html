@@ -428,6 +428,33 @@ body.gap-mode #topMeta{min-height:0!important}
 #betweenTitle .bt-anim{animation:bt-slide .4s cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){#betweenTitle .bt-anim{animation:none}}
 
+/* ============ ვიზუალური ეფექტები ============ */
+
+/* #4 — გვერდის შემოსვლა. მხოლოდ opacity+transform (კომპოზიტორი) → CLS არ ზიანდება */
+@keyframes ws-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.layout.ws-in{animation:ws-in .34s ease both}
+
+/* #1 — ქულების count-up. tabular-nums ციფრებს ერთ სიგანეზე აჩერებს, pill აღარ ცახცახებს */
+.points-pill .pts-val{font-variant-numeric:tabular-nums;font-feature-settings:'tnum'}
+@keyframes ws-bump{0%{transform:scale(1)}38%{transform:scale(1.07)}100%{transform:scale(1)}}
+.points-pill.ws-bump{animation:ws-bump .42s cubic-bezier(.2,.9,.3,1.25)}
+
+/* #2 — ბოქსის გახსნა */
+@keyframes ws-glow{0%{box-shadow:0 0 0 0 rgba(46,196,182,.42)}70%{box-shadow:0 0 0 15px rgba(46,196,182,0)}100%{box-shadow:0 0 0 0 rgba(46,196,182,0)}}
+@keyframes ws-ico{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-9deg)}100%{transform:scale(1) rotate(0)}}
+.box-card.ws-unlock{animation:ws-glow 1.15s ease}
+.box-card.ws-unlock .box-ico{display:inline-block;animation:ws-ico .55s cubic-bezier(.2,.9,.3,1.3)}
+
+/* #5 — დასრულების ✓ */
+@keyframes ws-ck{0%{transform:scale(0) rotate(-25deg);opacity:0}55%{transform:scale(1.3) rotate(6deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+.box-card.ws-done{animation:ws-glow 1.15s ease}
+.box-card.ws-done .done-ck{display:inline-block;animation:ws-ck .5s cubic-bezier(.2,.9,.3,1.4) both}
+
+@media (prefers-reduced-motion:reduce){
+  .layout.ws-in,.points-pill.ws-bump,.box-card.ws-unlock,.box-card.ws-unlock .box-ico,
+  .box-card.ws-done,.box-card.ws-done .done-ck{animation:none}
+}
+
 /* ── responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
   /* ერთ სვეტად დაწყობისას row-gap აკონტროლებს ბოლო ბოქსსა და Leaderboard-ს
@@ -659,7 +686,7 @@ body.gap-mode #topMeta{min-height:0!important}
   <div class="ad-box" id="adTop"></div>
 </div>
 
-<div class="layout">
+<div class="layout ws-in">
   <div class="main-col">
     <div class="welcome">Welcome, <span id="userName">...</span>!</div>
     <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
@@ -893,9 +920,9 @@ async function init(){
         _trp = (_h||[]).reduce((s,r)=>s+(r.round_points||0),0) + (profile.total_points||0);
       }
     }catch(_){}
-    document.getElementById('userPoints').textContent = _trp;
+    wsPoints(document.getElementById('userPoints'), _trp, 'ptsRound');
     myRoundTotal = _trp;   // leaderboard-ის ჩემი რიგი იგივე რიცხვს აჩვენებს, რაც ჰედერი
-    document.getElementById('userChampPoints').textContent = profile.championship_points || 0;
+    wsPoints(document.getElementById('userChampPoints'), profile.championship_points || 0, 'ptsChamp');
     const av = avatarSVG(profile.avatar_id, 38);
     const avEl = document.getElementById('userAvatar');
     if(av){ avEl.innerHTML = av; avEl.style.background='transparent'; }
@@ -1222,6 +1249,73 @@ function paintCountdown(el, str){
   }
 }
 
+/* ===== ვიზუალური ეფექტების დამხმარე ფენა =====
+   dashboard ყოველ ჯერზე სუფთად იტვირთება (quiz-ს სრული ნავიგაცია მიჰყავს),
+   ანუ ბოქსი უკვე გახსნილი/დასრულებულია რენდერის მომენტში. ამიტომ ვინახავთ
+   წინა ვიზიტის სურათს და ვაანიმირებთ მხოლოდ იმას, რაც მას შემდეგ შეიცვალა.
+   localStorage-ში მხოლოდ რიცხვები/სტატუსებია — layout-ზე გავლენა არ აქვს,
+   ამიტომ CLS ხელუხლებელი რჩება. */
+function wsReduce(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function wsPrev(){
+  let s = null;
+  try{ s = JSON.parse(localStorage.getItem('ws_snap') || 'null'); }catch(_){}
+  // სხვა მომხმარებელი იმავე ბრაუზერში — წინა სურათი არ გვეკუთვნის
+  if(!s || !currentUser || s.uid !== currentUser.id) return null;
+  return s;
+}
+function wsSave(patch){
+  let s = null;
+  try{ s = JSON.parse(localStorage.getItem('ws_snap') || 'null'); }catch(_){}
+  if(!s || !currentUser || s.uid !== currentUser.id) s = { uid: currentUser ? currentUser.id : null };
+  Object.assign(s, patch);
+  try{ localStorage.setItem('ws_snap', JSON.stringify(s)); }catch(_){}
+}
+
+// #1 — ქულა წინა ვიზიტთან შედარებით თუ გაიზარდა, აგორდება; სხვა დროს პირდაპირ იწერება
+function wsPoints(el, val, key){
+  if(!el) return;
+  const prevSnap = wsPrev();
+  const prev = prevSnap && typeof prevSnap[key] === 'number' ? prevSnap[key] : null;
+  const patch = {}; patch[key] = val; wsSave(patch);
+
+  if(prev === null || prev >= val || wsReduce()){ el.textContent = val; return; }
+
+  const pill = el.closest ? el.closest('.points-pill') : null;
+  if(pill){ pill.classList.remove('ws-bump'); void pill.offsetWidth; pill.classList.add('ws-bump'); }
+
+  const from = prev, dur = 620;
+  let t0 = null;
+  el.textContent = from;
+  function step(ts){
+    if(!t0) t0 = ts;
+    const p = Math.min((ts - t0) / dur, 1);
+    el.textContent = Math.round(from + (val - from) * (1 - Math.pow(1 - p, 3)));
+    if(p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// #2 + #5 — ბოქსის მდგომარეობის ცვლილება წინა ვიზიტიდან
+function wsBoxTransitions(boxes, states){
+  const prevSnap = wsPrev();
+  const prev = prevSnap ? prevSnap.boxes : null;
+  const now = {};
+  for(let i=0; i<boxes.length; i++){ now[boxes[i].id] = states[i]; }
+  wsSave({ boxes: now });
+
+  if(!prev || wsReduce()) return;   // პირველი ვიზიტი — ანიმაცია არ გვინდა
+  for(let i=0; i<boxes.length; i++){
+    const id = boxes[i].id, was = prev[id], is = states[i];
+    if(!was || was === is) continue;
+    const el = document.querySelector('.box-card[data-bid="'+id+'"]');
+    if(!el) continue;
+    if(was === 'locked' && is === 'active') el.classList.add('ws-unlock');
+    else if(is === 'completed') el.classList.add('ws-done');
+  }
+}
+
 function dispName(n){ n = n || '—'; return n.length > 18 ? n.slice(0,18) : n; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -1453,6 +1547,9 @@ async function loadBoxes(){
   html += '</div>';
   container.innerHTML = html;
 
+  // #2 + #5 — რომელი ბოქსი გაიხსნა / დასრულდა წინა ვიზიტის შემდეგ
+  try{ wsBoxTransitions(boxes, states); }catch(_){}
+
   // რეალური სიმაღლე დავიმახსოვროთ — შემდეგ ჩატვირთვაზე რეზერვი
   // ზუსტად ამდენი იქნება და კონტენტი აღარ ახტება (CLS ≈ 0).
   requestAnimationFrame(()=>{
@@ -1486,12 +1583,12 @@ async function loadBoxes(){
 function renderBox(box, taskList, doneTaskIds, state, prog){
   let statusHtml, cardCls='';
   if(state==='active'){ statusHtml = '<div class="box-status active-status"><span class="status-dot"></span>Active</div>'; }
-  else if(state==='completed'){ statusHtml = '<div class="box-status done-status">✓ Completed</div>'; cardCls=' completed'; }
+  else if(state==='completed'){ statusHtml = '<div class="box-status done-status"><span class="done-ck">✓</span> Completed</div>'; cardCls=' completed'; }
   else { statusHtml = '<div class="box-status locked-status">Locked</div>'; cardCls=' locked'; }
 
   // დაბლოკილ ბოქსზე ბოქლომი, სხვაგან ყუთი
   const boxIcon = (state === 'locked') ? '🔒' : '📦';
-  let html = '<div class="box-card'+cardCls+'"><div class="box-header"><div class="box-name"><span class="box-name-txt">'+boxIcon+' '+escapeHtml(box.name)+'</span></div>'+statusHtml+'</div>';
+  let html = '<div class="box-card'+cardCls+'" data-bid="'+box.id+'"><div class="box-header"><div class="box-name"><span class="box-name-txt"><span class="box-ico">'+boxIcon+'</span> '+escapeHtml(box.name)+'</span></div>'+statusHtml+'</div>';
 
   if(state==='locked'){
     html += '<div class="locked-msg">🔒 Complete the previous box to unlock</div></div>';
