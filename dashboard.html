@@ -1509,7 +1509,6 @@ async function loadBoxes(){
       .from('boxes')
       .select('*')
       .eq('date', today)
-      .eq('is_published', true)     // დრაფტი აქაც არ უნდა გამოჩნდეს
       .order('sequence_order');
     if(error){ container.innerHTML = '<div class="empty">Error loading boxes: '+error.message+'</div>'; return; }
     boxes = bs || [];

@@ -311,13 +311,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       </div>
 
       <div class="card-title" style="margin-top:8px">📦 Boxes</div>
-      <div class="ad-mode-row" style="margin-bottom:14px;align-items:center">
+      <div class="ad-mode-row" style="margin-bottom:14px">
         <button class="ad-mode-btn active" id="boxtab_today" onclick="setBoxTab('today')">Today</button>
         <button class="ad-mode-btn" id="boxtab_upcoming" onclick="setBoxTab('upcoming')">Upcoming</button>
         <button class="ad-mode-btn" id="boxtab_history" onclick="setBoxTab('history')">History</button>
-        <!-- ერთი საერთო ღილაკი: ყველა შენახულ ცვლილებას აქვეყნებს -->
-        <button class="btn btn-primary" id="applyBtn" onclick="applyAll()"
-                style="margin-left:auto" disabled>Publish</button>
       </div>
 
       <!-- History-ის კალენდარი + Clear (მხოლოდ History ჩანართზე ჩანს) -->
@@ -1790,11 +1787,6 @@ async function loadBoxes(){
   const list = document.getElementById('boxesList');
   const today = todayStr();
 
-  // საერთო Save ღილაკი ყველა ბოქსს ითვლის, არა მხოლოდ გახსნილ ჩანართს —
-  // თორემ Today-ზე მდგომი ვერ დაინახავდა Upcoming-ში დარჩენილ დრაფტს.
-  // History გამოტოვებულია: წარსული ბოქსის გამოქვეყნებას აზრი არ აქვს.
-  refreshApplyBtn((allBoxes||[]).filter(b => b.is_published !== true && b.date >= today).length);
-
   // ჩანართის მიხედვით ფილტრი
   let boxes = (allBoxes||[]);
   if(boxTab==='today'){
@@ -1825,7 +1817,7 @@ async function loadBoxes(){
         ? '<button class="btn btn-ghost btn-sm" onclick="openTaskEdit(\''+t.id+'\')" title="Edit">✏️</button>'
         : '';
       const delBtn = (boxTab!=='history')
-        ? '<button class="btn btn-danger btn-sm" onclick="deleteTask(\''+t.id+'\',\''+box.id+'\')">Delete</button>'
+        ? '<button class="btn btn-danger btn-sm" onclick="deleteTask(\''+t.id+'\')">Delete</button>'
         : '';
       tasksHtml += '<div class="list-item" style="margin-left:20px;background:var(--bg2)"><span class="badge '+t.type+'">'+t.type+'</span><div class="li-info"><div class="li-title">'+escapeHtml(t.title)+'</div><div class="li-sub">+'+t.points+' points</div></div><div class="li-actions">'+editBtn+delBtn+'</div></div>';
     }
@@ -1854,42 +1846,6 @@ async function clearHistory(){
   await db.from('boxes').delete().in('id', ids);
   showMsg('boxMsg','History cleared! ✅','ok');
   loadBoxes();
-}
-
-// Publish — ერთი ღილაკი, ყველა გამოუქვეყნებელ ბოქსს აქვეყნებს.
-// მანამდე ცვლილებები ბაზაში ინახება, მაგრამ მომხმარებელს არ უჩანს.
-async function applyAll(){
-  // .select() აბრუნებს რეალურად განახლებულ სტრიქონებს. ეს აუცილებელია:
-  // თუ სესია ამოიწურა ან სხვა ჩანართში გამოხვედი, RLS განახლებას დაბლოკავს,
-  // Supabase კი შეცდომას არ დააბრუნებს — უბრალოდ 0 სტრიქონს განაახლებს.
-  // შემოწმების გარეშე კოდი წარმატებას აცხადებდა, სინამდვილეში კი არაფერი ხდებოდა.
-  const { data, error } = await db.from('boxes').update({ is_published: true })
-    .eq('is_published', false).gte('date', todayStr()).select('id');
-  if(error){ showMsg('boxMsg', error.message, 'err'); return; }
-  if(!data || data.length === 0){
-    showMsg('boxMsg', 'Nothing was published. Your admin session may have expired — reload the page and sign in again.', 'err');
-    loadBoxes();
-    return;
-  }
-  showMsg('boxMsg', 'Changes published — now live for users. ✅', 'ok');
-  loadBoxes();
-}
-
-// ღილაკი მუქია, სანამ გამოსაქვეყნებელი არაფერია
-function refreshApplyBtn(n){
-  const b = document.getElementById('applyBtn');
-  if(!b) return;
-  b.disabled = (n === 0);
-  b.style.opacity = (n === 0) ? '.35' : '1';
-  b.style.cursor  = (n === 0) ? 'default' : 'pointer';
-}
-
-// ნებისმიერი ცვლილება ბოქსს დრაფტში აბრუნებს, ე.ი. Apply ისევ ცოცხლდება.
-// ეს იმას ნიშნავს, რომ ცოცხალ ბოქსში ჩასწორება მას დროებით მალავს —
-// სანამ Apply-ს არ დააჭერ.
-async function unpublishBox(boxId){
-  if(!boxId) return;
-  await db.from('boxes').update({ is_published: false }).eq('id', boxId);
 }
 
 async function deleteBox(id){
@@ -1990,7 +1946,6 @@ async function saveTask(){
       });
       if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
     }
-    await unpublishBox(document.getElementById('taskBoxId').value);
     closeTaskModal();
     loadBoxes();
     return;
@@ -2039,7 +1994,6 @@ async function saveTask(){
     if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
   }
 
-  await unpublishBox(boxId);
   closeTaskModal();
   loadBoxes();
 }
@@ -2047,7 +2001,7 @@ async function saveTask(){
 // წაშლა სერვერზე მოწმდება: user_activity-ზე RLS მოქმედებს, ამიტომ ბრაუზერიდან
 // შემოწმება მხოლოდ საკუთარ პასუხებს დაინახავდა და ცრუ „უსაფრთხოა"-ს დააბრუნებდა.
 // FK არის CASCADE — წაშლა ჩუმად წაშლიდა ყველა პასუხს, ქულა კი profiles-ში დარჩებოდა.
-async function deleteTask(id, boxId){
+async function deleteTask(id){
   if(!confirm('Delete this task?')) return;
   const { data, error } = await db.rpc('admin_delete_task', { p_task_id: id });
   if(error){ showMsg('boxMsg', error.message, 'err'); return; }
@@ -2056,8 +2010,7 @@ async function deleteTask(id, boxId){
       ' user answer(s) recorded. Deleting would erase them and corrupt point totals.', 'err');
     return;
   }
-  await unpublishBox(boxId);
-  showMsg('boxMsg', 'Task deleted. Press Publish to make it live.', 'ok');
+  showMsg('boxMsg', 'Task deleted. ✅', 'ok');
   loadBoxes();
 }
 
