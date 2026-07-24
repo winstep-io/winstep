@@ -1859,9 +1859,18 @@ async function clearHistory(){
 // Publish — ერთი ღილაკი, ყველა გამოუქვეყნებელ ბოქსს აქვეყნებს.
 // მანამდე ცვლილებები ბაზაში ინახება, მაგრამ მომხმარებელს არ უჩანს.
 async function applyAll(){
-  const { error } = await db.from('boxes').update({ is_published: true })
-    .eq('is_published', false).gte('date', todayStr());
+  // .select() აბრუნებს რეალურად განახლებულ სტრიქონებს. ეს აუცილებელია:
+  // თუ სესია ამოიწურა ან სხვა ჩანართში გამოხვედი, RLS განახლებას დაბლოკავს,
+  // Supabase კი შეცდომას არ დააბრუნებს — უბრალოდ 0 სტრიქონს განაახლებს.
+  // შემოწმების გარეშე კოდი წარმატებას აცხადებდა, სინამდვილეში კი არაფერი ხდებოდა.
+  const { data, error } = await db.from('boxes').update({ is_published: true })
+    .eq('is_published', false).gte('date', todayStr()).select('id');
   if(error){ showMsg('boxMsg', error.message, 'err'); return; }
+  if(!data || data.length === 0){
+    showMsg('boxMsg', 'Nothing was published. Your admin session may have expired — reload the page and sign in again.', 'err');
+    loadBoxes();
+    return;
+  }
   showMsg('boxMsg', 'Changes published — now live for users. ✅', 'ok');
   loadBoxes();
 }
