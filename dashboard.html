@@ -420,6 +420,18 @@ body.gap-mode #betweenChamps{margin:0 auto;width:100%}
 body.gap-mode #boxesContainer{min-height:0!important}
 body.gap-mode #topMeta{min-height:0!important}
 
+/* ── Pause Site overlay — ფასადი, პროცესებს არ ცვლის ──
+   z-index ყველაფერზე მაღლა: შუალედის ფანჯარაც და adblock notice-იც დაფაროს. */
+#pauseOverlay{position:fixed;inset:0;z-index:2147483647;display:none;
+  background:var(--bg,#080c0b);
+  align-items:center;justify-content:center;padding:24px}
+#pauseOverlay.on{display:flex}
+.pause-card{max-width:520px;width:100%;text-align:center;
+  background:var(--bg2,#0f1917);border:1px solid var(--border,rgba(255,255,255,.08));
+  border-radius:20px;padding:44px 32px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.pause-ico{font-size:3rem;margin-bottom:18px}
+.pause-msg{font-size:1.08rem;line-height:1.6;color:var(--soft,#c9d4d1)}
+
 /* ── championship countdown — per-digit slide transition ──────
    მხოლოდ შეცვლილი ციფრი ცოცდება ზემოდან თავის ადგილზე; unchanged
    ციფრები და ორწერტილები უძრავად რჩება. tabular-nums უკვე betweenTitle-ზეა,
@@ -643,6 +655,13 @@ body.gap-mode #topMeta{min-height:0!important}
   </script>
 </head>
 <body>
+<!-- Pause overlay — bootstrap-ის მიხედვით ჩნდება/ქრება, dashboard-ს არ ცვლის -->
+<div id="pauseOverlay">
+  <div class="pause-card">
+    <div class="pause-ico">🔧</div>
+    <div class="pause-msg" id="pauseMsg"></div>
+  </div>
+</div>
 <script>
 /* CLS ადაპტური რეზერვი — ტესტ: დროებით გათიშულია (0 რეზერვის შესამოწმებლად).
    დასაბრუნებლად: მოხსენი კომენტარი ქვემოთ და fallback 0px → 320px დააბრუნე. */
@@ -850,8 +869,24 @@ function loadBootstrap(){
   return bootPromise;
 }
 
+function applyPauseOverlay(){
+  // BOOT.pause.paused: 1 = პაუზა. fallback-ზე (BOOT=null) overlay არ ჩნდება.
+  const p = BOOT && BOOT.pause;
+  if(p && (p.paused === 1 || p.paused === true || p.paused === '1')){
+    const el = document.getElementById('pauseOverlay');
+    const msg = document.getElementById('pauseMsg');
+    if(msg) msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
+    if(el) el.classList.add('on');
+  }
+}
+
 async function init(){
-  loadBootstrap();   // ერთი მოთხოვნა ყველასთვის — ადრევე ვიწყებთ
+  await loadBootstrap();   // ერთი მოთხოვნა ყველასთვის — ადრევე ვიწყებთ
+
+  // Pause overlay: თუ საიტი პაუზაზეა, ფასადი გადაეფარება (ავტორიზებულს და
+  // სტუმარსაც). dashboard-ის ლოგიკა ქვემოთ განაგრძობს მუშაობას უცვლელად.
+  applyPauseOverlay();
+
   const { data: { session } } = await db.auth.getSession();
 
   if(!session){

@@ -344,6 +344,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
         <div id="currentChampBox"><div class="loading">Loading...</div></div>
       </div>
 
+      <!-- Pause Site — ფორსმაჟორისთვის. მთელ dashboard-ს გადააფარებს overlay-ს.
+           პროცესებს (ჩემპიონატი, cron, ქულები) არ ცვლის — მხოლოდ ფასადია. -->
+      <div class="card">
+        <div class="card-title">⏸️ Pause Site</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Shows a maintenance overlay to all visitors. Nothing stops in the background — championship, rounds and points keep running. Use it to work calmly during a problem.</div>
+        <div class="field" style="margin-bottom:12px">
+          <label class="field-label">Message shown to visitors</label>
+          <input class="field-input" id="pauseMsgInput" placeholder="We'll be back shortly...">
+        </div>
+        <div id="pauseStatus" style="font-size:.8rem;margin-bottom:12px;color:var(--muted)">Loading...</div>
+        <button class="btn btn-primary" id="pauseBtn" onclick="togglePause()">Pause Site</button>
+      </div>
+
       <div class="card">
         <div class="card-title">➕ Create New Championship</div>
         <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">Create the next championship with its own settings. It starts on the date you choose, after the current one finishes.</div>
@@ -1146,7 +1159,49 @@ async function markPaid(payoutId, paid){
 }
 
 // ==================== CHAMPIONSHIP ====================
+// ── Pause Site ──
+// site_paused settings-შია (0/1), pause_message site_state-ში (ტექსტი).
+// ეს ღილაკი მხოლოდ ამ ორ ჩანაწერს ცვლის — სხვა არაფერს ეხება.
+async function loadPauseState(){
+  const btn = document.getElementById('pauseBtn');
+  const status = document.getElementById('pauseStatus');
+  const msgIn = document.getElementById('pauseMsgInput');
+  if(!btn) return;
+
+  const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
+  const { data: m } = await db.from('site_state').select('value').eq('key','pause_message').maybeSingle();
+  const paused = s && s.value === 1;
+  if(msgIn && m) msgIn.value = m.value || '';
+
+  if(paused){
+    btn.textContent = 'Unpause Site';
+    btn.className = 'btn btn-danger';
+    status.innerHTML = '<span style="color:var(--red)">● PAUSED — visitors see the maintenance overlay</span>';
+  } else {
+    btn.textContent = 'Pause Site';
+    btn.className = 'btn btn-primary';
+    status.innerHTML = '<span style="color:var(--green)">● Live — site is running normally</span>';
+  }
+}
+
+async function togglePause(){
+  const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
+  const nowPaused = !(s && s.value === 1);
+
+  const msg = document.getElementById('pauseMsgInput').value.trim();
+  if(msg){
+    await db.from('site_state').update({ value: msg }).eq('key','pause_message');
+  }
+
+  const { error } = await db.from('settings').update({ value: nowPaused ? 1 : 0 }).eq('key','site_paused');
+  if(error){ showMsg('champMsg', error.message, 'err'); return; }
+
+  showMsg('champMsg', nowPaused ? 'Site paused. Visitors now see the overlay.' : 'Site is live again.', 'ok');
+  loadPauseState();
+}
+
 async function loadChampionship(){
+  loadPauseState();   // Pause Site ქარდის მდგომარეობა
   // active championship
   const { data: champs } = await db.from('championships').select('*').order('number',{ascending:false});
   const active = (champs||[]).find(c=>c.status==='active');
