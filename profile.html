@@ -305,14 +305,6 @@ header{background-color:rgba(10,15,14,.9)!important;
   background:var(--bg3)!important;border:0!important;border-radius:14px!important;
   font-family:var(--body)!important;font-weight:600!important;color:var(--text)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
-
-/* პაროლის ჩვენება/დამალვა — index.html-ის (Log In) იდენტური სტილი.
-   ღილაკი ველის შიგნით დგას, ამიტომ ველს მარჯვნიდან padding სჭირდება. */
-.pw-wrap{position:relative;width:100%}
-.pw-wrap .acc-input{width:100%;padding-right:44px}
-.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;line-height:0;color:var(--teal2);transition:color .2s;display:flex;align-items:center;justify-content:center}
-.pw-toggle:hover{color:var(--teal)}
-.pw-toggle svg{width:20px;height:20px;display:block}
 .input-field:focus,.acc-input:focus,input:focus{outline:0!important;
   box-shadow:0 0 0 2px var(--teal)!important}
 .input-label,.field-label,.s-label,.sp-label,.stat-lbl,.sr-label,.timer-label{
@@ -382,6 +374,13 @@ header{background-color:rgba(10,15,14,.9)!important;
 div[style*="font-size:.66rem"]{font-size:.78rem!important}
 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* გვერდის ჩატვირთვის ეფექტი — fade + მსუბუქი zoom (ერთხელ) */
+@keyframes pageFadeIn{0%{opacity:0;transform:scale(.985)}100%{opacity:1;transform:scale(1)}}
+body{animation:pageFadeIn .42s ease-out both}
+@media (prefers-reduced-motion: reduce){
+  body{animation:none}
+}
 </style>
 </head>
 <body>
@@ -468,15 +467,9 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     <!-- Password -->
     <div>
       <div class="sr-label" style="margin-bottom:8px">New Password</div>
-      <div class="pw-wrap" style="margin-bottom:8px">
-        <input id="accPassword" name="ws_new_password" class="acc-input" type="password" placeholder="New password (min 6 chars)" autocomplete="new-password" data-lpignore="true" data-1p-ignore>
-        <button type="button" class="pw-toggle" onclick="togglePw('accPassword',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
-      </div>
+      <input id="accPassword" name="ws_new_password" class="acc-input" type="password" placeholder="New password (min 6 chars)" autocomplete="new-password" data-lpignore="true" data-1p-ignore style="width:100%;margin-bottom:8px">
       <div style="display:flex;gap:8px">
-        <div class="pw-wrap" style="flex:1">
-          <input id="accPassword2" name="ws_new_password2" class="acc-input" type="password" placeholder="Confirm new password" autocomplete="new-password" data-lpignore="true" data-1p-ignore>
-          <button type="button" class="pw-toggle" onclick="togglePw('accPassword2',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
-        </div>
+        <input id="accPassword2" name="ws_new_password2" class="acc-input" type="password" placeholder="Confirm new password" autocomplete="new-password" data-lpignore="true" data-1p-ignore>
         <button class="acc-btn" onclick="savePassword()">Save</button>
       </div>
     </div>
@@ -529,7 +522,7 @@ async function init(){
 
 // championship rank (pill) — new tiebreaker order
 async function loadStanding(){
-  const { data: champPlayers } = await db.from('public_profiles')
+  const { data: champPlayers } = await db.from('profiles')
     .select('id, championship_points, season_points, total_points, total_activity, correct_answers, last_point_at')
     .eq('is_disqualified', false);
   const sorted = (champPlayers||[]).filter(p =>
@@ -584,7 +577,7 @@ async function loadRoundStanding(){
   document.getElementById('sRace').textContent = totalRoundPts;
 
   // live place in the current round — მხოლოდ აქტიური მოთამაშეები (0 აქტივობა/ქულა არ ითვლება)
-  const { data: rawPlayers } = await db.from('public_profiles')
+  const { data: rawPlayers } = await db.from('profiles')
     .select('id, total_points, total_activity, championship_points, season_points')
     .eq('is_disqualified', false)
     .order('total_points',{ascending:false})
@@ -729,15 +722,6 @@ async function saveEmail(){
   const { error } = await db.auth.updateUser({ email });
   if(error){ showAccMsg(error.message, false); return; }
   showAccMsg('Email change requested. Check your new inbox to confirm. 📧', true);
-}
-
-// პაროლის ჩვენება/დამალვა — index.html-ის (Log In) იდენტური ფუნქცია
-function togglePw(id, btn){
-  const field = document.getElementById(id);
-  const eyeOpen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const eyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
-  if(field.type === 'password'){ field.type = 'text'; btn.innerHTML = eyeOpen; }
-  else { field.type = 'password'; btn.innerHTML = eyeOff; }
 }
 
 async function savePassword(){
