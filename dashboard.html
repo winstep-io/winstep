@@ -519,11 +519,12 @@ body.gap-mode #topMeta{min-height:0!important}
 
 
 /* [საცდელი] გვერდის ჩატვირთვის ეფექტი — fade + მსუბუქი zoom.
-   მოსახსნელად: ეს ბლოკი წაშალე. */
+   .layout-ზეა და არა body-ზე: body-ს transform აფუჭებდა fixed modal-ების
+   პოზიციას (How Rounds Work ქვევით ჩამოცურდებოდა). */
 @keyframes pageFadeIn{0%{opacity:0;transform:scale(.985)}100%{opacity:1;transform:scale(1)}}
-body{animation:pageFadeIn .42s ease-out both}
+.layout{animation:pageFadeIn .42s ease-out both}
 @media (prefers-reduced-motion: reduce){
-  body{animation:none}
+  .layout{animation:none}
 }
 </style>
   <!-- cookie-consent (inlined: removes a render-blocking request; must still
