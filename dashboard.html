@@ -343,6 +343,11 @@ header{display:flex;align-items:center;justify-content:space-between;
 /* გახსნის ეფექტი — იგივე, რაც ბონუსის ფანჯარას (pop) */
 .modal-overlay.show .modal-card{animation:modalPop .42s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes modalPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+/* Sign up prompt — იგივე pop ეფექტი, რაც How Rounds Work-ს */
+#authPromptModal .auth-prompt-card{animation:modalPop .42s cubic-bezier(.34,1.56,.64,1) both}
+@media (prefers-reduced-motion: reduce){
+  #authPromptModal .auth-prompt-card{animation:none}
+}
 @media (prefers-reduced-motion: reduce){
   .modal-overlay.show .modal-card{animation:none}
 }
@@ -1016,7 +1021,7 @@ function showAuthPrompt(){
     m = document.createElement('div');
     m.id = 'authPromptModal';
     m.style = 'position:fixed;inset:0;background:rgba(8,12,11,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px';
-    m.innerHTML = '<div style="background:#0f1614;border:1px solid rgba(46,196,182,.2);border-radius:18px;padding:30px 26px;max-width:360px;text-align:center;font-family:Nunito,sans-serif">'
+    m.innerHTML = '<div class="auth-prompt-card" style="background:#0f1614;border:1px solid rgba(46,196,182,.2);border-radius:18px;padding:30px 26px;max-width:360px;text-align:center;font-family:Nunito,sans-serif">'
       + '<div style="font-size:2.2rem;margin-bottom:10px">🔒</div>'
       + '<div style="font-size:1.15rem;font-weight:700;color:#e8f0ee;margin-bottom:8px">Sign up to start earning</div>'
       + '<div style="font-size:.88rem;color:#9fb5b0;margin-bottom:20px;line-height:1.5">Create a free account to complete tasks, play games, and climb the leaderboard for real prizes.</div>'
@@ -1026,6 +1031,9 @@ function showAuthPrompt(){
     document.body.appendChild(m);
   }
   m.style.display = 'flex';
+  // ანიმაცია ყოველ გახსნაზე ითამაშოს (ელემენტი ერთხელ იქმნება)
+  const card = m.querySelector('.auth-prompt-card');
+  if(card){ card.style.animation = 'none'; void card.offsetWidth; card.style.animation = ''; }
 }
 
 // ---- round banner ----
