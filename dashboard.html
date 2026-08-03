@@ -306,6 +306,25 @@ header{display:flex;align-items:center;justify-content:space-between;
   margin-left:1px}
 #leaderboardContainer.champ-mode .lb-pts{color:var(--gold)}
 .lb-dots{text-align:center;padding:4px;color:var(--muted);font-size:.75rem;border-bottom:0}
+/* ── Top 100 — ჩაკეცილი სრული ცხრილი (ცალკე ბარათი, ლიდერბორდის ქვემოთ) ── */
+.lb100-card{padding:0;display:none}
+.lb100-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 18px;background:transparent;border:0;cursor:pointer;font-family:var(--disp);
+  font-size:1.02rem;font-weight:600;letter-spacing:-.01em;color:var(--text)}
+.lb100-toggle:hover{background:rgba(255,255,255,.02)}
+.lb100-toggle[aria-expanded="true"]{border-bottom:1px solid var(--border)}
+.lb100-title{display:flex;align-items:center;gap:8px}
+.lb100-chev{width:16px;height:16px;flex-shrink:0;color:var(--muted);transition:transform .24s ease}
+.lb100-toggle[aria-expanded="true"] .lb100-chev{transform:rotate(180deg)}
+.lb100-wrap{max-height:0;overflow:hidden;transition:max-height .28s ease}
+.lb100-scroll{position:relative;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
+.lb100-scroll::-webkit-scrollbar{width:8px}
+.lb100-scroll::-webkit-scrollbar-track{background:transparent}
+.lb100-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:8px;border:2px solid var(--bg2)}
+.lb100-scroll::-webkit-scrollbar-thumb:hover{background:var(--soft)}
+.lb100-scroll.champ-mode .lb-pts{color:var(--gold)}
+@media (prefers-reduced-motion: reduce){.lb100-wrap,.lb100-chev{transition:none}}
 
 /* ── prizes — GIFT CARD: ერთადერთი ბრენდის მწვანეში შეღებილი ზედაპირი,
    დიაგონალური ლამინირებული ელვარებით. პირდაპირ ეხმიანება იმას,
@@ -793,6 +812,17 @@ body.gap-mode #topMeta{min-height:0!important}
       </div>
     </div>
 
+    <!-- Top 100 — ჩაკეცილი სრული ცხრილი (loadLeaderboard/syncTop100 მართავს ხილვადობას) -->
+    <div class="card lb100-card" id="lb100Card">
+      <button class="lb100-toggle" id="lb100Toggle" type="button" onclick="toggleTop100()" aria-expanded="false" aria-controls="lb100Wrap">
+        <span class="lb100-title">🏆 Top 100</span>
+        <svg class="lb100-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="lb100-wrap" id="lb100Wrap">
+        <div class="lb100-scroll" id="lb100Container"></div>
+      </div>
+    </div>
+
     <div class="pi-card" id="prizeCard" style="display:none">
       <div class="pi-title">Championship Prizes 🎁</div>
       <div id="prizeRows"></div>
@@ -1194,6 +1224,8 @@ function closeRoundInfo(){
 }
 let myRoundTotal = null;   // ჰედერში დათვლილი რაუნდების ჯამი (ჩემი)
 let lbMode = 'championship';
+let top100Open = false;   // Top 100 ჩაკეცილი ბარათის მდგომარეობა
+let top100Ctx = null;     // მიმდინარე სია + აქტიური ტაბის კონტექსტი
 function switchLb(mode){
   lbMode = mode;
   document.getElementById('tabChampionship').classList.toggle('active', mode==='championship');
@@ -1278,6 +1310,72 @@ async function loadLeaderboard(){
   }
 
   container.innerHTML = html;
+
+  // ── Top 100 კონტექსტი — მიჰყვება აქტიურ ტაბს; buildRow ხურავს ლოკალურ helper-ებს (avOf/ptsCell)
+  top100Ctx = {
+    players: players,
+    isChamp: isChamp,
+    show: players.length > 5,     // ბარათი ჩანს მხოლოდ თუ ზედა 5-ს მიღმა კიდევ არიან
+    buildRow: function(p, rank){
+      const meClass = (p.id===myId) ? ' me' : '';
+      return '<div class="lb-row'+meClass+'"><span class="lb-rank">'+rank+'</span>'+avOf(p)
+        + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div>'
+        + '<div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'
+        + ptsCell(p)+'</div>';
+    }
+  };
+  syncTop100();
+}
+
+// ── Top 100 (ჩაკეცილი) ──────────────────────────────────────
+// ხილვადობა/სინქრონი: ეძახება loadLeaderboard-ის ბოლოს ყოველ რენდერზე (ტაბის ცვლაზეც)
+function syncTop100(){
+  const card = document.getElementById('lb100Card');
+  if(!card) return;
+  const wrap = document.getElementById('lb100Wrap');
+  const tg   = document.getElementById('lb100Toggle');
+  if(!top100Ctx || !top100Ctx.show){
+    card.style.display = 'none';       // ≤5 მოთამაშე — ზედა ბარათი ისედაც ყველას აჩვენებს
+    top100Open = false;
+    if(wrap) wrap.style.maxHeight = '0';
+    if(tg) tg.setAttribute('aria-expanded','false');
+    return;
+  }
+  card.style.display = 'block';
+  if(top100Open) paintTop100();        // ღიაა — ხელახლა დავხატოთ აქტიური ტაბით
+}
+
+// სრული სიის დახატვა + სქროლ-სარკმლის სიმაღლე ზუსტად 10 რიგზე (lazy — მხოლოდ გახსნისას)
+function paintTop100(){
+  const scroll = document.getElementById('lb100Container');
+  const wrap   = document.getElementById('lb100Wrap');
+  if(!scroll || !wrap || !top100Ctx) return;
+  let html = '';
+  for(let i=0;i<top100Ctx.players.length;i++) html += top100Ctx.buildRow(top100Ctx.players[i], i+1);
+  scroll.innerHTML = html;
+  scroll.classList.toggle('champ-mode', top100Ctx.isChamp);
+  const N = 10;
+  if(top100Ctx.players.length > N){
+    const nth = scroll.children[N-1];           // მე-10 რიგი
+    scroll.style.height = nth ? (nth.offsetTop + nth.offsetHeight) + 'px' : '';
+  } else {
+    scroll.style.height = '';                    // ≤10 — ყველა ეტევა, სქროლი არ სჭირდება
+  }
+  if(top100Open) wrap.style.maxHeight = scroll.offsetHeight + 'px';
+}
+
+// გახსნა/დახურვა — ისარი ბრუნავს (CSS), wrap max-height ანიმაციით
+function toggleTop100(){
+  const tg = document.getElementById('lb100Toggle');
+  if(!tg) return;
+  top100Open = !top100Open;
+  tg.setAttribute('aria-expanded', top100Open ? 'true' : 'false');
+  if(top100Open){
+    paintTop100();
+  } else {
+    const wrap = document.getElementById('lb100Wrap');
+    if(wrap) wrap.style.maxHeight = '0';
+  }
 }
 
 // countdown-ს ცალკეულ ციფრებად ხატავს და მხოლოდ შეცვლილ ციფარს ანიმაციას უკეთებს.
