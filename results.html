@@ -80,8 +80,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.03)}
 .lb-row.prize-zone{background:rgba(245,200,66,.04)}
 .lb-row:last-child{border-bottom:none}
-/* Top 100 გაშლილი ხედის სქროლი — რიგები იგივე ზომისაა, მხოლოდ სქროლი ემატება */
-.stand-scroll{max-height:560px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
+/* Standing ტაბები (Championship / This Round) */
+.stand-tabs{display:flex;gap:8px;margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:5px}
+.stand-tab{flex:1;padding:10px 12px;background:transparent;border:0;border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;font-size:.82rem;color:var(--muted);white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s}
+.stand-tab:hover{color:var(--soft)}
+.stand-tab.active{background:var(--teal);color:var(--on-accent)}
+/* Top standings გაშლილი ხედის სქროლი — რიგები იგივე ზომისაა, სიმაღლე ~7 რიგზეა დაჭრილი */
+.stand-scroll{position:relative;max-height:413px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
 .stand-scroll::-webkit-scrollbar{width:8px}
 .stand-scroll::-webkit-scrollbar-track{background:transparent}
 .stand-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:8px;border:2px solid var(--bg2)}
@@ -436,6 +441,10 @@ body{animation:pageFadeIn .42s ease-out both}
 
   <!-- FULL STANDINGS -->
   <div class="section-title">Standing</div>
+  <div class="stand-tabs">
+    <button class="stand-tab active" id="stTabChamp" type="button" onclick="switchStand('champ')">🏆 Championship</button>
+    <button class="stand-tab" id="stTabRound" type="button" onclick="switchStand('round')">🏁 This Round</button>
+  </div>
   <div class="card" id="standingsCard">
     <div style="text-align:center;padding:24px;color:var(--muted)">Loading standings...</div>
   </div>
@@ -519,34 +528,38 @@ async function init(){
   const { data: zones } = await db.rpc('get_championship_prizes', { p_champ_id: champIdForPrizes });
   prizeZones = zones || [];
 
-  // standings — champ pts → cumulative round pts → activity → correct → earliest last point (NO email — public safe)
-  const { data: rawPlayers } = await db.from('public_profiles')
+  const activeFilter = p =>
+    (p.total_points||0) > 0 || (p.championship_points||0) > 0 ||
+    (p.season_points||0) > 0 || (p.total_activity||0) > 0;
+
+  // ── Championship Standing — champ pts → cumulative round pts → activity → correct → earliest last point
+  const { data: champRaw } = await db.from('public_profiles')
     .select('id, username, avatar_id, championship_points, season_points, total_points, total_activity, correct_answers, last_point_at')
     .order('championship_points',{ascending:false})
     .order('total_activity',{ascending:false})
     .order('correct_answers',{ascending:false})
     .limit(100);
-
-  // მხოლოდ აქტიური მონაწილეები — ვისაც აქვს ქულა ან აქტივობა
-  const players = (rawPlayers || []).filter(p =>
-    (p.total_points||0) > 0 ||
-    (p.championship_points||0) > 0 ||
-    (p.season_points||0) > 0 ||
-    (p.total_activity||0) > 0
+  champPlayers = (champRaw || []).filter(activeFilter);
+  champPlayers.sort((a,b)=>
+    ((b.championship_points||0)-(a.championship_points||0)) ||
+    (((b.season_points||0)+(b.total_points||0))-((a.season_points||0)+(a.total_points||0))) ||
+    ((b.total_activity||0)-(a.total_activity||0)) ||
+    ((b.correct_answers||0)-(a.correct_answers||0)) ||
+    ((a.last_point_at?new Date(a.last_point_at).getTime():Infinity)-(b.last_point_at?new Date(b.last_point_at).getTime():Infinity))
   );
 
-  if(players){
-    players.sort((a,b)=>
-      ((b.championship_points||0)-(a.championship_points||0)) ||
-      (((b.season_points||0)+(b.total_points||0))-((a.season_points||0)+(a.total_points||0))) ||
-      ((b.total_activity||0)-(a.total_activity||0)) ||
-      ((b.correct_answers||0)-(a.correct_answers||0)) ||
-      ((a.last_point_at?new Date(a.last_point_at).getTime():Infinity)-(b.last_point_at?new Date(b.last_point_at).getTime():Infinity))
-    );
-  }
+  // ── This Round Standing — dashboard-ის „This Round"-ის იდენტური რანჟირება (DB order)
+  const { data: roundRaw } = await db.from('public_profiles')
+    .select('id, username, avatar_id, championship_points, season_points, total_points, total_activity, correct_answers, created_at')
+    .order('total_points',{ascending:false})
+    .order('total_activity',{ascending:false})
+    .order('correct_answers',{ascending:false})
+    .order('created_at',{ascending:true})
+    .limit(100);
+  roundPlayers = (roundRaw || []).filter(activeFilter);
 
-  renderPodium(players||[]);
-  renderStandings(players||[]);
+  renderPodium(champPlayers);       // podium ყოველთვის ჩემპიონატის საპრიზო სამეულია
+  renderStandings();
   loadPastChampionships();
 }
 
@@ -666,54 +679,65 @@ function maxPrizePlace(){
   return max;
 }
 
-let allPlayers = [];
-let showingAll = false;
+let champPlayers = [];
+let roundPlayers = [];
+let standMode = 'champ';   // 'champ' | 'round'
 
-function renderStandings(players){
-  allPlayers = players;
+function renderStandings(){
+  const isRound = standMode==='round';
+  const players = isRound ? roundPlayers : champPlayers;
   const card = document.getElementById('standingsCard');
-  if(players.length===0){ card.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted)">No players yet.</div>'; return; }
+  if(!players || players.length===0){ card.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted)">No players yet.</div>'; return; }
 
-  const prizeCount = maxPrizePlace(); // how many places get prizes
-  // ჩაკეცილში მხოლოდ საპრიზო ადგილები (3 იქნება თუ 30 — ყველა ჩანს); პრიზი თუ არაა, top 3 fallback
-  const collapsedCount = prizeCount > 0 ? prizeCount : Math.min(players.length, 3);
-  const cutoff = showingAll ? players.length : collapsedCount;
-  const visible = players.slice(0, cutoff);
+  const prizeCount = maxPrizePlace(); // საპრიზო ადგილები — მხოლოდ Championship ტაბზე
 
   let rowsHtml = '';
-  visible.forEach((p, i)=>{
+  players.forEach((p, i)=>{
     const place = i+1;
     const isMe = me && p.id===me.id;
-    const isWinner = place<=3;
-    const inPrizeZone = place<=prizeCount;
-    const prize = prizeForPlace(place);
+    const isWinner = !isRound && place<=3;
+    const inPrizeZone = !isRound && place<=prizeCount;
+    const prize = isRound ? null : prizeForPlace(place);
     const cls = (isMe?'me':'') + (isWinner?' winner':'');
+    const ptsHtml = isRound
+      // This Round — რაუნდის ქულა (dashboard-ის „This Round"-ის ანალოგი)
+      ? '<span class="lb-pts"><span style="color:var(--text)">'+(p.total_points||0)+'</span> <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
+      // Championship — champ / cumulative round
+      : '<span class="lb-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted);font-weight:400"> / </span><span style="color:var(--text)">'+((p.season_points||0)+(p.total_points||0))+'</span> <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>';
     rowsHtml += '<div class="lb-row'+(cls?' '+cls:'')+(inPrizeZone&&!isWinner?' prize-zone':'')+'">'
       + '<span class="lb-rank">'+place+'</span>'
       + avatarCell(p)
       + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div>'
       + '<div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'
-      + '<span class="lb-pts"><span style="color:var(--gold)">'+(p.championship_points||0)+'</span><span style="color:var(--muted);font-weight:400"> / </span><span style="color:var(--text)">'+((p.season_points||0)+(p.total_points||0))+'</span> <span style="font-size:.6rem;color:var(--muted);font-weight:400">PTS</span></span>'
+      + ptsHtml
       + (prize ? '<span class="lb-prize">'+prize+'</span>' : '')
       + '</div>';
   });
 
-  // გაშლილში (top 100) რიგები სქროლიან კონტეინერში ჯდება; ჩაკეცილში (საპრიზო ზონა) — პირდაპირ
-  let html = showingAll ? '<div class="stand-scroll">'+rowsHtml+'</div>' : rowsHtml;
-
-  // toggle — ჩაკეცილი: „Show top 100" | გაშლილი: „Show prize zone only"
-  if(players.length > collapsedCount){
-    html += '<div style="text-align:center;padding:14px"><button onclick="toggleShowAll()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--teal);font-family:Nunito,sans-serif;font-weight:600;font-size:.82rem;padding:9px 20px;border-radius:9px;cursor:pointer">'
-      + (showingAll ? '▲ Show prize zone only' : '▼ Show top 100')
-      + '</button></div>';
-  }
-
-  card.innerHTML = html;
+  card.innerHTML = '<div class="stand-scroll" id="standScroll">'+rowsHtml+'</div>';
+  capStandHeight();  // სიმაღლე ~7 რიგზე; მეტი — სქროლით
 }
 
-function toggleShowAll(){
-  showingAll = !showingAll;
-  renderStandings(allPlayers);
+// სქროლ-სარკმლის სიმაღლე = ზუსტად 7 რიგი (თუ მეტია); დანარჩენი სქროლით
+function capStandHeight(){
+  const sc = document.getElementById('standScroll');
+  if(!sc) return;
+  const rows = sc.querySelectorAll('.lb-row');
+  const N = 7;
+  if(rows.length > N){
+    const nth = rows[N-1];
+    sc.style.maxHeight = (nth.offsetTop + nth.offsetHeight) + 'px';
+  } else {
+    sc.style.maxHeight = '';   // 7 ან ნაკლები — ყველა ეტევა
+  }
+}
+
+function switchStand(mode){
+  if(standMode===mode) return;
+  standMode = mode;
+  document.getElementById('stTabChamp').classList.toggle('active', mode==='champ');
+  document.getElementById('stTabRound').classList.toggle('active', mode==='round');
+  renderStandings();
 }
 
 function avatarCell(p){
