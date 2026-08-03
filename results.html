@@ -80,6 +80,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.03)}
 .lb-row.prize-zone{background:rgba(245,200,66,.04)}
 .lb-row:last-child{border-bottom:none}
+/* Top 100 გაშლილი ხედის სქროლი — რიგები იგივე ზომისაა, მხოლოდ სქროლი ემატება */
+.stand-scroll{max-height:560px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
+.stand-scroll::-webkit-scrollbar{width:8px}
+.stand-scroll::-webkit-scrollbar-track{background:transparent}
+.stand-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:8px;border:2px solid var(--bg2)}
+.stand-scroll::-webkit-scrollbar-thumb:hover{background:var(--soft)}
 .lb-row.winner{background:rgba(245,200,66,.04)}
 .lb-rank{font-family:'Fredoka',sans-serif;font-size:.8rem;color:var(--text);width:28px;flex-shrink:0;text-align:center}
 .lb-rank.medal{font-size:1.05rem}
@@ -429,7 +435,7 @@ body{animation:pageFadeIn .42s ease-out both}
   </div>
 
   <!-- FULL STANDINGS -->
-  <div class="section-title">Full Standings</div>
+  <div class="section-title">Standing</div>
   <div class="card" id="standingsCard">
     <div style="text-align:center;padding:24px;color:var(--muted)">Loading standings...</div>
   </div>
@@ -669,10 +675,12 @@ function renderStandings(players){
   if(players.length===0){ card.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted)">No players yet.</div>'; return; }
 
   const prizeCount = maxPrizePlace(); // how many places get prizes
-  const cutoff = showingAll ? players.length : Math.max(prizeCount, 3); // always show at least top 3
+  // ჩაკეცილში მხოლოდ საპრიზო ადგილები (3 იქნება თუ 30 — ყველა ჩანს); პრიზი თუ არაა, top 3 fallback
+  const collapsedCount = prizeCount > 0 ? prizeCount : Math.min(players.length, 3);
+  const cutoff = showingAll ? players.length : collapsedCount;
   const visible = players.slice(0, cutoff);
 
-  let html = '';
+  let rowsHtml = '';
   visible.forEach((p, i)=>{
     const place = i+1;
     const isMe = me && p.id===me.id;
@@ -680,7 +688,7 @@ function renderStandings(players){
     const inPrizeZone = place<=prizeCount;
     const prize = prizeForPlace(place);
     const cls = (isMe?'me':'') + (isWinner?' winner':'');
-    html += '<div class="lb-row'+(cls?' '+cls:'')+(inPrizeZone&&!isWinner?' prize-zone':'')+'">'
+    rowsHtml += '<div class="lb-row'+(cls?' '+cls:'')+(inPrizeZone&&!isWinner?' prize-zone':'')+'">'
       + '<span class="lb-rank">'+place+'</span>'
       + avatarCell(p)
       + '<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div>'
@@ -690,11 +698,13 @@ function renderStandings(players){
       + '</div>';
   });
 
-  // show all / show less toggle
-  if(players.length > Math.max(prizeCount,3)){
-    const remaining = players.length - Math.max(prizeCount,3);
+  // გაშლილში (top 100) რიგები სქროლიან კონტეინერში ჯდება; ჩაკეცილში (საპრიზო ზონა) — პირდაპირ
+  let html = showingAll ? '<div class="stand-scroll">'+rowsHtml+'</div>' : rowsHtml;
+
+  // toggle — ჩაკეცილი: „Show top 100" | გაშლილი: „Show prize zone only"
+  if(players.length > collapsedCount){
     html += '<div style="text-align:center;padding:14px"><button onclick="toggleShowAll()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--teal);font-family:Nunito,sans-serif;font-weight:600;font-size:.82rem;padding:9px 20px;border-radius:9px;cursor:pointer">'
-      + (showingAll ? '▲ Show prize zone only' : '▼ Show all '+players.length+' players ('+remaining+' more)')
+      + (showingAll ? '▲ Show prize zone only' : '▼ Show top 100')
       + '</button></div>';
   }
 
