@@ -307,7 +307,7 @@ header{display:flex;align-items:center;justify-content:space-between;
 #leaderboardContainer.champ-mode .lb-pts{color:var(--gold)}
 .lb-dots{text-align:center;padding:4px;color:var(--muted);font-size:.75rem;border-bottom:0}
 /* ── ასქროლვადი top-100 ლიდერბორდი ── */
-#leaderboardContainer{position:relative;max-height:380px;overflow-y:auto;
+#leaderboardContainer{position:relative;max-height:305px;overflow-y:auto;
   overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
 #leaderboardContainer::-webkit-scrollbar{width:8px}
@@ -1293,6 +1293,17 @@ async function loadLeaderboard(){
     html += '<div class="lb-row'+meClass+'">'+rowInner(p, i+1)+'</div>';
   }
   container.innerHTML = html;
+
+  // ზუსტად 5 რიგი ჩანს სქროლის გარეშე; დანარჩენი (6–100) სქროლით.
+  // მუშაობს ორივე რეჟიმში — ავტორიზებულშიც და სტუმრისთვისაც (CSS overflow კონტეინერზეა).
+  // სიმაღლეს დინამიურად ვზომავ, რომ შრიფტის რენდერისგან დამოუკიდებლად ზუსტად 5 იყოს.
+  const VISIBLE_ROWS = 5, PEEK = 15;   // PEEK = მე-6 რიგის თხელი წვერი, სქროლის მინიშნება
+  if(players.length > VISIBLE_ROWS){
+    const fifth = container.children[VISIBLE_ROWS-1];
+    if(fifth) container.style.maxHeight = (fifth.offsetTop + fifth.offsetHeight + PEEK) + 'px';
+  } else {
+    container.style.maxHeight = '';    // 5 ან ნაკლები — შემოსაზღვრა არ სჭირდება
+  }
 
   // ── sticky "You: #N" ჩიპი — ჩნდება მხოლოდ მაშინ, როცა შენი რიგი ეკრანს გარეთაა ──
   const chip = document.getElementById('lbYouChip');
