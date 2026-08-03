@@ -306,21 +306,6 @@ header{display:flex;align-items:center;justify-content:space-between;
   margin-left:1px}
 #leaderboardContainer.champ-mode .lb-pts{color:var(--gold)}
 .lb-dots{text-align:center;padding:4px;color:var(--muted);font-size:.75rem;border-bottom:0}
-/* ── ასქროლვადი top-100 ლიდერბორდი ── */
-#leaderboardContainer{position:relative;max-height:305px;overflow-y:auto;
-  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
-#leaderboardContainer::-webkit-scrollbar{width:8px}
-#leaderboardContainer::-webkit-scrollbar-track{background:transparent}
-#leaderboardContainer::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:8px;
-  border:2px solid var(--bg2)}
-#leaderboardContainer::-webkit-scrollbar-thumb:hover{background:var(--soft)}
-/* sticky "You: #N" ჩიპი — ჩნდება, როცა შენი რიგი ეკრანს გარეთაა */
-.lb-you-chip{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;
-  border-top:1px solid var(--border2);background:rgba(46,196,182,.12);transition:background .15s}
-.lb-you-chip:hover{background:rgba(46,196,182,.18)}
-.lb-you-chip .lb-name{color:var(--teal);font-weight:700}
-.lb-you-chip.champ-mode .lb-pts{color:var(--gold)}
 
 /* ── prizes — GIFT CARD: ერთადერთი ბრენდის მწვანეში შეღებილი ზედაპირი,
    დიაგონალური ლამინირებული ელვარებით. პირდაპირ ეხმიანება იმას,
@@ -806,7 +791,6 @@ body.gap-mode #topMeta{min-height:0!important}
         <div class="sk-lb-row"><div class="sk" style="width:16px;height:16px;border-radius:5px"></div><div class="sk sk-av"></div><div class="sk-li"><div class="sk" style="height:12px;width:46%"></div><div class="sk" style="height:10px;width:44%"></div></div><div class="sk" style="width:44px;height:14px"></div></div>
         <div class="sk-lb-row"><div class="sk" style="width:16px;height:16px;border-radius:5px"></div><div class="sk sk-av"></div><div class="sk-li"><div class="sk" style="height:12px;width:54%"></div><div class="sk" style="height:10px;width:40%"></div></div><div class="sk" style="width:44px;height:14px"></div></div>
       </div>
-      <div id="lbYouChip" class="lb-you-chip" style="display:none"></div>
     </div>
 
     <div class="pi-card" id="prizeCard" style="display:none">
@@ -1210,7 +1194,6 @@ function closeRoundInfo(){
 }
 let myRoundTotal = null;   // ჰედერში დათვლილი რაუნდების ჯამი (ჩემი)
 let lbMode = 'championship';
-let lbYouObserver = null;  // sticky "You: #N" ჩიპის ხილვადობის observer
 function switchLb(mode){
   lbMode = mode;
   document.getElementById('tabChampionship').classList.toggle('active', mode==='championship');
@@ -1279,57 +1262,22 @@ async function loadLeaderboard(){
     return '<div class="lb-avatar lb-avatar-initial">'+(p.username||'?').charAt(0).toUpperCase()+'</div>';
   };
 
-  // ერთი რიგის შიგთავსი — საერთოა სიის რიგებისთვისაც და sticky ჩიპისთვისაც
-  const rowInner = (p, rankNum, nameOverride)=>
-    '<span class="lb-rank">'+rankNum+'</span>'+avOf(p)+
-    '<div class="lb-info"><div class="lb-name">'+escapeHtml(nameOverride || dispName(p.username))+
-    '</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'+ptsCell(p);
-
-  // top 100-მდე ყველა აქტიური მოთამაშე იხატება; კონტეინერი ასქროლვადია (CSS max-height)
   let html = '';
-  for(let i=0;i<players.length;i++){
+  const topN = Math.min(players.length, 5);
+  for(let i=0;i<topN;i++){
     const p = players[i];
+    const rank = '<span class="lb-rank">'+(i+1)+'</span>';
     const meClass = (p.id===myId) ? ' me' : '';
-    html += '<div class="lb-row'+meClass+'">'+rowInner(p, i+1)+'</div>';
+    html += '<div class="lb-row'+meClass+'">'+rank+avOf(p)+'<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'+ptsCell(p)+'</div>';
   }
+
+  if(myRank >= 5){
+    html += '<div class="lb-dots">· · ·</div>';
+    const p = players[myRank];
+    html += '<div class="lb-row me"><span class="lb-rank">'+(myRank+1)+'</span>'+avOf(p)+'<div class="lb-info"><div class="lb-name">'+escapeHtml(dispName(p.username))+'</div><div class="lb-stats">🎯 '+(p.total_activity||0)+' · ✅ '+(p.correct_answers||0)+'</div></div>'+ptsCell(p)+'</div>';
+  }
+
   container.innerHTML = html;
-
-  // ზუსტად 5 რიგი ჩანს სქროლის გარეშე; დანარჩენი (6–100) სქროლით.
-  // მუშაობს ორივე რეჟიმში — ავტორიზებულშიც და სტუმრისთვისაც (CSS overflow კონტეინერზეა).
-  // სიმაღლეს დინამიურად ვზომავ, რომ შრიფტის რენდერისგან დამოუკიდებლად ზუსტად 5 იყოს.
-  const VISIBLE_ROWS = 5, PEEK = 15;   // PEEK = მე-6 რიგის თხელი წვერი, სქროლის მინიშნება
-  if(players.length > VISIBLE_ROWS){
-    const fifth = container.children[VISIBLE_ROWS-1];
-    if(fifth) container.style.maxHeight = (fifth.offsetTop + fifth.offsetHeight + PEEK) + 'px';
-  } else {
-    container.style.maxHeight = '';    // 5 ან ნაკლები — შემოსაზღვრა არ სჭირდება
-  }
-
-  // ── sticky "You: #N" ჩიპი — ჩნდება მხოლოდ მაშინ, როცა შენი რიგი ეკრანს გარეთაა ──
-  const chip = document.getElementById('lbYouChip');
-  if(lbYouObserver){ lbYouObserver.disconnect(); lbYouObserver = null; }
-  if(chip){
-    chip.classList.toggle('champ-mode', isChamp);
-    if(myRank < 0){
-      chip.style.display = 'none';           // სტუმარი ან top 100-ში არმყოფი — ჩიპი არ ჩანს
-    } else {
-      const me = players[myRank];
-      chip.innerHTML = rowInner(me, myRank+1, 'You');
-      chip.style.display = 'none';            // observer აჩენს მხოლოდ საჭიროებისას
-      const meRow = container.querySelector('.lb-row.me');
-      chip.onclick = function(){
-        if(!meRow) return;
-        const top = meRow.offsetTop - (container.clientHeight/2) + (meRow.clientHeight/2);
-        container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-      };
-      if(meRow && 'IntersectionObserver' in window){
-        lbYouObserver = new IntersectionObserver(function(entries){
-          chip.style.display = entries[0].isIntersecting ? 'none' : 'flex';
-        }, { root: container, threshold: 0 });
-        lbYouObserver.observe(meRow);
-      }
-    }
-  }
 }
 
 // countdown-ს ცალკეულ ციფრებად ხატავს და მხოლოდ შეცვლილ ციფარს ანიმაციას უკეთებს.
