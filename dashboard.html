@@ -324,6 +324,15 @@ header{display:flex;align-items:center;justify-content:space-between;
 .lb100-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:8px;border:2px solid var(--bg2)}
 .lb100-scroll::-webkit-scrollbar-thumb:hover{background:var(--soft)}
 .lb100-scroll.champ-mode .lb-pts{color:var(--gold)}
+/* კომპაქტური რიგები — 10 ეტევა ლიდერბორდის 5-ის სიმაღლეში; ვიზუალურად ოდნავ დარბილებული */
+.lb100-scroll .lb-row{padding:3px 16px;gap:7px;border-bottom-color:rgba(255,255,255,.028)}
+.lb100-scroll .lb-rank{font-size:.78rem;width:16px}
+.lb100-scroll .lb-avatar{width:20px;height:20px;font-size:.64rem;opacity:.85}
+.lb100-scroll .lb-name{font-size:.74rem;color:var(--text2);font-weight:600;line-height:1.15}
+.lb100-scroll .lb-row.me .lb-name{color:var(--teal);font-weight:700}
+.lb100-scroll .lb-stats{font-size:.56rem;margin-top:0;line-height:1.05}
+.lb100-scroll .lb-pts{font-size:.76rem;color:var(--text2)}
+.lb100-scroll .lb-pts .lb-lbl{font-size:.56rem}
 @media (prefers-reduced-motion: reduce){.lb100-wrap,.lb100-chev{transition:none}}
 
 /* ── prizes — GIFT CARD: ერთადერთი ბრენდის მწვანეში შეღებილი ზედაპირი,
@@ -1345,7 +1354,7 @@ function syncTop100(){
   if(top100Open) paintTop100();        // ღიაა — ხელახლა დავხატოთ აქტიური ტაბით
 }
 
-// სრული სიის დახატვა + სქროლ-სარკმლის სიმაღლე ზუსტად 10 რიგზე (lazy — მხოლოდ გახსნისას)
+// სრული სიის დახატვა + სარკმლის სიმაღლე = ლიდერბორდის 5 რიგის ტოლი (lazy — მხოლოდ გახსნისას)
 function paintTop100(){
   const scroll = document.getElementById('lb100Container');
   const wrap   = document.getElementById('lb100Wrap');
@@ -1354,13 +1363,16 @@ function paintTop100(){
   for(let i=0;i<top100Ctx.players.length;i++) html += top100Ctx.buildRow(top100Ctx.players[i], i+1);
   scroll.innerHTML = html;
   scroll.classList.toggle('champ-mode', top100Ctx.isChamp);
-  const N = 10;
-  if(top100Ctx.players.length > N){
-    const nth = scroll.children[N-1];           // მე-10 რიგი
-    scroll.style.height = nth ? (nth.offsetTop + nth.offsetHeight) + 'px' : '';
-  } else {
-    scroll.style.height = '';                    // ≤10 — ყველა ეტევა, სქროლი არ სჭირდება
+  // სარკმლის სიმაღლე = ლიდერბორდის 5 რიგის სიმაღლე (იგივე ვიზუალური ზომა).
+  // კომპაქტური რიგებით ~10 ეტევა; max-height-ით ცოტა მოთამაშისას ცარიელი ადგილი არ რჩება.
+  const lb = document.getElementById('leaderboardContainer');
+  let viewH = 0;
+  if(lb){
+    const lrows = lb.querySelectorAll('.lb-row');
+    for(let i=0; i<Math.min(5, lrows.length); i++) viewH += lrows[i].offsetHeight;
   }
+  scroll.style.height = '';
+  scroll.style.maxHeight = viewH > 0 ? (viewH + 'px') : '';
   if(top100Open) wrap.style.maxHeight = scroll.offsetHeight + 'px';
 }
 
