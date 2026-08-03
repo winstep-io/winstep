@@ -420,9 +420,9 @@ body{animation:pageFadeIn .42s ease-out both}
     <div class="loading">Loading rounds... ⏳</div>
   </div>
 
-  <div class="section-title">Recent Activity</div>
-  <div class="card" id="historyCard">
-    <div class="loading">Loading activity... ⏳</div>
+  <div class="section-title">Past Championships</div>
+  <div class="card" id="pastChampsCard">
+    <div class="loading">Loading championships... ⏳</div>
   </div>
 
   <div class="section-title">Choose Avatar</div>
@@ -517,7 +517,7 @@ async function init(){
 
   loadStanding();
   loadRoundStanding();
-  loadHistory();
+  loadPastChampionships();
 }
 
 // championship rank (pill) — new tiebreaker order
@@ -607,29 +607,68 @@ async function loadRoundStanding(){
   card.innerHTML = '<table class="rs-table"><thead><tr><th>Round</th><th>Activity</th><th>Correct</th><th>Points</th><th>Place</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
-async function loadHistory(){
-  const { data: activity } = await db.from('user_activity')
-    .select('*, tasks(title, type)')
-    .eq('user_id', currentUser.id)
-    .order('completed_at',{ascending:false})
+// ბოლო 5 დასრულებული ჩემპიონატში დაკავებული ადგილი (ბოლოს დასრულებული — თავში).
+// ადგილი/championship_points → championship_payouts; Activity/Correct → user_round_stats-ის ჯამი.
+async function loadPastChampionships(){
+  const card = document.getElementById('pastChampsCard');
+
+  const { data: champs } = await db.from('championships')
+    .select('id, number')
+    .eq('status','finished')
+    .order('number',{ascending:false})
     .limit(5);
 
-  const card = document.getElementById('historyCard');
-  if(!activity || activity.length===0){ card.innerHTML = '<div class="empty">No activity yet. Complete some tasks! 🎯</div>'; return; }
-
-  let html = '';
-  for(const a of activity){
-    const t = a.tasks || {};
-    const type = t.type || 'quiz';
-    const icon = type==='quiz'?'❓':type==='video'?'📺':'🌐';
-    const iconCls = type==='quiz'?'hi-quiz':type==='video'?'hi-video':'hi-web';
-    let title = t.title || 'Task';
-    if(type==='quiz') title += a.is_correct===true ? ' — Correct' : a.is_correct===false ? ' — Wrong' : ' — Skipped';
-    const when = timeAgo(a.completed_at);
-    const ptsCls = a.points_earned>=50 ? 'gold' : a.points_earned===0 ? 'muted' : '';
-    html += '<div class="history-row"><div class="history-icon '+iconCls+'">'+icon+'</div><div class="history-info"><div class="history-title">'+escapeHtml(title)+'</div><div class="history-date">'+when+'</div></div><div class="history-pts '+ptsCls+'">+'+a.points_earned+'</div></div>';
+  if(!champs || champs.length===0){
+    card.innerHTML = '<div class="empty">No completed championships yet. 🏁</div>';
+    return;
   }
-  card.innerHTML = html;
+
+  const champIds = champs.map(c=>c.id);
+
+  // ჩემი საბოლოო ადგილი + championship_points თითო ჩემპიონატში
+  const { data: payouts } = await db.from('championship_payouts')
+    .select('championship_id, place, championship_points')
+    .eq('user_id', currentUser.id)
+    .in('championship_id', champIds);
+  const payoutBy = {}; (payouts||[]).forEach(p=>{ payoutBy[p.championship_id] = p; });
+
+  // Activity/Correct — რაუნდების ჯამი თითო ჩემპიონატში
+  const { data: stats } = await db.from('user_round_stats')
+    .select('championship_id, activity, correct_answers')
+    .eq('user_id', currentUser.id)
+    .in('championship_id', champIds);
+  const statBy = {};
+  (stats||[]).forEach(s=>{
+    if(!statBy[s.championship_id]) statBy[s.championship_id] = { activity:0, correct:0 };
+    statBy[s.championship_id].activity += (s.activity||0);
+    statBy[s.championship_id].correct  += (s.correct_answers||0);
+  });
+
+  const em = '—';   // მონაწილეობის გარეშე
+  let rows = '';
+  for(const c of champs){
+    const po = payoutBy[c.id];
+    const st = statBy[c.id];
+    const played = !!po || !!st;
+    let activity, correct, points, place;
+    if(!played){
+      activity = correct = points = place = em;
+    } else {
+      activity = st ? st.activity : 0;
+      correct  = st ? st.correct  : 0;
+      points   = po ? po.championship_points : 0;
+      place    = po ? (ordinal(po.place)+' Place') : em;
+    }
+    rows += '<tr>'
+      + '<td class="rs-round">Championship '+champIdLabel(c.number)+'</td>'
+      + '<td>'+activity+'</td>'
+      + '<td>'+correct+'</td>'
+      + '<td class="rs-pts">'+points+'</td>'
+      + '<td class="rs-place">'+place+'</td>'
+      + '</tr>';
+  }
+
+  card.innerHTML = '<table class="rs-table"><thead><tr><th>Championship</th><th>🎯</th><th>✅</th><th>Points</th><th>Place</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 function timeAgo(ts){
