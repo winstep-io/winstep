@@ -728,7 +728,7 @@ function capStandHeight(){
     const nth = rows[N-1];
     sc.style.maxHeight = (nth.offsetTop + nth.offsetHeight) + 'px';
   } else {
-    sc.style.maxHeight = '';   // 7 ან ნაკლები — ყველა ეტევა
+    sc.style.maxHeight = 'none';   // 7 ან ნაკლები — ცალსახად უსაზღვრო, სქროლი არასდროს
   }
 }
 
