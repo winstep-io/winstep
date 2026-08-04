@@ -518,7 +518,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 
 <div class="quiz-wrap ws-in">
   <div class="top-bar">
-    <button class="back-btn" onclick="abandonQuiz().then(()=>window.location.href='/dashboard.html')">◀ Back to tasks</button>
+    <button class="back-btn" onclick="if(!maybeShowBonusFirst()) abandonQuiz().then(()=>window.location.href='/dashboard.html')">◀ Back to tasks</button>
     <span class="quiz-tag" id="quizTag">Quiz</span>
   </div>
 
@@ -554,7 +554,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
   <div class="ad-banner" id="adSlotBottom" style="display:none"><div id="adBottom" style="width:100%"></div></div>
   -->
 
-  <button class="continue-btn" id="continueBtn" onclick="window.location.href='/dashboard.html'">← Back to Tasks</button>
+  <button class="continue-btn" id="continueBtn" onclick="if(!maybeShowBonusFirst()) window.location.href='/dashboard.html'">← Back to Tasks</button>
 
 <!-- Interstitial (full-screen ad) overlay -->
 </div>
@@ -571,6 +571,8 @@ let taskId = null;
 let task = null;
 let question = null;
 let answered = false;
+let bonusPending = false;   // პასუხმა ბონუსი გახსნა, მაგრამ modal ჯერ არ გამოჩენილა
+let bonusTimer = null;      // showBonusUnlock-ის დაყოვნებული timer
 let quizStarted = false;
 let activityId = null;
 let timeLeft = 20;
@@ -725,11 +727,14 @@ async function pick(btn){
   // (just_unlocked) და ეს ბოქსის ბოლო კითხვა არ იყო (box_completed=false),
   // თორემ ბოქსის დახურვის ფანჯარა ისედაც გამოვა — ორი ფანჯარა ზედმეტია.
   if(res.just_unlocked === true && res.box_completed !== true){
-    setTimeout(showBonusUnlock, 900);   // ჯერ პასუხის შედეგი დაინახოს
+    bonusPending = true;                       // back დაყოვნდეს, სანამ modal არ გამოჩნდება
+    bonusTimer = setTimeout(showBonusUnlock, 900);   // ჯერ პასუხის შედეგი დაინახოს
   }
 }
 
 function showBonusUnlock(){
+  bonusPending = false;
+  if(bonusTimer){ clearTimeout(bonusTimer); bonusTimer = null; }
   const m = document.getElementById('bonusModal');
   if(!m) return;
   m.classList.add('on');
@@ -737,6 +742,13 @@ function showBonusUnlock(){
   if(!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     bonusConfetti();
   }
+}
+
+// თუ ბონუსის ფანჯარა ჯერ არ გამოჩენილა (მოლოდინშია), back-ის ნაცვლად ჯერ ის ვაჩვენოთ.
+// აბრუნებს true-ს, თუ modal გამოჩნდა — მაშინ გამომძახებელმა ნავიგაცია უნდა შეაჩეროს.
+function maybeShowBonusFirst(){
+  if(bonusPending){ showBonusUnlock(); return true; }
+  return false;
 }
 
 function closeBonus(){
