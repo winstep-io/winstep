@@ -842,6 +842,10 @@ function showTermsGate(){
       <div style="text-align:left;font-size:.78rem;color:#c9d4d1;line-height:1.6;background:#0a1211;border:1px solid rgba(46,196,182,.12);border-radius:12px;padding:14px 16px;margin-bottom:14px">
         I certify that I am 18 years of age or older, and I agree to the <a href="/terms.html" target="_blank" style="color:var(--teal,#2ec4b6);text-decoration:underline">Terms of Service</a>, <a href="/privacy.html" target="_blank" style="color:var(--teal,#2ec4b6);text-decoration:underline">Privacy Policy</a>, and <a href="/official-rules.html" target="_blank" style="color:var(--teal,#2ec4b6);text-decoration:underline">Official Rules</a>. I understand that U.S. residents winning $600 or more in a calendar year must provide tax documentation before prizes are issued.
       </div>
+      <label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;text-align:left;line-height:1.5;font-size:.78rem;color:#c9d4d1;margin:0 0 14px">
+        <input type="checkbox" id="termsUsPerson" style="margin-top:2px;flex-shrink:0;width:16px;height:16px;accent-color:var(--teal,#2ec4b6);cursor:pointer">
+        <span style="flex:1">I am a U.S. citizen or resident for tax purposes. <span style="opacity:.65">Leave unchecked if this doesn't apply to you.</span></span>
+      </label>
       <p style="font-size:.72rem;color:#7a908b;margin:0 0 20px">No purchase necessary to participate.</p>
       <button id="termsAgreeBtn" style="width:100%;padding:14px;background:var(--teal,#2ec4b6);border:none;border-radius:11px;font-family:Nunito,sans-serif;font-size:1rem;font-weight:700;color:#0a1413;cursor:pointer;margin-bottom:12px">I Agree</button>
       <a id="termsLogoutBtn" style="display:inline-block;font-size:.78rem;color:#7a908b;cursor:pointer;text-decoration:underline">Log out</a>
@@ -852,6 +856,8 @@ function showTermsGate(){
     b.disabled = true; b.textContent = 'Saving…';
     try{
       await db.rpc('accept_terms');
+      const usChecked = !!(document.getElementById('termsUsPerson') && document.getElementById('termsUsPerson').checked);
+      try{ await db.rpc('set_us_person', { p_val: usChecked }); }catch(_){}
       if(myProfile) myProfile.terms_accepted_at = new Date().toISOString();
       ov.remove();
     }catch(e){
@@ -958,7 +964,12 @@ async function init(){
     const agreedAtSignup = currentUser.user_metadata && currentUser.user_metadata.agreed === true;
     if(agreedAtSignup){
       // email signup already agreed via the checkbox — record it silently, no modal
-      try{ await db.rpc('accept_terms'); myProfile.terms_accepted_at = new Date().toISOString(); }catch(_){}
+      try{
+        await db.rpc('accept_terms');
+        myProfile.terms_accepted_at = new Date().toISOString();
+        const up = !!(currentUser.user_metadata && currentUser.user_metadata.is_us_person === true);
+        try{ await db.rpc('set_us_person', { p_val: up }); }catch(_){}
+      }catch(_){}
     } else {
       // Google OAuth (or any path) with no recorded agreement — block until they agree
       showTermsGate();

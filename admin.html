@@ -471,6 +471,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
             <option value="rejected">Reject</option>
             <option value="none">None</option>
           </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted);cursor:pointer;margin-left:6px">
+            <input type="checkbox" id="usPersonFilter" onchange="renderUsers()" style="width:15px;height:15px;accent-color:var(--teal,#2ec4b6);cursor:pointer">🇺🇸 U.S. persons only
+          </label>
         </div>
         <div id="userCount" style="font-size:.72rem;color:var(--muted);margin-top:8px"></div>
       </div>
@@ -1684,21 +1687,29 @@ async function deletePrize(id){
 }
 // ==================== USERS ====================
 let allUsers = [];
+let usPersonSet = new Set();   // admin_us_person_ids-ის შედეგი (US-person მომხმარებლების id-ები)
 
 async function loadUsers(){
   const { data: users, error: usersErr } = await db.rpc('admin_get_users');
   if(usersErr){ console.error('admin_get_users error:', usersErr.message); }
   allUsers = users || [];
+  // US-person id-ები ცალკე RPC-ით (admin_get_users-ს არ ვეხებით)
+  try{
+    const { data: usRows } = await db.rpc('admin_us_person_ids');
+    usPersonSet = new Set((usRows||[]).map(r => (r && typeof r === 'object') ? r.id : r));
+  }catch(_){ usPersonSet = new Set(); }
   renderUsers();
 }
 
 function renderUsers(){
   const q = (document.getElementById('userSearch').value||'').toLowerCase().trim();
   const ccFilter = (document.getElementById('cookieFilter')||{}).value || 'all';
+  const usOnly = !!(document.getElementById('usPersonFilter') && document.getElementById('usPersonFilter').checked);
   const ccVal = u => (u.cookie_consent==='accepted'||u.cookie_consent==='rejected') ? u.cookie_consent : 'none';
   const filtered = allUsers.filter(u=>{
     if(q && !((u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.display_id||'').includes(q))) return false;
     if(ccFilter!=='all' && ccVal(u)!==ccFilter) return false;
+    if(usOnly && !usPersonSet.has(u.id)) return false;
     return true;
   });
 
@@ -1727,6 +1738,7 @@ function renderUsers(){
     const badges = [];
     if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
     if(u.is_banned) badges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
+    if(usPersonSet.has(u.id)) badges.push('<span class="badge" style="background:rgba(46,196,182,.14);color:var(--teal,#2ec4b6)">🇺🇸 US</span>');
     const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
@@ -1784,6 +1796,7 @@ async function openUserProfile(userId){
     ['Email', escapeHtml(u.email||'—')],
     ['Player ID', '#'+escapeHtml(u.display_id||'—')],
     ['Country', country],
+    ['🇺🇸 U.S. person', usPersonSet.has(u.id) ? '<span style="color:var(--teal,#2ec4b6);font-weight:700">Yes</span>' : 'No'],
     ['Registered', reg],
     ['Cookie consent', cc],
     ['🏆 Championship points', (u.championship_points||0)],

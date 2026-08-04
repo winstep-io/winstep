@@ -523,6 +523,13 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
       <p style="margin:12px 0 0 26px;opacity:.8">No purchase necessary to participate.</p>
     </div>
 
+    <div class="legal signup-only" id="usPersonNote" style="margin:-4px 0 14px">
+      <label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;text-align:left;line-height:1.5;width:100%">
+        <input type="checkbox" id="usPersonCheck" style="margin-top:2px;flex-shrink:0;width:17px;height:17px;accent-color:var(--teal);cursor:pointer">
+        <span style="flex:1">I am a U.S. citizen or resident for tax purposes.<br><span style="opacity:.7;font-size:.9em">Leave unchecked if this doesn't apply to you.</span></span>
+      </label>
+    </div>
+
     <div style="display:flex;justify-content:center;margin:0 0 14px"><div class="cf-turnstile" data-sitekey="0x4AAAAAADuaBdw260z6JkeC" data-theme="dark" data-callback="onCaptcha" data-expired-callback="onCaptchaExpired" data-error-callback="onCaptchaExpired"></div></div>
     <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Log In</button>
 
@@ -710,7 +717,7 @@ async function handleSubmit(){
     btn.textContent = 'Creating account...';
     const { data, error } = await db.auth.signUp({
       email, password,
-      options: { data: { username: username, agreed: true }, captchaToken }
+      options: { data: { username: username, agreed: true, is_us_person: document.getElementById('usPersonCheck').checked }, captchaToken }
     });
     resetCaptcha();
 
