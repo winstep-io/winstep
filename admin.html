@@ -1185,7 +1185,7 @@ async function loadPayouts(){
     + '</div></div>';
 
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem">'
-    + '<tr style="text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase"><th style="padding:8px 6px">#</th><th style="padding:8px 6px">Player</th><th style="padding:8px 6px">Email</th><th style="padding:8px 6px">IP Country</th><th style="padding:8px 6px">Points</th><th style="padding:8px 6px">Prize</th><th style="padding:8px 6px">Status</th></tr>';
+    + '<tr style="text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase"><th style="padding:8px 6px">#</th><th style="padding:8px 6px">Player</th><th style="padding:8px 6px">User ID</th><th style="padding:8px 6px">Email</th><th style="padding:8px 6px">IP Country</th><th style="padding:8px 6px">Points</th><th style="padding:8px 6px">Prize</th><th style="padding:8px 6px">Status</th></tr>';
 
   // Paid ფილტრი — ცხრილში მხოლოდ საპრიზო row-ები ჩანს, არჩეული სტატუსით
   const visibleRows = payouts.filter(p => {
@@ -1218,6 +1218,7 @@ async function loadPayouts(){
     html += '<tr style="border-top:1px solid var(--border);'+rowBg+'">'
       + '<td style="padding:9px 6px;font-weight:700">'+medal+'</td>'
       + '<td style="padding:9px 6px">'+escapeHtml(prof.username||'—')+'</td>'
+      + '<td style="padding:9px 6px;font-family:monospace;font-size:.76rem;color:var(--teal);font-weight:600">#'+escapeHtml(prof.display_id||'—')+'</td>'
       + '<td style="padding:9px 6px;font-family:monospace;font-size:.76rem">'+escapeHtml(prof.email||'—')+'</td>'
       + '<td style="padding:9px 6px">'+(prof.ip_country==='US'?'<span style="color:var(--red);font-weight:700">🇺🇸 US</span>':escapeHtml(prof.ip_country||'—'))+'</td>'
       + '<td style="padding:9px 6px;color:var(--teal);font-weight:600">'+p.championship_points+'</td>'
