@@ -454,14 +454,13 @@ body{animation:pageFadeIn .42s ease-out both}
       </div>
     </div>
 
-    <!-- Email -->
+    <!-- Email (read-only — registration email is fixed; prizes are sent here) -->
     <div style="margin-bottom:18px">
       <div class="sr-label" style="margin-bottom:8px">Email</div>
       <div style="display:flex;gap:8px">
-        <input id="accEmail" name="ws_contact_email" class="acc-input" type="email" placeholder="Email" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other">
-        <button class="acc-btn" onclick="saveEmail()">Save</button>
+        <input id="accEmail" name="ws_contact_email" class="acc-input" type="email" placeholder="Email" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" readonly style="opacity:.75;cursor:default">
       </div>
-      <div style="font-size:.68rem;color:var(--muted);margin-top:6px">Changing email may require confirmation via a link sent to the new address.</div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:6px">Your registration email can't be changed — prizes are sent to this address. Need help? Contact <a href="mailto:team@winstep.io" style="color:var(--teal)">team@winstep.io</a>.</div>
     </div>
 
     <!-- Password -->
@@ -760,14 +759,6 @@ async function selectAvatar(avatarId){
   renderHeaderAvatar(avatarId, myProfile?myProfile.username:'');
   buildAvatarGrid(avatarId);
   showAccMsg(avatarId ? 'Avatar updated! ✅' : 'Avatar removed. ✅', true);
-}
-
-async function saveEmail(){
-  const email = document.getElementById('accEmail').value.trim();
-  if(!email || !email.includes('@')){ showAccMsg('Please enter a valid email.', false); return; }
-  const { error } = await db.auth.updateUser({ email });
-  if(error){ showAccMsg(error.message, false); return; }
-  showAccMsg('Email change requested. Check your new inbox to confirm. 📧', true);
 }
 
 async function savePassword(){
