@@ -1905,8 +1905,16 @@ async function createBox(){
   // მიმდინარე გლობალური კონფიგი „ჩავამაგროთ" თავად ბოქსზე — მომავალი ცვლილება
   // ამ ბოქსს აღარ შეეხება (per-box snapshot)
   const toInt = v => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; };
-  const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct']);
+  const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct','quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
   const cfg = {}; (cfgRows||[]).forEach(r => { cfg[r.key] = r.value; });
+
+  // Quiz-ის ქულები + ტაიმერი — snapshot (ბონუს თამაშები გლობალური რჩება)
+  const game_config = {
+    quiz_correct:      toInt(cfg.quiz_correct),
+    quiz_wrong:        toInt(cfg.quiz_wrong),
+    quiz_timeout:      toInt(cfg.quiz_timeout),
+    quiz_time_seconds: toInt(cfg.quiz_time_seconds)
+  };
 
   // რეკლამის კონფიგის snapshot — მხოლოდ გადაწყვეტილებები/ფლაგები (კოდები გლობალური რჩება)
   const { data: intRow } = await db.from('interstitial_settings').select('*').eq('id',1).single();
@@ -1929,7 +1937,8 @@ async function createBox(){
     name: autoName, date, start_time: '00:00:00', end_time: '23:59:00', sort_order: nextOrder, sequence_order: nextOrder,
     interval_minutes: toInt(cfg.box_interval_minutes),
     unlock_correct: toInt(cfg.bridge_unlock_correct),
-    ad_config
+    ad_config,
+    game_config
   });
   if(error){ showMsg('boxMsg', error.message, 'err'); return; }
   showMsg('boxMsg', autoName + ' created! ✅','ok');

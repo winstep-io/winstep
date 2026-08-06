@@ -616,6 +616,20 @@ async function init(){
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
   if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
 
+  // ბოქსის საკუთარი Quiz-კონფიგი (snapshot); NULL → გლობალი. აისახება ტაიმერზეც და „+X points"-ზეც
+  try{
+    const { data: t } = await db.from('tasks').select('box_id').eq('id', taskId).single();
+    if(t && t.box_id){
+      const { data: b } = await db.from('boxes').select('game_config').eq('id', t.box_id).single();
+      const gc = b ? b.game_config : null;
+      if(gc){
+        ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds'].forEach(k=>{
+          if(gc[k] != null) pointSettings[k] = gc[k];
+        });
+      }
+    }
+  }catch(_){}
+
   renderQuestion();
   startTimer();
 }
