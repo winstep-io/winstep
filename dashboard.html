@@ -1725,7 +1725,7 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
   }
   // მინიშნება მხოლოდ აქტიურ ბოქსში — დასრულებულში აზრი აღარ აქვს
   if(state === 'active'){
-    const need = pointSettings.bridge_unlock_correct;
+    const need = (box.unlock_correct != null ? box.unlock_correct : pointSettings.bridge_unlock_correct);
     html += '<div class="unlock-hint">🎮 <b>'+need+'</b> correct answer'+(need===1?'':'s')+' unlock'+(need===1?'s':'')+' the bonus game</div>';
   }
   html += '</div></div>';

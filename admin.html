@@ -1902,8 +1902,16 @@ async function createBox(){
   const nextOrder = (sameDay ? sameDay.length : 0) + 1;
   const autoName = 'Box ' + nextOrder;
 
+  // მიმდინარე გლობალური კონფიგი „ჩავამაგროთ" თავად ბოქსზე — მომავალი ცვლილება
+  // ამ ბოქსს აღარ შეეხება (per-box snapshot)
+  const toInt = v => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; };
+  const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct']);
+  const cfg = {}; (cfgRows||[]).forEach(r => { cfg[r.key] = r.value; });
+
   const { error } = await db.from('boxes').insert({
-    name: autoName, date, start_time: '00:00:00', end_time: '23:59:00', sort_order: nextOrder, sequence_order: nextOrder
+    name: autoName, date, start_time: '00:00:00', end_time: '23:59:00', sort_order: nextOrder, sequence_order: nextOrder,
+    interval_minutes: toInt(cfg.box_interval_minutes),
+    unlock_correct: toInt(cfg.bridge_unlock_correct)
   });
   if(error){ showMsg('boxMsg', error.message, 'err'); return; }
   showMsg('boxMsg', autoName + ' created! ✅','ok');
