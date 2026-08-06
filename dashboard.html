@@ -1443,8 +1443,16 @@ async function loadAds(){
     const byKey = {};
     rows.forEach(r => byKey[r.slot_key] = r);
     const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
-    renderAdSlot(byKey['dashboard_top'], 'adSlotTop', 'adTop', globalScript);
-    renderAdSlot(byKey['dashboard_bottom'], 'adSlotBottom', 'adBottom', globalScript);
+    // ბანერის on/off — დღის snapshot-იდან (fallback გლობალურ slot-ზე); კოდი ისევ slot-იდან
+    const withDayFlag = (key) => {
+      const base = byKey[key] || { mode:'auto', custom_code:'' };
+      const on = (dayAdCfg && dayAdCfg['banner_'+key] != null)
+        ? (dayAdCfg['banner_'+key] === true)
+        : (byKey[key] ? byKey[key].enabled !== false : true);
+      return Object.assign({}, base, { enabled: on });
+    };
+    renderAdSlot(withDayFlag('dashboard_top'), 'adSlotTop', 'adTop', globalScript);
+    renderAdSlot(withDayFlag('dashboard_bottom'), 'adSlotBottom', 'adBottom', globalScript);
 
     // ვიდეო/interstitial პროვაიდერის სკრიპტი — site-wide ჩატვირთვა <head>-ში
     // (მხოლოდ თუ admin-ში „Load site-wide" ჩართულია). interstitial ახლა აქ, დაშბორდზე ჩნდება.
@@ -1539,6 +1547,7 @@ function ordinal(n){ const s=['th','st','nd','rd']; const v=n%100; return n+(s[(
 
 // ---- load boxes + tasks ----
 let pointSettings = { box_interval_minutes: 15, bridge_unlock_correct: 2 };
+let dayAdCfg = null;   // მიმდინარე დღის ბოქსების ad_config snapshot (per-day რეკლამის ფლაგები)
 
 // გზა B — box-ის დასრულება/თამაშის განბლოკვა სერვერზე მოწმდება (anti-cheat).
 // client აღარ წერს user_box_progress-ს; სერვერი ამოწმებს და ქმნის საჭიროებისას.
@@ -1568,6 +1577,8 @@ async function loadBoxes(){
     const { data: bx, error: bxErr } = await db.rpc('get_dashboard_boxes');
     if(bxErr || !bx) throw bxErr || new Error('no data');
     boxes = bx.boxes || [];
+    dayAdCfg = (boxes.find(b => b && b.ad_config) || {}).ad_config || null;  // დღის რეკლამის snapshot
+    loadAds();   // ბანერები დღის snapshot-ით ხელახლა გამოვიყენოთ
     doneTaskIds = (bx.activity || []).map(a=>a.task_id);
     (bx.progress || []).forEach(p=>{ progressByBox[p.box_id] = p; });
     boxesFromRpc = true;
@@ -1861,25 +1872,34 @@ function parseList(str){
 
 async function maybeShowInterstitialDashboard(intervalActive){
   if(!currentUser) return;                 // სტუმარს არ ეხება
-  const cfg = await getIntCfg();
-  if(!cfg || !cfg.enabled) return;          // Master switch
+  const cfg = await getIntCfg();            // კოდები/mode გლობალიდან (+ fallback ძველი ბოქსებისთვის)
+  if(!cfg) return;
 
-  // --- BOX (პრიორიტეტი): ახლა დახურული ბოქსი (აქტიური break-ით) ---
-  if(cfg.box_enabled && intervalActive && intervalActive.prog && !intervalActive.prog.box_ad_shown){
-    const list = parseList(cfg.box_after);
-    const boxNum = (intervalActive.boxIndex|0) + 1;   // ბოქსის რეალური ნომერი (პოზიცია)
-    if(list.includes(boxNum)){
+  // --- BOX (პრიორიტეტი): გადაწყვეტილება ბოქსის საკუთარი snapshot-იდან (გაყინული) ---
+  if(intervalActive && intervalActive.prog && !intervalActive.prog.box_ad_shown){
+    const adc = (intervalActive.box && intervalActive.box.ad_config) || null;
+    const master    = adc ? (adc.int_master === true)      : (cfg.enabled === true);
+    const boxEnabled = adc ? (adc.int_box_enabled === true) : (cfg.box_enabled === true);
+    const afterList = parseList(adc ? adc.int_box_after : cfg.box_after);
+    const boxNum    = (intervalActive.boxIndex|0) + 1;   // ბოქსის რეალური ნომერი (პოზიცია)
+    if(master && boxEnabled && afterList.includes(boxNum)){
       const { data: r } = await db.rpc('claim_box_ad', { p_box_id: intervalActive.box.id });
       if(r && r.claimed){ await fireInterstitial(cfg.box_mode, cfg.box_code); return; }
     }
   }
 
-  // --- QUIZ: ყოველ N ვიქტორინაზე ---
-  if(cfg.quiz_enabled){
-    const n = parseInt(String(cfg.quiz_after||'').trim(), 10);
-    if(Number.isFinite(n) && n >= 1){
-      const { data: r } = await db.rpc('claim_quiz_ad', { p_n: n });
-      if(r && r.claimed){ await fireInterstitial(cfg.quiz_mode, cfg.quiz_code); return; }
+  // --- QUIZ: ყოველ N ვიქტორინაზე — გადაწყვეტილება დღის snapshot-იდან (გაყინული) ---
+  {
+    const adc = dayAdCfg || null;
+    const master   = adc ? (adc.int_master === true)       : (cfg.enabled === true);
+    const quizEn   = adc ? (adc.int_quiz_enabled === true) : (cfg.quiz_enabled === true);
+    const quizAfter = adc ? adc.int_quiz_after : cfg.quiz_after;
+    if(master && quizEn){
+      const n = parseInt(String(quizAfter||'').trim(), 10);
+      if(Number.isFinite(n) && n >= 1){
+        const { data: r } = await db.rpc('claim_quiz_ad', { p_n: n });
+        if(r && r.claimed){ await fireInterstitial(cfg.quiz_mode, cfg.quiz_code); return; }
+      }
     }
   }
 }

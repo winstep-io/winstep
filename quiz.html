@@ -837,7 +837,21 @@ async function loadAds(){
     const byKey = {};
     rows.forEach(r => byKey[r.slot_key] = r);
     const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
-    renderAdSlot(byKey['quiz_top'], 'adSlotTop', 'adTop', globalScript);
+
+    // ბანერის on/off — ბოქსის ad_config snapshot-იდან (fallback გლობალურ slot-ზე); კოდი slot-იდან
+    let bannerOn = byKey['quiz_top'] ? (byKey['quiz_top'].enabled !== false) : true;
+    if(taskId){
+      try{
+        const { data: t } = await db.from('tasks').select('box_id').eq('id', taskId).single();
+        if(t && t.box_id){
+          const { data: b } = await db.from('boxes').select('ad_config').eq('id', t.box_id).single();
+          const adc = b ? b.ad_config : null;
+          if(adc && adc.banner_quiz_top != null) bannerOn = (adc.banner_quiz_top === true);
+        }
+      }catch(_){}
+    }
+    const qt = Object.assign({}, byKey['quiz_top'] || { mode:'auto', custom_code:'' }, { enabled: bannerOn });
+    renderAdSlot(qt, 'adSlotTop', 'adTop', globalScript);
     // ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ამ ხაზის დასაწყისის //
     // renderAdSlot(byKey['quiz_bottom'], 'adSlotBottom', 'adBottom', globalScript);
     // (ვიდეო-სკრიპტის site-wide ჩატვირთვა დაშბორდზე გადავიდა — interstitial ახლა იქ ჩნდება)

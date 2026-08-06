@@ -1908,10 +1908,28 @@ async function createBox(){
   const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct']);
   const cfg = {}; (cfgRows||[]).forEach(r => { cfg[r.key] = r.value; });
 
+  // რეკლამის კონფიგის snapshot — მხოლოდ გადაწყვეტილებები/ფლაგები (კოდები გლობალური რჩება)
+  const { data: intRow } = await db.from('interstitial_settings').select('*').eq('id',1).single();
+  const { data: adRows } = await db.from('ad_settings').select('slot_key,enabled');
+  const adBy = {}; (adRows||[]).forEach(r => { adBy[r.slot_key] = r; });
+  const bannerOn = k => adBy[k] ? (adBy[k].enabled !== false) : true;
+  const it = intRow || {};
+  const ad_config = {
+    int_master:       it.enabled === true,
+    int_box_enabled:  it.box_enabled === true,
+    int_box_after:    it.box_after || '',
+    int_quiz_enabled: it.quiz_enabled === true,
+    int_quiz_after:   it.quiz_after || '',
+    banner_dashboard_top:    bannerOn('dashboard_top'),
+    banner_dashboard_bottom: bannerOn('dashboard_bottom'),
+    banner_quiz_top:         bannerOn('quiz_top')
+  };
+
   const { error } = await db.from('boxes').insert({
     name: autoName, date, start_time: '00:00:00', end_time: '23:59:00', sort_order: nextOrder, sequence_order: nextOrder,
     interval_minutes: toInt(cfg.box_interval_minutes),
-    unlock_correct: toInt(cfg.bridge_unlock_correct)
+    unlock_correct: toInt(cfg.bridge_unlock_correct),
+    ad_config
   });
   if(error){ showMsg('boxMsg', error.message, 'err'); return; }
   showMsg('boxMsg', autoName + ' created! ✅','ok');
