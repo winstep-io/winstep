@@ -575,17 +575,21 @@ async function loadPastChampionships(){
 
   document.getElementById('pastSection').style.display = 'block';
 
+  // გამარჯვებულების სახელები ერთ მოთხოვნაში (N+1-ის ნაცვლად — თითო ჩემპიონატზე ცალკე მოთხოვნა აღარაა)
+  const winnerIds = [...new Set(champs.map(c=>c.winner_user_id).filter(Boolean))];
+  const winnerName = {};
+  if(winnerIds.length){
+    const { data: ws } = await db.from('public_profiles').select('id, username').in('id', winnerIds);
+    (ws||[]).forEach(w => { winnerName[w.id] = w.username; });
+  }
+
   let html = '';
   for(const c of champs){
-    let winnerName = '—';
-    if(c.winner_user_id){
-      const { data: w } = await db.from('public_profiles').select('username').eq('id', c.winner_user_id).maybeSingle();
-      if(w) winnerName = w.username;
-    }
+    const wn = (c.winner_user_id && winnerName[c.winner_user_id]) || '—';
     const period = (c.start_date||'') + (c.end_date?(' → '+c.end_date):'');
     html += '<div class="lb-row" style="cursor:pointer" onclick="viewPastResults(\''+c.id+'\','+c.number+')">'
       + '<span class="lb-rank">🏆</span>'
-      + '<div class="lb-info"><div class="lb-name">Championship '+champIdLabel(c.number)+'</div><div class="lb-stats">'+period+' · winner: '+escapeHtml(winnerName)+'</div></div>'
+      + '<div class="lb-info"><div class="lb-name">Championship '+champIdLabel(c.number)+'</div><div class="lb-stats">'+period+' · winner: '+escapeHtml(wn)+'</div></div>'
       + '<span class="lb-pts" style="font-size:.8rem">View ▾</span>'
       + '</div>';
   }
