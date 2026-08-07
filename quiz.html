@@ -578,6 +578,8 @@ let activityId = null;
 let timeLeft = 20;
 let timerInterval = null;
 let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0, quiz_time_seconds: 20 };
+let boxGameCfg = null;   // ბოქსის game_config snapshot (Quiz ქულები/ტაიმერი)
+let boxAdCfg = null;     // ბოქსის ad_config snapshot (ბანერი) — ერთ query-ში ორივე
 
 // get task id from URL
 const params = new URLSearchParams(window.location.search);
@@ -587,11 +589,22 @@ taskId = params.get('task');
 // რომ არეული რიგი ეკრანზე არ გამოჩნდეს.
 const dispNum = parseInt(params.get('n'), 10);
 
+// ბოქსის კონფიგი ერთ query-ში (game_config + ad_config) — ტაიმერიც, ქულაც, ბანერიც ამას იყენებს
+async function loadBoxCfg(){
+  if(!taskId) return;
+  try{
+    const { data: t } = await db.from('tasks').select('box_id, boxes(game_config, ad_config)').eq('id', taskId).single();
+    const b = t && t.boxes ? t.boxes : null;
+    if(b){ boxGameCfg = b.game_config || null; boxAdCfg = b.ad_config || null; }
+  }catch(_){}
+}
+
 async function init(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href = '/index.html'; return; }
   currentUser = session.user;
   accessToken = session.access_token;
+  await loadBoxCfg();   // ბოქსის კონფიგი ერთხელ (game_config + ad_config)
   loadAds();
 
   if(!taskId){ document.getElementById('quizContent').innerHTML = '<div class="loading">No quiz selected.</div>'; return; }
@@ -616,19 +629,12 @@ async function init(){
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
   if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
 
-  // ბოქსის საკუთარი Quiz-კონფიგი (snapshot); NULL → გლობალი. აისახება ტაიმერზეც და „+X points"-ზეც
-  try{
-    const { data: t } = await db.from('tasks').select('box_id').eq('id', taskId).single();
-    if(t && t.box_id){
-      const { data: b } = await db.from('boxes').select('game_config').eq('id', t.box_id).single();
-      const gc = b ? b.game_config : null;
-      if(gc){
-        ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds'].forEach(k=>{
-          if(gc[k] != null) pointSettings[k] = gc[k];
-        });
-      }
-    }
-  }catch(_){}
+  // ბოქსის საკუთარი Quiz-კონფიგი (უკვე წამოღებული loadBoxCfg-ში); NULL → გლობალი
+  if(boxGameCfg){
+    ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds'].forEach(k=>{
+      if(boxGameCfg[k] != null) pointSettings[k] = boxGameCfg[k];
+    });
+  }
 
   renderQuestion();
   startTimer();
@@ -852,18 +858,9 @@ async function loadAds(){
     rows.forEach(r => byKey[r.slot_key] = r);
     const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
 
-    // ბანერის on/off — ბოქსის ad_config snapshot-იდან (fallback გლობალურ slot-ზე); კოდი slot-იდან
+    // ბანერის on/off — ბოქსის ad_config snapshot-იდან (loadBoxCfg-ში წამოღებული); კოდი slot-იდან
     let bannerOn = byKey['quiz_top'] ? (byKey['quiz_top'].enabled !== false) : true;
-    if(taskId){
-      try{
-        const { data: t } = await db.from('tasks').select('box_id').eq('id', taskId).single();
-        if(t && t.box_id){
-          const { data: b } = await db.from('boxes').select('ad_config').eq('id', t.box_id).single();
-          const adc = b ? b.ad_config : null;
-          if(adc && adc.banner_quiz_top != null) bannerOn = (adc.banner_quiz_top === true);
-        }
-      }catch(_){}
-    }
+    if(boxAdCfg && boxAdCfg.banner_quiz_top != null) bannerOn = (boxAdCfg.banner_quiz_top === true);
     const qt = Object.assign({}, byKey['quiz_top'] || { mode:'auto', custom_code:'' }, { enabled: bannerOn });
     renderAdSlot(qt, 'adSlotTop', 'adTop', globalScript);
     // ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ამ ხაზის დასაწყისის //
