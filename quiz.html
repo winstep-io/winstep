@@ -578,8 +578,7 @@ let activityId = null;
 let timeLeft = 20;
 let timerInterval = null;
 let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0, quiz_time_seconds: 20 };
-let boxGameCfg = null;   // ბოქსის game_config snapshot (Quiz ქულები/ტაიმერი)
-let boxAdCfg = null;     // ბოქსის ad_config snapshot (ბანერი) — ერთ query-ში ორივე
+let boxAdCfg = null;     // ბოქსის ad_config snapshot (ბანერი per-day)
 
 // get task id from URL
 const params = new URLSearchParams(window.location.search);
@@ -589,13 +588,13 @@ taskId = params.get('task');
 // რომ არეული რიგი ეკრანზე არ გამოჩნდეს.
 const dispNum = parseInt(params.get('n'), 10);
 
-// ბოქსის კონფიგი ერთ query-ში (game_config + ad_config) — ტაიმერიც, ქულაც, ბანერიც ამას იყენებს
+// ბოქსის ad_config (ბანერისთვის) — ერთ query-ში
 async function loadBoxCfg(){
   if(!taskId) return;
   try{
-    const { data: t } = await db.from('tasks').select('box_id, boxes(game_config, ad_config)').eq('id', taskId).single();
+    const { data: t } = await db.from('tasks').select('box_id, boxes(ad_config)').eq('id', taskId).single();
     const b = t && t.boxes ? t.boxes : null;
-    if(b){ boxGameCfg = b.game_config || null; boxAdCfg = b.ad_config || null; }
+    if(b){ boxAdCfg = b.ad_config || null; }
   }catch(_){}
 }
 
@@ -604,7 +603,7 @@ async function init(){
   if(!session){ window.location.href = '/index.html'; return; }
   currentUser = session.user;
   accessToken = session.access_token;
-  await loadBoxCfg();   // ბოქსის კონფიგი ერთხელ (game_config + ad_config)
+  await loadBoxCfg();   // ბოქსის ad_config (ბანერისთვის) ერთხელ
   loadAds();
 
   if(!taskId){ document.getElementById('quizContent').innerHTML = '<div class="loading">No quiz selected.</div>'; return; }
@@ -625,16 +624,9 @@ async function init(){
   question = qData;
   document.getElementById('quizTag').textContent = (dispNum > 0) ? ('Quiz ' + dispNum) : 'Quiz';
 
-  // load global point settings
+  // load global point settings (Quiz ქულები/ტაიმერი — გლობალური, ცოცხლად)
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
   if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
-
-  // ბოქსის საკუთარი Quiz-კონფიგი (უკვე წამოღებული loadBoxCfg-ში); NULL → გლობალი
-  if(boxGameCfg){
-    ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds'].forEach(k=>{
-      if(boxGameCfg[k] != null) pointSettings[k] = boxGameCfg[k];
-    });
-  }
 
   renderQuestion();
   startTimer();
