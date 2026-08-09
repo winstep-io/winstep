@@ -1908,21 +1908,15 @@ async function createBox(){
   const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct']);
   const cfg = {}; (cfgRows||[]).forEach(r => { cfg[r.key] = r.value; });
 
-  // რეკლამის კონფიგის snapshot — მხოლოდ გადაწყვეტილებები/ფლაგები (კოდები გლობალური რჩება)
+  // interstitial-ის (ვიდეორეკლამის) snapshot per-box — ბანერები გლობალურია, აღარ ვინახავთ
   const { data: intRow } = await db.from('interstitial_settings').select('*').eq('id',1).single();
-  const { data: adRows } = await db.from('ad_settings').select('slot_key,enabled');
-  const adBy = {}; (adRows||[]).forEach(r => { adBy[r.slot_key] = r; });
-  const bannerOn = k => adBy[k] ? (adBy[k].enabled !== false) : true;
   const it = intRow || {};
   const ad_config = {
     int_master:       it.enabled === true,
     int_box_enabled:  it.box_enabled === true,
     int_box_after:    it.box_after || '',
     int_quiz_enabled: it.quiz_enabled === true,
-    int_quiz_after:   it.quiz_after || '',
-    banner_dashboard_top:    bannerOn('dashboard_top'),
-    banner_dashboard_bottom: bannerOn('dashboard_bottom'),
-    banner_quiz_top:         bannerOn('quiz_top')
+    int_quiz_after:   it.quiz_after || ''
   };
 
   const { error } = await db.from('boxes').insert({

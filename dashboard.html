@@ -1443,16 +1443,8 @@ async function loadAds(){
     const byKey = {};
     rows.forEach(r => byKey[r.slot_key] = r);
     const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
-    // ბანერის on/off — დღის snapshot-იდან (fallback გლობალურ slot-ზე); კოდი ისევ slot-იდან
-    const withDayFlag = (key) => {
-      const base = byKey[key] || { mode:'auto', custom_code:'' };
-      const on = (dayAdCfg && dayAdCfg['banner_'+key] != null)
-        ? (dayAdCfg['banner_'+key] === true)
-        : (byKey[key] ? byKey[key].enabled !== false : true);
-      return Object.assign({}, base, { enabled: on });
-    };
-    renderAdSlot(withDayFlag('dashboard_top'), 'adSlotTop', 'adTop', globalScript);
-    renderAdSlot(withDayFlag('dashboard_bottom'), 'adSlotBottom', 'adBottom', globalScript);
+    renderAdSlot(byKey['dashboard_top'], 'adSlotTop', 'adTop', globalScript);
+    renderAdSlot(byKey['dashboard_bottom'], 'adSlotBottom', 'adBottom', globalScript);
 
     // ვიდეო/interstitial პროვაიდერის სკრიპტი — site-wide ჩატვირთვა <head>-ში
     // (მხოლოდ თუ admin-ში „Load site-wide" ჩართულია). interstitial ახლა აქ, დაშბორდზე ჩნდება.
@@ -1577,8 +1569,7 @@ async function loadBoxes(){
     const { data: bx, error: bxErr } = await db.rpc('get_dashboard_boxes');
     if(bxErr || !bx) throw bxErr || new Error('no data');
     boxes = bx.boxes || [];
-    dayAdCfg = (boxes.find(b => b && b.ad_config) || {}).ad_config || null;  // დღის რეკლამის snapshot
-    loadAds();   // ბანერები დღის snapshot-ით ხელახლა გამოვიყენოთ
+    dayAdCfg = (boxes.find(b => b && b.ad_config) || {}).ad_config || null;  // interstitial-ის quiz კადენციისთვის
     doneTaskIds = (bx.activity || []).map(a=>a.task_id);
     (bx.progress || []).forEach(p=>{ progressByBox[p.box_id] = p; });
     boxesFromRpc = true;

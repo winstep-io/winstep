@@ -578,7 +578,6 @@ let activityId = null;
 let timeLeft = 20;
 let timerInterval = null;
 let pointSettings = { quiz_correct: 10, quiz_wrong: 5, quiz_timeout: 0, quiz_time_seconds: 20 };
-let boxAdCfg = null;     // ბოქსის ad_config snapshot (ბანერი per-day)
 
 // get task id from URL
 const params = new URLSearchParams(window.location.search);
@@ -588,22 +587,11 @@ taskId = params.get('task');
 // რომ არეული რიგი ეკრანზე არ გამოჩნდეს.
 const dispNum = parseInt(params.get('n'), 10);
 
-// ბოქსის ad_config (ბანერისთვის) — ერთ query-ში
-async function loadBoxCfg(){
-  if(!taskId) return;
-  try{
-    const { data: t } = await db.from('tasks').select('box_id, boxes(ad_config)').eq('id', taskId).single();
-    const b = t && t.boxes ? t.boxes : null;
-    if(b){ boxAdCfg = b.ad_config || null; }
-  }catch(_){}
-}
-
 async function init(){
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href = '/index.html'; return; }
   currentUser = session.user;
   accessToken = session.access_token;
-  await loadBoxCfg();   // ბოქსის ad_config (ბანერისთვის) ერთხელ
   loadAds();
 
   if(!taskId){ document.getElementById('quizContent').innerHTML = '<div class="loading">No quiz selected.</div>'; return; }
@@ -849,12 +837,7 @@ async function loadAds(){
     const byKey = {};
     rows.forEach(r => byKey[r.slot_key] = r);
     const globalScript = (byKey['__global__'] && byKey['__global__'].custom_code) || '';
-
-    // ბანერის on/off — ბოქსის ad_config snapshot-იდან (loadBoxCfg-ში წამოღებული); კოდი slot-იდან
-    let bannerOn = byKey['quiz_top'] ? (byKey['quiz_top'].enabled !== false) : true;
-    if(boxAdCfg && boxAdCfg.banner_quiz_top != null) bannerOn = (boxAdCfg.banner_quiz_top === true);
-    const qt = Object.assign({}, byKey['quiz_top'] || { mode:'auto', custom_code:'' }, { enabled: bannerOn });
-    renderAdSlot(qt, 'adSlotTop', 'adTop', globalScript);
+    renderAdSlot(byKey['quiz_top'], 'adSlotTop', 'adTop', globalScript);
     // ქვედა ბანერი დროებით გათიშულია — აღსადგენად მოაშორე ამ ხაზის დასაწყისის //
     // renderAdSlot(byKey['quiz_bottom'], 'adSlotBottom', 'adBottom', globalScript);
     // (ვიდეო-სკრიპტის site-wide ჩატვირთვა დაშბორდზე გადავიდა — interstitial ახლა იქ ჩნდება)
