@@ -709,7 +709,7 @@ body.gap-mode #topMeta{min-height:0!important}
     </div>
     <div class="logo-name">win<span>step</span></div>
   </div>
-  <div class="header-right">
+  <div class="header-right" style="visibility:hidden">
     <div class="points-pill">
       <span class="pts-val pts-champ" id="userChampPoints">0</span>
       <span class="pts-sep">/</span>
@@ -928,6 +928,8 @@ async function init(){
   }
 
   currentUser = session.user;
+  // auth დადგინდა — header-ის ღილაკები ახლა ვაჩვენოთ (ავტორიზებული ვარიანტი)
+  { const hr = document.querySelector('.header-right'); if(hr) hr.style.visibility = 'visible'; }
 
   // load profile
   const { data: profile } = await db.from('profiles').select('id, username, avatar_id, championship_points, season_points, total_points, cookie_consent, is_banned, ip_country, terms_accepted_at').eq('id', currentUser.id).single();
@@ -1018,6 +1020,7 @@ function enterPreviewMode(){
   const hr = document.querySelector('.header-right');
   if(hr){
     hr.innerHTML = '<button class="logout-btn" onclick="window.location.href=\'/index.html\'" style="background:var(--teal);color:#000;border:none;font-weight:600">Log In / Sign Up</button>';
+    hr.style.visibility = 'visible';   // სტუმრის ღილაკი მზადაა — ახლა ვაჩვენოთ
   }
 }
 
