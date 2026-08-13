@@ -1988,9 +1988,24 @@ async function loadBoxes(){
       tasksHtml += '<div class="list-item" style="margin-left:20px;background:var(--bg2)"><span class="badge '+t.type+'">'+t.type+'</span><div class="li-info"><div class="li-title">'+escapeHtml(t.title)+'</div><div class="li-sub">+'+t.points+' points</div></div><div class="li-actions">'+editBtn+delBtn+'</div></div>';
     }
     const niceDate = new Date(box.date+'T00:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+
+    // ბოქსის შექმნის-მომენტის კონფიგი (snapshot) — Upcoming-ზე შეცდომის დასაჭერად
+    const adc = box.ad_config || null;
+    const fmtTrig = (en, val) => (adc && adc.int_master === true && en === true && String(val||'').trim()) ? String(val).trim() : 'Off';
+    const cfgInterval = (box.interval_minutes != null) ? (box.interval_minutes + ' min') : '—';
+    const cfgUnlock   = (box.unlock_correct   != null) ? box.unlock_correct : '—';
+    const cfgAfterBox  = adc ? fmtTrig(adc.int_box_enabled,  adc.int_box_after)  : '—';
+    const cfgAfterQuiz = adc ? fmtTrig(adc.int_quiz_enabled, adc.int_quiz_after) : '—';
+    const cfgLine = '<div class="li-sub" style="margin-top:4px;opacity:.9;font-size:.68rem">'
+      + '⏱ Interval: <b style="color:var(--teal)">'+cfgInterval+'</b> · '
+      + '🎮 Unlock: <b style="color:var(--teal)">'+cfgUnlock+'</b> correct · '
+      + '📺 After box: <b style="color:'+(cfgAfterBox==='Off'||cfgAfterBox==='—'?'var(--muted)':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterBox))+'</b> · '
+      + 'After quiz: <b style="color:'+(cfgAfterQuiz==='Off'||cfgAfterQuiz==='—'?'var(--muted)':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterQuiz))+'</b>'
+      + '</div>';
+
     // History-ში "+ Task" ღილაკი არ ჩანს (წარსულს ვერ შეცვლი)
     const taskBtn = (boxTab==='history') ? '' : '<button class="btn btn-ghost btn-sm" onclick="openTaskModal(\''+box.id+'\')">+ Task</button>';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div></div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div>'+cfgLine+'</div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
     if(tasksHtml) html += tasksHtml;
   }
   list.innerHTML = html;
