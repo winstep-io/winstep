@@ -728,8 +728,8 @@ body.gap-mode #topMeta{min-height:0!important}
 
 <div class="layout ws-in">
   <div class="main-col">
-    <div class="welcome">Welcome, <span id="userName">...</span>!</div>
-    <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
+    <div class="welcome" style="visibility:hidden">Welcome, <span id="userName">...</span>!</div>
+    <div class="welcome-sub" style="visibility:hidden">Complete tasks to earn points and climb the leaderboard.</div>
 
     <div id="topMeta" class="topmeta-reserve">
       <div class="champ-badge" id="champBadge" style="display:none"></div>
@@ -980,6 +980,9 @@ async function init(){
 
   if(profile){
     document.getElementById('userName').textContent = profile.username;
+    // სახელი მზადაა — მისალმება ახლა ვაჩვენოთ (ავტორიზებული რეჟიმი)
+    { const w = document.querySelector('.welcome'), ws = document.querySelector('.welcome-sub');
+      if(w) w.style.visibility = 'visible'; if(ws) ws.style.visibility = 'visible'; }
     // Total Round Points = authoritative sum of finished rounds + live (matches profile & round table)
     let _trp = (profile.season_points||0) + (profile.total_points||0);
     try{
