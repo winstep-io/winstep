@@ -290,6 +290,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div class="nav-item" onclick="nav('settings',this)"><span>⚙️</span><span>Points Settings</span></div>
     <div class="nav-item" onclick="nav('ads',this)"><span>📺</span><span>Ad Manager</span></div>
     <div class="nav-item" onclick="nav('emailforms',this)"><span>📧</span><span>E-Mail Forms</span></div>
+    <div class="nav-item" onclick="nav('gallery',this)"><span>📷</span><span>Photo Gallery</span></div>
   </div>
 
   <div class="main">
@@ -709,6 +710,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       </div>
     </div>
   </div>
+
+    <div class="section" id="sec-gallery">
+      <div class="page-title">Photo Gallery</div>
+      <div class="page-sub">ატვირთე სურათები ერთხელ — ქუიზების შექმნისას აქედან აიღებ (Copy URL). აღარ დაგჭირდა — წაშალე, რომ მოცულობა არ დაიკავოს.</div>
+      <div class="card" style="margin-bottom:16px">
+        <input type="file" id="galleryFile" accept="image/*" multiple style="display:none" onchange="galleryUpload(this.files)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" onclick="document.getElementById('galleryFile').click()">⬆️ Upload images</button>
+          <button class="btn btn-danger" onclick="galleryDeleteAll()">🗑 Delete all</button>
+          <span id="galleryMsg" class="msg" style="margin:0"></span>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:8px">მაქს. 2MB თითო ფაილზე · სახელი ავტომატურად ნეიტრალურდება (პასუხს არ ამხელს)</div>
+      </div>
+      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px"></div>
+    </div>
 </div>
 
 <!-- ============ ADD TASK MODAL ============ -->
@@ -911,6 +927,75 @@ function nav(section, el){
   if(section==='users') loadUsers();
   if(section==='ads'){ loadAds(); loadInterstitial(); }
   if(section==='emailforms'){ wfRender(); cfRender(); }
+  if(section==='gallery') loadGallery();
+}
+
+// ==================== PHOTO GALLERY (Supabase Storage) ====================
+const GALLERY_BUCKET = 'quiz-images';
+let galleryUrls = {};
+
+async function loadGallery(){
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  const { data, error } = await db.storage.from(GALLERY_BUCKET).list('', { limit: 300, sortBy:{ column:'created_at', order:'desc' } });
+  if(error){ grid.innerHTML = '<div style="color:var(--red)">'+escapeHtml(error.message)+'</div>'; return; }
+  const files = (data||[]).filter(f=>f.name && !f.name.startsWith('.'));
+  if(!files.length){ grid.innerHTML = '<div style="color:var(--muted)">ჯერ სურათი არ არის. ატვირთე ზემოთ ⬆️</div>'; return; }
+  galleryUrls = {};
+  grid.innerHTML = files.map(f=>{
+    const url = db.storage.from(GALLERY_BUCKET).getPublicUrl(f.name).data.publicUrl;
+    galleryUrls[f.name] = url;
+    return '<div style="position:relative;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg3)">'
+      + '<img src="'+url+'" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;display:block">'
+      + '<div style="display:flex;gap:4px;padding:6px">'
+      + '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="galleryCopy(\''+f.name+'\')">📋 Copy URL</button>'
+      + '<button class="btn btn-danger btn-sm" onclick="galleryDelete(\''+f.name+'\')">✕</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+async function galleryUpload(files){
+  if(!files || !files.length) return;
+  let ok=0, skip=0;
+  for(const file of files){
+    if(!file.type || !file.type.startsWith('image/')){ skip++; continue; }
+    if(file.size > 2*1024*1024){ showMsg('galleryMsg', file.name+' — 2MB-ზე დიდია, გამოტოვდა.', 'err'); skip++; continue; }
+    const ext = ((file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')) || 'jpg';
+    const path = 'q_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3) + '.' + ext;
+    const { error } = await db.storage.from(GALLERY_BUCKET).upload(path, file, { cacheControl:'3600', upsert:false });
+    if(error){ showMsg('galleryMsg', error.message, 'err'); } else { ok++; }
+  }
+  document.getElementById('galleryFile').value = '';
+  if(ok) showMsg('galleryMsg', 'ატვირთულია '+ok+' სურათი ✓'+(skip?(' · გამოტოვდა '+skip):''), 'ok');
+  loadGallery();
+}
+
+async function galleryDelete(name){
+  if(!confirm('წავშალო ეს სურათი?\nთუ ქუიზში გამოყენებულია, იქ ბმული გატყდება.')) return;
+  const { error } = await db.storage.from(GALLERY_BUCKET).remove([name]);
+  if(error){ showMsg('galleryMsg', error.message, 'err'); return; }
+  loadGallery();
+}
+
+async function galleryDeleteAll(){
+  if(!confirm('ყველა სურათი წაიშალოს? ეს შეუქცევადია.')) return;
+  const { data } = await db.storage.from(GALLERY_BUCKET).list('', { limit: 1000 });
+  const names = (data||[]).map(f=>f.name).filter(n=>n && !n.startsWith('.'));
+  if(names.length){
+    const { error } = await db.storage.from(GALLERY_BUCKET).remove(names);
+    if(error){ showMsg('galleryMsg', error.message, 'err'); return; }
+  }
+  showMsg('galleryMsg', 'ყველა სურათი წაიშალა.', 'ok');
+  loadGallery();
+}
+
+function galleryCopy(name){
+  const url = galleryUrls[name];
+  if(!url) return;
+  navigator.clipboard.writeText(url).then(
+    ()=>showMsg('galleryMsg','URL დაკოპირდა ✓','ok'),
+    ()=>{ prompt('დააკოპირე URL:', url); }
+  );
 }
 
 // ==================== AD MANAGER ====================
