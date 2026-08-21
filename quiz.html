@@ -501,6 +501,20 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 @keyframes bonusPop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
 @keyframes bonusTrophy{0%{transform:scale(0) rotate(-20deg)}55%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
 @keyframes bonusConf{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(140px) rotate(340deg);opacity:0}}
+
+/* ===== Image Quiz ===== */
+.q-image{display:block;width:100%;max-height:230px;object-fit:contain;border-radius:14px;margin:2px 0 14px;background:#0c1a17;border:1px solid var(--border)}
+.q-image.portrait{max-width:74%;max-height:320px;margin-left:auto;margin-right:auto}
+.answers.img-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:11px}
+.answers.img-grid .answer{flex-direction:column;gap:0;padding:0!important;overflow:hidden;position:relative;aspect-ratio:4/3;align-items:stretch;transform:none!important}
+.answers.img-grid.portrait .answer{aspect-ratio:3/4}
+.answers.img-grid .answer:hover:not(.disabled){transform:translateY(-2px)!important}
+.answers.img-grid .answer img{width:100%;height:100%;object-fit:cover;display:block}
+.answers.img-grid .answer .answer-letter{position:absolute;top:7px;left:7px;width:26px;height:26px;z-index:2;background:rgba(6,20,18,.72)!important;color:#fff!important;border:1px solid rgba(255,255,255,.28)!important}
+.answers.img-grid .answer .answer-mark{position:absolute;bottom:5px;right:8px;z-index:2;font-size:1.35rem}
+.answers.img-grid .answer .imgfallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-size:1.8rem;color:var(--muted);background:var(--bg3)}
+.answers.img-grid .answer.correct{outline:3px solid var(--green);outline-offset:-3px;background:transparent!important}
+.answers.img-grid .answer.wrong{outline:3px solid var(--red);outline-offset:-3px;background:transparent!important}
 </style>
 </head>
 <body>
@@ -570,6 +584,31 @@ let accessToken = null;
 let taskId = null;
 let task = null;
 let question = null;
+let quizOrient = 'landscape';   // image-პასუხების/კითხვის ორიენტაცია
+let answerImgOk = {};           // რომელი პასუხის სურათი ჩაიტვირთა (A/B/C/D)
+
+// სურათების preload (რომ ტაიმერამდე ჩაიტვირთოს და ორიენტაცია ვიცოდეთ)
+function _preload(urls){
+  return Promise.all((urls||[]).filter(Boolean).map(u=>new Promise(res=>{
+    const im = new Image();
+    im.onload  = ()=>res({url:u, w:im.naturalWidth, h:im.naturalHeight, ok:true});
+    im.onerror = ()=>res({url:u, ok:false});
+    im.src = u;
+  })));
+}
+async function preloadQuizMedia(){
+  quizOrient = 'landscape'; answerImgOk = {};
+  const L = ['A','B','C','D'];
+  if(question && question.answer_type === 'image'){
+    const r = await _preload([question.answer_a,question.answer_b,question.answer_c,question.answer_d]);
+    r.forEach((x,i)=>{ answerImgOk[L[i]] = !!x.ok; });
+    const first = r.find(x=>x.ok && x.w && x.h);
+    if(first && first.h > first.w) quizOrient = 'portrait';
+  } else if(question && question.question_image){
+    const r = await _preload([question.question_image]);
+    if(r[0] && r[0].ok && r[0].h > r[0].w) quizOrient = 'portrait';
+  }
+}
 let answered = false;
 let bonusPending = false;   // პასუხმა ბონუსი გახსნა, მაგრამ modal ჯერ არ გამოჩენილა
 let bonusTimer = null;      // showBonusUnlock-ის დაყოვნებული timer
@@ -616,11 +655,32 @@ async function init(){
   const { data: setRows } = await db.from('settings').select('*').in('key',['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds']);
   if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
 
+  await preloadQuizMedia();   // სურათები + ორიენტაცია — ტაიმერამდე
+
   renderQuestion();
   startTimer();
 }
 
 function renderQuestion(){
+  const qImg = question.question_image
+    ? `<img class="q-image ${quizOrient==='portrait'?'portrait':''}" src="${question.question_image}" alt="">`
+    : '';
+  const qTextHtml = question.question ? `<div class="q-text">${question.question}</div>` : '';
+
+  let answersHtml;
+  if(question.answer_type === 'image'){
+    const cell = (ltr, url) => {
+      const inner = answerImgOk[ltr]
+        ? `<img src="${url}" alt="">`
+        : `<div class="imgfallback">${ltr}</div>`;
+      return `<button class="answer" data-letter="${ltr}" onclick="pick(this)"><span class="answer-letter">${ltr}</span>${inner}<span class="answer-mark"></span></button>`;
+    };
+    answersHtml = `<div class="answers img-grid ${quizOrient==='portrait'?'portrait':''}" id="answers">${cell('A',question.answer_a)}${cell('B',question.answer_b)}${cell('C',question.answer_c)}${cell('D',question.answer_d)}</div>`;
+  } else {
+    const btn = (ltr, txt) => `<button class="answer" data-letter="${ltr}" onclick="pick(this)"><span class="answer-letter">${ltr}</span><span class="answer-text">${txt}</span><span class="answer-mark"></span></button>`;
+    answersHtml = `<div class="answers" id="answers">${btn('A',question.answer_a)}${btn('B',question.answer_b)}${btn('C',question.answer_c)}${btn('D',question.answer_d)}</div>`;
+  }
+
   const html = `
     <div class="timer-section">
       <div class="timer-top">
@@ -631,15 +691,11 @@ function renderQuestion(){
     </div>
     <div class="question-section">
       <div class="q-number">${(dispNum > 0) ? ('Quiz ' + dispNum) : 'Quiz'}</div>
-      <div class="q-text">${question.question}</div>
+      ${qImg}
+      ${qTextHtml}
       <div class="q-pts">🎁 +${pointSettings.quiz_correct} points for correct answer</div>
     </div>
-    <div class="answers" id="answers">
-      <button class="answer" data-letter="A" onclick="pick(this)"><span class="answer-letter">A</span><span class="answer-text">${question.answer_a}</span><span class="answer-mark"></span></button>
-      <button class="answer" data-letter="B" onclick="pick(this)"><span class="answer-letter">B</span><span class="answer-text">${question.answer_b}</span><span class="answer-mark"></span></button>
-      <button class="answer" data-letter="C" onclick="pick(this)"><span class="answer-letter">C</span><span class="answer-text">${question.answer_c}</span><span class="answer-mark"></span></button>
-      <button class="answer" data-letter="D" onclick="pick(this)"><span class="answer-letter">D</span><span class="answer-text">${question.answer_d}</span><span class="answer-mark"></span></button>
-    </div>
+    ${answersHtml}
     <div class="result-msg" id="resultMsg">
       <div class="result-icon" id="resultIcon"></div>
       <div class="result-info"><div class="result-title" id="resultTitle"></div><div class="result-sub" id="resultSub"></div></div>

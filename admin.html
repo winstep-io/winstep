@@ -722,6 +722,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       <label class="field-label">Task Type</label>
       <select class="field-select" id="taskType" onchange="onTaskTypeChange()">
         <option value="quiz">Quiz</option>
+        <option value="image_quiz">Image Quiz (image + 4 text)</option>
+        <option value="4image_quiz">4 Image Quiz (text + 4 images)</option>
         <option value="video">Video Ad</option>
         <option value="website">Website Visit</option>
       </select>
@@ -731,17 +733,22 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       <input class="field-input" id="taskTitle" placeholder="e.g. Quiz 1" autocomplete="off">
     </div>
     <div id="quizFields">
+      <div class="field" id="qImageField" style="display:none">
+        <label class="field-label">Question Image URL</label>
+        <input class="field-input" id="qImage" placeholder="https://.../image.jpg" autocomplete="off">
+        <div style="font-size:.66rem;color:var(--muted);margin-top:4px">ერთი სურათი კითხვისთვის (ფაილის სახელი პასუხს ნუ ამხელს)</div>
+      </div>
       <div class="field">
-        <label class="field-label">Question</label>
+        <label class="field-label" id="qTextLabel">Question</label>
         <input class="field-input" id="qText" placeholder="What is...?" autocomplete="off">
       </div>
       <div class="field-row">
-        <div class="field"><label class="field-label">Answer A</label><input class="field-input" id="qA" autocomplete="off"></div>
-        <div class="field"><label class="field-label">Answer B</label><input class="field-input" id="qB" autocomplete="off"></div>
+        <div class="field"><label class="field-label" id="qLabelA">Answer A</label><input class="field-input" id="qA" autocomplete="off"></div>
+        <div class="field"><label class="field-label" id="qLabelB">Answer B</label><input class="field-input" id="qB" autocomplete="off"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label class="field-label">Answer C</label><input class="field-input" id="qC" autocomplete="off"></div>
-        <div class="field"><label class="field-label">Answer D</label><input class="field-input" id="qD" autocomplete="off"></div>
+        <div class="field"><label class="field-label" id="qLabelC">Answer C</label><input class="field-input" id="qC" autocomplete="off"></div>
+        <div class="field"><label class="field-label" id="qLabelD">Answer D</label><input class="field-input" id="qD" autocomplete="off"></div>
       </div>
       <div class="field">
         <label class="field-label">Correct Answer</label>
@@ -2064,7 +2071,7 @@ function openTaskModal(boxId){
   document.getElementById('taskType').value = 'quiz';
   document.getElementById('taskType').disabled = false;
   onTaskTypeChange();
-  ['taskTitle','qText','qA','qB','qC','qD','taskUrl'].forEach(id=>document.getElementById(id).value='');
+  ['taskTitle','qText','qA','qB','qC','qD','taskUrl','qImage'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('qCorrect').value = 'A';
   document.getElementById('taskMsg').className = 'msg';
 }
@@ -2081,11 +2088,18 @@ async function openTaskEdit(taskId){
   document.querySelector('#taskModal button.btn-primary').textContent = 'Save Changes';
   document.getElementById('taskModal').style.display = 'flex';
 
-  document.getElementById('taskType').value = 'quiz';
+  // ვარიანტის ამოცნობა შენახული მონაცემიდან
+  let variant = 'quiz';
+  if(q){
+    if(q.answer_type === 'image') variant = '4image_quiz';
+    else if(q.question_image) variant = 'image_quiz';
+  }
+  document.getElementById('taskType').value = variant;
   document.getElementById('taskType').disabled = true; // ტიპს რედაქტირებისას არ ვცვლით
   onTaskTypeChange();
 
   document.getElementById('taskTitle').value = t.title || '';
+  document.getElementById('qImage').value = q ? (q.question_image||'') : '';
   document.getElementById('qText').value = q ? (q.question||'') : '';
   document.getElementById('qA').value = q ? (q.answer_a||'') : '';
   document.getElementById('qB').value = q ? (q.answer_b||'') : '';
@@ -2101,89 +2115,96 @@ function closeTaskModal(){
 
 function onTaskTypeChange(){
   const type = document.getElementById('taskType').value;
-  document.getElementById('quizFields').style.display = type==='quiz' ? 'block' : 'none';
-  // ყველა ტიპი quiz-ის გარდა URL ველს აჩვენებს (გარე ოფერი)
-  document.getElementById('urlField').style.display = (type==='quiz') ? 'none' : 'block';
+  const isQuiz = ['quiz','image_quiz','4image_quiz'].includes(type);
+  document.getElementById('quizFields').style.display = isQuiz ? 'block' : 'none';
+  // ყველა არა-quiz ტიპი URL ველს აჩვენებს (გარე ოფერი)
+  document.getElementById('urlField').style.display = isQuiz ? 'none' : 'block';
+
+  // კითხვის სურათი — მხოლოდ "Image Quiz"-ზე (სურათი-კითხვა)
+  document.getElementById('qImageField').style.display = (type==='image_quiz') ? 'block' : 'none';
+
+  // "4 Image Quiz" — პასუხები URL-ებია; ველების ლეიბლი/placeholder შესაბამისად
+  const imgAns = (type==='4image_quiz');
+  [['qLabelA','qA','A'],['qLabelB','qB','B'],['qLabelC','qC','C'],['qLabelD','qD','D']].forEach(([lid,iid,ltr])=>{
+    const lab = document.getElementById(lid), inp = document.getElementById(iid);
+    if(lab) lab.textContent = imgAns ? ('Image '+ltr+' URL') : ('Answer '+ltr);
+    if(inp) inp.placeholder = imgAns ? ('https://.../'+ltr.toLowerCase()+'.jpg') : '';
+  });
+  // Image Quiz-ზე კითხვის ტექსტი არასავალდებულოა (სურათი თავად კითხვაა)
+  const qtl = document.getElementById('qTextLabel');
+  if(qtl) qtl.textContent = (type==='image_quiz') ? 'Question (optional)' : 'Question';
 }
 
 async function saveTask(){
   const boxId = document.getElementById('taskBoxId').value;
   const editId = document.getElementById('editTaskId').value;
-  const type = document.getElementById('taskType').value;
+  const rawType = document.getElementById('taskType').value;
   const title = document.getElementById('taskTitle').value.trim();
   if(!title){ showMsg('taskMsg','Please enter a title.','err'); return; }
 
-  // ===== EDIT MODE (quiz მხოლოდ) =====
-  if(editId){
-    const { error: tErr } = await db.from('tasks').update({ title }).eq('id', editId);
-    if(tErr){ showMsg('taskMsg', tErr.message, 'err'); return; }
+  const isQuizVariant = ['quiz','image_quiz','4image_quiz'].includes(rawType);
+  const taskType = isQuizVariant ? 'quiz' : rawType;   // tasks.type ყოველთვის 'quiz' quiz-ვარიანტებზე
 
+  // quiz payload (ADD + EDIT-ისთვის საერთო) + ვალიდაცია
+  function buildQuizPayload(){
     const q = document.getElementById('qText').value.trim();
     const a = document.getElementById('qA').value.trim();
     const b = document.getElementById('qB').value.trim();
     const c = document.getElementById('qC').value.trim();
     const d = document.getElementById('qD').value.trim();
     const correct = document.getElementById('qCorrect').value;
-    if(!q||!a||!b||!c||!d){ showMsg('taskMsg','Please fill the question and all answers.','err'); return; }
+    const qImage = document.getElementById('qImage').value.trim();
+    if(!a||!b||!c||!d){ return { err:'Please fill all 4 answers.' }; }
+    if(rawType==='image_quiz' && !qImage){ return { err:'Please add the question image URL.' }; }
+    if(rawType!=='image_quiz' && !q){ return { err:'Please enter the question.' }; }
+    return { payload: {
+      question: q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct,
+      question_image: (rawType==='image_quiz') ? (qImage||null) : null,
+      answer_type:    (rawType==='4image_quiz') ? 'image' : 'text'
+    }};
+  }
 
-    // quiz_questions — update თუ არსებობს, თორემ insert
+  // ===== EDIT MODE =====
+  if(editId){
+    const { error: tErr } = await db.from('tasks').update({ title }).eq('id', editId);
+    if(tErr){ showMsg('taskMsg', tErr.message, 'err'); return; }
+    const built = buildQuizPayload();
+    if(built.err){ showMsg('taskMsg', built.err, 'err'); return; }
     const { data: existing } = await db.from('quiz_questions').select('id').eq('task_id', editId).maybeSingle();
     if(existing){
-      const { error: qErr } = await db.from('quiz_questions').update({
-        question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
-      }).eq('task_id', editId);
+      const { error: qErr } = await db.from('quiz_questions').update(built.payload).eq('task_id', editId);
       if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
     } else {
-      const { error: qErr } = await db.from('quiz_questions').insert({
-        task_id: editId, question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
-      });
+      const { error: qErr } = await db.from('quiz_questions').insert(Object.assign({ task_id: editId }, built.payload));
       if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
     }
-    closeTaskModal();
-    loadBoxes();
-    return;
+    closeTaskModal(); loadBoxes(); return;
   }
 
   // ===== ADD MODE =====
-  // points come from global settings, per task type
   const POINT_KEYS = {
-    quiz:        'quiz_correct',
-    video:       'video_points',
-    website:     'website_points',
-    app_install: 'app_install_points',
-    survey:      'survey_points',
-    signup:      'signup_points',
-    trial:       'trial_points',
-    social:      'social_points',
-    custom:      'custom_points'
+    quiz:'quiz_correct', image_quiz:'quiz_correct', '4image_quiz':'quiz_correct',
+    video:'video_points', website:'website_points',
+    app_install:'app_install_points', survey:'survey_points', signup:'signup_points',
+    trial:'trial_points', social:'social_points', custom:'custom_points'
   };
-  const settingKey = POINT_KEYS[type] || 'custom_points';
+  const settingKey = POINT_KEYS[rawType] || 'custom_points';
   const { data: setting } = await db.from('settings').select('value').eq('key', settingKey).single();
   const points = setting ? setting.value : 10;
 
   const url = document.getElementById('taskUrl').value.trim();
-  // ბოქსის ბოლო sort_order-ს ვპოულობთ — ახალი task ბოლოში, სწორი ნომრით ჩაემატოს
-  // (თუ ყველას 0 ჰქონდა, tie-ს ვერ არჩევდა და რიგი ირღვეოდა)
   const { data: last } = await db.from('tasks').select('sort_order')
     .eq('box_id', boxId).order('sort_order',{ascending:false}).limit(1).maybeSingle();
   const nextSort = (last && typeof last.sort_order === 'number') ? last.sort_order + 1 : 1;
   const { data: newTask, error } = await db.from('tasks').insert({
-    box_id: boxId, type, title, points, url: url||null, sort_order: nextSort
+    box_id: boxId, type: taskType, title, points, url: url||null, sort_order: nextSort
   }).select().single();
-
   if(error){ showMsg('taskMsg', error.message, 'err'); return; }
 
-  if(type==='quiz'){
-    const q = document.getElementById('qText').value.trim();
-    const a = document.getElementById('qA').value.trim();
-    const b = document.getElementById('qB').value.trim();
-    const c = document.getElementById('qC').value.trim();
-    const d = document.getElementById('qD').value.trim();
-    const correct = document.getElementById('qCorrect').value;
-    if(!q||!a||!b||!c||!d){ showMsg('taskMsg','Please fill the question and all answers.','err'); return; }
-    const { error: qErr } = await db.from('quiz_questions').insert({
-      task_id: newTask.id, question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
-    });
+  if(isQuizVariant){
+    const built = buildQuizPayload();
+    if(built.err){ showMsg('taskMsg', built.err, 'err'); return; }
+    const { error: qErr } = await db.from('quiz_questions').insert(Object.assign({ task_id: newTask.id }, built.payload));
     if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
   }
 
