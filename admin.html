@@ -110,6 +110,68 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .badge.quiz{background:var(--teal3);color:var(--teal)}
 .badge.video{background:rgba(230,57,70,.12);color:#ff8a93}
 .badge.website{background:rgba(100,150,255,.12);color:#8ab4ff}
+
+/* Fredoka/Nunito — quiz card-ისთვის (იგივე /fonts როგორც quiz.html) */
+@font-face{font-family:'Fredoka';font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Fredoka';font-weight:700;font-display:swap;src:url('/fonts/fredoka-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Nunito';font-weight:400;font-display:swap;src:url('/fonts/nunito-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Nunito';font-weight:700;font-display:swap;src:url('/fonts/nunito-latin-700-normal.woff2') format('woff2')}
+/* ===== Quiz Generator (scoped) ===== */
+#sec-qgen{--qbg2:#0e1a18;--qbg3:#132723;--qbg4:#18332d;--qbd:rgba(255,255,255,.08);--qbd2:rgba(46,196,182,.4);--qteal:#2ec4b6;--qteal4:rgba(46,196,182,.14);--qgold:#f5c842;--qtext:#eaf5f2;--qmuted:#8ba39d;--qsoft:#b6cdc7;--qgreen:#51cf66;--qgreen2:rgba(81,207,102,.14);--qred:#ff6b6b;--qdisp:'Fredoka',sans-serif;--qbody:'Nunito',sans-serif}
+#sec-qgen .qg-setup{width:100%;max-width:460px;background:var(--qbg2);border:1px solid var(--qbd);border-radius:18px;padding:20px}
+#sec-qgen .qg-setup h2{font-family:var(--qdisp);font-weight:600;font-size:1rem;margin:0 0 14px;color:var(--qsoft)}
+#sec-qgen .fld{margin-bottom:13px}
+#sec-qgen .fld label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--qmuted);margin-bottom:5px;font-weight:700}
+#sec-qgen .fld input,#sec-qgen .fld select{width:100%;background:var(--qbg3);border:1.5px solid var(--qbd);border-radius:10px;padding:11px 13px;color:var(--qtext);font-family:var(--qbody);font-size:.95rem;outline:none}
+#sec-qgen .fld input:focus,#sec-qgen .fld select:focus{border-color:var(--qbd2)}
+#sec-qgen .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#sec-qgen .ansrow{display:grid;grid-template-columns:34px 1fr;gap:9px;align-items:center;margin-bottom:9px}
+#sec-qgen .ansrow .lp{width:34px;height:40px;border-radius:9px;background:var(--qteal4);color:var(--qteal);display:flex;align-items:center;justify-content:center;font-family:var(--qdisp);font-weight:700}
+#sec-qgen .hint{font-size:.66rem;color:var(--qmuted);margin:-4px 0 12px}
+#sec-qgen .playbtn{width:100%;margin-top:8px;padding:14px;border:none;border-radius:13px;background:var(--qteal);color:#06231f;font-family:var(--qdisp);font-weight:600;font-size:1.02rem;cursor:pointer}
+#sec-qgen .qg-stage{width:100%;display:none;flex-direction:column;align-items:center;margin-top:18px}
+#sec-qgen .qg-stage.on{display:flex}
+#sec-qgen .phone{width:100%;max-width:392px;border-radius:30px;overflow:hidden;background:linear-gradient(180deg,#0c1a18,#081210);border:1px solid rgba(46,196,182,.18);box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
+#sec-qgen .qg-controls{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+#sec-qgen .qg-controls button{font-family:var(--qdisp);font-weight:500;font-size:.85rem;color:var(--qsoft);background:var(--qbg2);border:1px solid var(--qbd);border-radius:11px;padding:9px 16px;cursor:pointer}
+#sec-qgen .qc-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 0}
+#sec-qgen .qc-back{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--qbd);display:flex;align-items:center;justify-content:center;color:var(--qsoft);font-size:.85rem}
+#sec-qgen .qc-tag{font-family:var(--qdisp);font-weight:600;font-size:.95rem}#sec-qgen .qc-spacer{width:32px}
+#sec-qgen .timer-section{padding:16px 18px 0}
+#sec-qgen .timer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+#sec-qgen .timer-label{font-size:.8rem;color:var(--qsoft);font-weight:600}
+#sec-qgen .timer-value{font-family:var(--qdisp);font-weight:600;font-size:1rem;color:var(--qteal)}
+#sec-qgen .timer-value.warn{color:var(--qgold)}#sec-qgen .timer-value.danger{color:var(--qred)}
+#sec-qgen .timer-track{height:7px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+#sec-qgen .timer-fill{height:100%;width:100%;border-radius:6px;background:var(--qteal);transition:width 1s linear}
+#sec-qgen .timer-fill.warn{background:var(--qgold)}#sec-qgen .timer-fill.danger{background:var(--qred)}
+#sec-qgen .question-section{padding:20px 20px 4px}
+#sec-qgen .q-number{font-family:var(--qdisp);font-weight:600;font-size:.78rem;color:var(--qmuted);margin-bottom:7px}
+#sec-qgen .q-image{display:block;width:100%;max-height:230px;object-fit:contain;border-radius:14px;margin:2px 0 12px;background:#0c1a17;border:1px solid var(--qbd)}
+#sec-qgen .q-image.portrait{max-width:74%;max-height:320px;margin-left:auto;margin-right:auto}
+#sec-qgen .q-text{font-family:var(--qdisp);font-size:1.24rem;font-weight:600;line-height:1.32;color:var(--qtext);margin-bottom:8px}
+#sec-qgen .q-pts{font-size:.82rem;color:var(--qgold);font-weight:700}
+#sec-qgen .answers{padding:14px 20px 22px;display:flex;flex-direction:column;gap:10px}
+#sec-qgen .answer{display:flex;align-items:center;gap:13px;padding:15px 16px;background:var(--qbg3);border:0;border-radius:14px;text-align:left;width:100%;font-family:var(--qbody);transition:all .25s}
+#sec-qgen .answer-letter{width:32px;height:32px;border-radius:10px;background:var(--qteal4);display:flex;align-items:center;justify-content:center;font-family:var(--qdisp);font-weight:700;font-size:1rem;color:var(--qteal);flex-shrink:0;transition:all .25s}
+#sec-qgen .answer-text{font-size:1rem;color:var(--qtext);font-weight:600;flex:1}
+#sec-qgen .answer-mark{font-size:1.15rem;opacity:0;transition:opacity .25s}
+#sec-qgen .answer.correct{background:var(--qgreen2)}#sec-qgen .answer.correct .answer-letter{background:var(--qgreen);color:#04140a}#sec-qgen .answer.correct .answer-text{color:var(--qgreen)}#sec-qgen .answer.correct .answer-mark{opacity:1}
+#sec-qgen .answer.faded{opacity:.4}
+#sec-qgen .answers.img-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#sec-qgen .answers.img-grid .answer{flex-direction:column;gap:0;padding:0;overflow:hidden;position:relative;aspect-ratio:4/3;align-items:stretch}
+#sec-qgen .answers.img-grid.portrait .answer{aspect-ratio:3/4}
+#sec-qgen .answers.img-grid .answer img{width:100%;height:100%;object-fit:cover;display:block}
+#sec-qgen .answers.img-grid .answer .answer-letter{position:absolute;top:7px;left:7px;width:26px;height:26px;z-index:2;background:rgba(6,20,18,.72);color:#fff;border:1px solid rgba(255,255,255,.28)}
+#sec-qgen .answers.img-grid .answer .answer-mark{position:absolute;bottom:5px;right:8px;z-index:2;font-size:1.35rem}
+#sec-qgen .answers.img-grid .answer .imgfallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--qdisp);font-size:1.8rem;color:var(--qmuted);background:var(--qbg3)}
+#sec-qgen .answers.img-grid .answer.correct{outline:3px solid var(--qgreen);outline-offset:-3px;background:transparent}
+body.qgen-clean{overflow:hidden}
+body.qgen-clean #sec-qgen .qg-stage{position:fixed!important;inset:0;z-index:99999;background:radial-gradient(ellipse 700px 500px at 50% -6%,rgba(46,196,182,.12),transparent 60%),#0a1413;display:flex!important;align-items:center;justify-content:center;margin:0;padding:20px}
+body.qgen-clean #sec-qgen .qg-controls{display:none!important}
+.qgen-hint{display:none;position:fixed;top:16px;right:16px;z-index:100000;font-family:'Fredoka',sans-serif;font-size:.8rem;color:#8ba39d;background:rgba(14,26,24,.9);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 13px}
+body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
+@keyframes qgFade{0%,60%{opacity:1}100%{opacity:0}}
 </style>
   <!-- cookie-consent (inlined: removes a render-blocking request; must still
        run BEFORE the GA4 block below so Consent Mode v2 defaults apply first) -->
@@ -291,6 +353,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div class="nav-item" onclick="nav('ads',this)"><span>📺</span><span>Ad Manager</span></div>
     <div class="nav-item" onclick="nav('emailforms',this)"><span>📧</span><span>E-Mail Forms</span></div>
     <div class="nav-item" onclick="nav('gallery',this)"><span>📷</span><span>Photo Gallery</span></div>
+    <div class="nav-item" onclick="nav('qgen',this)"><span>🎬</span><span>Quiz Generator</span></div>
   </div>
 
   <div class="main">
@@ -727,6 +790,45 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     </div>
 </div>
 
+
+    <div class="section" id="sec-qgen">
+      <div class="page-title">Quiz Generator</div>
+      <div class="page-sub">ვიდეოებისთვის — ბაზას/ჩემპიონატს არ ეხება. ავტო-რეჟიმი: ტაიმერი გადის, სწორი პასუხი მწვანდება. „🎬 Clean view" + ეკრანის ჩამწერი.</div>
+      <div class="qg-setup" id="qgSetup">
+        <h2>⚙️ Setup</h2>
+        <div class="fld"><label>Type</label>
+          <select id="qgType" onchange="qgOnType()">
+            <option value="text">Text quiz (text + 4 text)</option>
+            <option value="imgq">Image Quiz (1 image + 4 text)</option>
+            <option value="imga">4 Image Quiz (1 text + 4 images)</option>
+          </select>
+        </div>
+        <div class="fld"><label>Quiz label</label><input id="qgLabel" value="Quiz 1"></div>
+        <div class="fld" id="qgFQImg" style="display:none"><label>Question Image URL</label><input id="qgQImg" placeholder="https://.../image.jpg"><div class="hint">ერთი სურათი კითხვისთვის</div></div>
+        <div class="fld"><label id="qgLQ">Question</label><input id="qgQ" value="What is the capital of France?"></div>
+        <div class="ansrow"><span class="lp">A</span><input id="qgA" value="Paris"></div>
+        <div class="ansrow"><span class="lp">B</span><input id="qgB" value="London"></div>
+        <div class="ansrow"><span class="lp">C</span><input id="qgC" value="Berlin"></div>
+        <div class="ansrow"><span class="lp">D</span><input id="qgD" value="Madrid"></div>
+        <div class="hint" id="qgAnsHint" style="display:none">პასუხების ველებში სურათის URL-ები (ერთი ორიენტაცია)</div>
+        <div class="row2">
+          <div class="fld"><label>Correct answer</label><select id="qgCorrect"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+          <div class="fld"><label>Timer (sec)</label><input id="qgTime" type="number" value="20" min="3" max="120"></div>
+        </div>
+        <div class="fld"><label>Points (+X)</label><input id="qgPts" type="number" value="1" min="0"></div>
+        <button class="playbtn" onclick="qgPlay()">▶ Play (auto)</button>
+      </div>
+      <div class="qg-stage" id="qgStage">
+        <div class="phone"><div id="qgCard"></div></div>
+        <div class="qg-controls">
+          <button onclick="qgReplay()">⟳ Replay</button>
+          <button onclick="qgNew()">↻ New quiz</button>
+          <button onclick="qgClean()">🎬 Clean view</button>
+        </div>
+      </div>
+      <div class="qgen-hint">Esc — გამოსვლა</div>
+    </div>
+
 <!-- ============ ADD TASK MODAL ============ -->
 <div class="gate" id="taskModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
   <div class="card" style="width:100%;max-width:440px;margin:0">
@@ -928,7 +1030,61 @@ function nav(section, el){
   if(section==='ads'){ loadAds(); loadInterstitial(); }
   if(section==='emailforms'){ wfRender(); cfRender(); }
   if(section==='gallery') loadGallery();
+  if(section==='qgen') qgReset();
 }
+
+// ==================== QUIZ GENERATOR (admin section) ====================
+let qgCfg=null, qgTimer=null, qgTimeLeft=0, qgOrient='landscape', qgImgOk={};
+function qgReset(){ qgOnType(); document.getElementById('qgStage').classList.remove('on'); document.getElementById('qgSetup').style.display='block'; document.body.classList.remove('qgen-clean'); }
+function qgOnType(){
+  const t=document.getElementById('qgType').value;
+  document.getElementById('qgFQImg').style.display=(t==='imgq')?'block':'none';
+  const imga=(t==='imga');
+  document.getElementById('qgAnsHint').style.display=imga?'block':'none';
+  ['A','B','C','D'].forEach(L=>{ const i=document.getElementById('qg'+L); i.placeholder=imga?('https://.../'+L.toLowerCase()+'.jpg'):''; });
+  document.getElementById('qgLQ').textContent=(t==='imgq')?'Question (optional)':'Question';
+}
+function qgPreload(urls){ return Promise.all((urls||[]).filter(Boolean).map(u=>new Promise(res=>{ const im=new Image(); im.onload=()=>res({ok:true,w:im.naturalWidth,h:im.naturalHeight,url:u}); im.onerror=()=>res({ok:false,url:u}); im.src=u; }))); }
+async function qgPlay(){
+  qgCfg={ type:document.getElementById('qgType').value, label:document.getElementById('qgLabel').value||'Quiz',
+    qImg:document.getElementById('qgQImg').value.trim(), q:document.getElementById('qgQ').value||'',
+    a:document.getElementById('qgA').value||'',b:document.getElementById('qgB').value||'',c:document.getElementById('qgC').value||'',d:document.getElementById('qgD').value||'',
+    correct:document.getElementById('qgCorrect').value, time:Math.max(3,parseInt(document.getElementById('qgTime').value)||20), pts:Math.max(0,parseInt(document.getElementById('qgPts').value)||1) };
+  document.getElementById('qgSetup').style.display='none';
+  document.getElementById('qgStage').classList.add('on');
+  await qgPrep(); qgRender(); qgStart();
+}
+async function qgPrep(){ qgOrient='landscape'; qgImgOk={}; const L=['A','B','C','D'];
+  if(qgCfg.type==='imga'){ const r=await qgPreload([qgCfg.a,qgCfg.b,qgCfg.c,qgCfg.d]); r.forEach((x,i)=>qgImgOk[L[i]]=!!x.ok); const f=r.find(x=>x.ok&&x.w&&x.h); if(f&&f.h>f.w) qgOrient='portrait'; }
+  else if(qgCfg.type==='imgq'&&qgCfg.qImg){ const r=await qgPreload([qgCfg.qImg]); if(r[0]&&r[0].ok&&r[0].h>r[0].w) qgOrient='portrait'; } }
+async function qgReplay(){ await qgPrep(); qgRender(); qgStart(); }
+function qgNew(){ clearInterval(qgTimer); document.getElementById('qgStage').classList.remove('on'); document.getElementById('qgSetup').style.display='block'; document.body.classList.remove('qgen-clean'); }
+function qgClean(){ document.body.classList.add('qgen-clean'); }
+function qgRender(){
+  const L=['A','B','C','D'], K={A:'a',B:'b',C:'c',D:'d'};
+  let ans;
+  if(qgCfg.type==='imga'){
+    ans='<div class="answers img-grid '+(qgOrient==='portrait'?'portrait':'')+'">'+L.map(l=>{ const url=qgCfg[K[l]]; const inner=qgImgOk[l]?('<img src="'+escapeHtml(url)+'">'):('<div class="imgfallback">'+l+'</div>'); return '<button class="answer" data-letter="'+l+'"><span class="answer-letter">'+l+'</span>'+inner+'<span class="answer-mark">\u2713</span></button>'; }).join('')+'</div>';
+  } else {
+    ans='<div class="answers">'+L.map(l=>'<button class="answer" data-letter="'+l+'"><span class="answer-letter">'+l+'</span><span class="answer-text">'+escapeHtml(qgCfg[K[l]])+'</span><span class="answer-mark">\u2713</span></button>').join('')+'</div>';
+  }
+  const qImg=(qgCfg.type==='imgq'&&qgCfg.qImg)?('<img class="q-image '+(qgOrient==='portrait'?'portrait':'')+'" src="'+escapeHtml(qgCfg.qImg)+'">'):'';
+  const qText=qgCfg.q?('<div class="q-text">'+escapeHtml(qgCfg.q)+'</div>'):'';
+  document.getElementById('qgCard').innerHTML='<div class="qc-head"><div class="qc-back">\u25c0</div><div class="qc-tag"></div><div class="qc-spacer"></div></div>'+
+    '<div class="timer-section"><div class="timer-top"><span class="timer-label">\u23f1\ufe0f Time to answer</span><span class="timer-value" id="qgTv">'+qgCfg.time+'s</span></div><div class="timer-track"><div class="timer-fill" id="qgTf"></div></div></div>'+
+    '<div class="question-section"><div class="q-number">'+escapeHtml(qgCfg.label)+'</div>'+qImg+qText+'<div class="q-pts">\ud83c\udf81 +'+qgCfg.pts+' points for correct answer</div></div>'+ans;
+}
+function qgStart(){
+  clearInterval(qgTimer); qgTimeLeft=qgCfg.time;
+  const tv=document.getElementById('qgTv'), tf=document.getElementById('qgTf'); tf.style.width='100%';
+  qgTimer=setInterval(()=>{ qgTimeLeft--; if(!tv||!tf) return;
+    tv.textContent=qgTimeLeft+'s'; tf.style.width=(qgTimeLeft/qgCfg.time*100)+'%';
+    const warn=qgTimeLeft<=10,danger=qgTimeLeft<=5;
+    tv.className='timer-value'+(danger?' danger':warn?' warn':''); tf.className='timer-fill'+(danger?' danger':warn?' warn':'');
+    if(qgTimeLeft<=0){ clearInterval(qgTimer); qgReveal(); } },1000);
+}
+function qgReveal(){ document.querySelectorAll('#qgCard .answer').forEach(a=>{ if(a.getAttribute('data-letter')===qgCfg.correct) a.classList.add('correct'); else a.classList.add('faded'); }); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.body.classList.remove('qgen-clean'); });
 
 // ==================== PHOTO GALLERY (Supabase Storage) ====================
 const GALLERY_BUCKET = 'quiz-images';
