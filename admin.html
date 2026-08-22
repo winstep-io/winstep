@@ -812,14 +812,13 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         </div>
         <div class="fld"><label>Points (+X)</label><input id="qgPts" type="number" value="1" min="0"></div>
         <button class="playbtn" onclick="qgPlay()">▶ Play (auto)</button>
+        <div style="display:flex;gap:9px;margin-top:9px">
+          <button onclick="qgReplay()" style="flex:1;font-family:var(--qdisp);font-weight:500;font-size:.9rem;color:var(--qsoft);background:var(--qbg3);border:1px solid var(--qbd);border-radius:11px;padding:11px;cursor:pointer">⟳ Replay</button>
+          <button onclick="qgClear()" style="flex:1;font-family:var(--qdisp);font-weight:500;font-size:.9rem;color:var(--qsoft);background:var(--qbg3);border:1px solid var(--qbd);border-radius:11px;padding:11px;cursor:pointer">🗑 Clear</button>
+        </div>
       </div>
       <div class="qg-stage" id="qgStage">
         <div class="phone"><div id="qgCard"></div></div>
-        <div class="qg-controls">
-          <button onclick="qgReplay()">⟳ Replay</button>
-          <button onclick="qgNew()">↻ New quiz</button>
-          <button onclick="qgClean()">🎬 Clean view</button>
-        </div>
       </div>
       <div class="qgen-hint">Esc — გამოსვლა</div>
     </div>
@@ -1035,7 +1034,7 @@ function nav(section, el){
   if(section==='ads'){ loadAds(); loadInterstitial(); }
   if(section==='emailforms'){ wfRender(); cfRender(); }
   if(section==='gallery') loadGallery();
-  if(section==='qgen') qgReset();
+  if(section==='qgen') qgClear();
 }
 
 // ==================== IMAGE PICKER (shared: task-modal + generator) ====================
@@ -1062,8 +1061,29 @@ function pickImage(url){
 function closeImagePicker(){ document.getElementById('imagePicker').style.display='none'; imagePickerTarget=null; }
 
 // ==================== QUIZ GENERATOR (admin section) ====================
-let qgCfg=null, qgTimer=null, qgTimeLeft=0, qgOrient='landscape', qgImgOk={};
-function qgReset(){ qgOnType(); document.getElementById('qgStage').classList.remove('on'); document.getElementById('qgSetup').style.display='block'; document.body.classList.remove('qgen-clean'); }
+let qgCfg=null, qgTimer=null, qgReturnTimer=null, qgTimeLeft=0, qgOrient='landscape', qgImgOk={};
+function qgClear(){
+  clearInterval(qgTimer); clearTimeout(qgReturnTimer); qgCfg=null;
+  document.getElementById('qgType').value='text';
+  document.getElementById('qgLabel').value='Quiz 1';
+  document.getElementById('qgQImg').value='';
+  document.getElementById('qgQ').value='';
+  ['A','B','C','D'].forEach(L=>document.getElementById('qg'+L).value='');
+  document.getElementById('qgCorrect').value='A';
+  document.getElementById('qgTime').value='20';
+  document.getElementById('qgPts').value='1';
+  qgOnType();
+  document.getElementById('qgStage').classList.remove('on');
+  document.getElementById('qgSetup').style.display='block';
+  document.body.classList.remove('qgen-clean');
+}
+// setup-ში დაბრუნება პარამეტრების შენარჩუნებით (ტაიმერის მერე / Esc)
+function qgToSetup(){
+  clearInterval(qgTimer); clearTimeout(qgReturnTimer);
+  document.body.classList.remove('qgen-clean');
+  document.getElementById('qgStage').classList.remove('on');
+  document.getElementById('qgSetup').style.display='block';
+}
 function qgOnType(){
   const t=document.getElementById('qgType').value;
   document.getElementById('qgFQImg').style.display=(t==='imgq')?'block':'none';
@@ -1080,15 +1100,19 @@ async function qgPlay(){
     correct:document.getElementById('qgCorrect').value, time:Math.max(3,parseInt(document.getElementById('qgTime').value)||20), pts:Math.max(0,parseInt(document.getElementById('qgPts').value)||1) };
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
+  document.body.classList.add('qgen-clean');
   await qgPrep(); qgRender(); qgStart();
-  document.getElementById('qgStage').scrollIntoView({block:'start'});
 }
 async function qgPrep(){ qgOrient='landscape'; qgImgOk={}; const L=['A','B','C','D'];
   if(qgCfg.type==='imga'){ const r=await qgPreload([qgCfg.a,qgCfg.b,qgCfg.c,qgCfg.d]); r.forEach((x,i)=>qgImgOk[L[i]]=!!x.ok); const f=r.find(x=>x.ok&&x.w&&x.h); if(f&&f.h>f.w) qgOrient='portrait'; }
   else if(qgCfg.type==='imgq'&&qgCfg.qImg){ const r=await qgPreload([qgCfg.qImg]); if(r[0]&&r[0].ok&&r[0].h>r[0].w) qgOrient='portrait'; } }
-async function qgReplay(){ await qgPrep(); qgRender(); qgStart(); document.getElementById('qgStage').scrollIntoView({block:'start'}); }
-function qgNew(){ clearInterval(qgTimer); document.getElementById('qgStage').classList.remove('on'); document.getElementById('qgSetup').style.display='block'; document.body.classList.remove('qgen-clean'); }
-function qgClean(){ document.body.classList.add('qgen-clean'); }
+async function qgReplay(){
+  if(!qgCfg) return;
+  document.getElementById('qgSetup').style.display='none';
+  document.getElementById('qgStage').classList.add('on');
+  document.body.classList.add('qgen-clean');
+  await qgPrep(); qgRender(); qgStart();
+}
 function qgRender(){
   const L=['A','B','C','D'], K={A:'a',B:'b',C:'c',D:'d'};
   let ans;
@@ -1112,8 +1136,11 @@ function qgStart(){
     tv.className='timer-value'+(danger?' danger':warn?' warn':''); tf.className='timer-fill'+(danger?' danger':warn?' warn':'');
     if(qgTimeLeft<=0){ clearInterval(qgTimer); qgReveal(); } },1000);
 }
-function qgReveal(){ document.querySelectorAll('#qgCard .answer').forEach(a=>{ if(a.getAttribute('data-letter')===qgCfg.correct) a.classList.add('correct'); else a.classList.add('faded'); }); }
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.body.classList.remove('qgen-clean'); });
+function qgReveal(){
+  document.querySelectorAll('#qgCard .answer').forEach(a=>{ if(a.getAttribute('data-letter')===qgCfg.correct) a.classList.add('correct'); else a.classList.add('faded'); });
+  clearTimeout(qgReturnTimer); qgReturnTimer=setTimeout(qgToSetup, 3000);
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.body.classList.contains('qgen-clean')) qgToSetup(); });
 
 // ==================== PHOTO GALLERY (Supabase Storage) ====================
 const GALLERY_BUCKET = 'quiz-images';
