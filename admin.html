@@ -789,7 +789,6 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px"></div>
     </div>
     <div class="section" id="sec-qgen">
-      <div class="page-title">Quiz Generator</div>
       <div class="qg-setup" id="qgSetup">
         <h2>⚙️ Setup</h2>
         <div class="fld"><label>Type</label>
@@ -1082,11 +1081,12 @@ async function qgPlay(){
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
   await qgPrep(); qgRender(); qgStart();
+  document.getElementById('qgStage').scrollIntoView({block:'start'});
 }
 async function qgPrep(){ qgOrient='landscape'; qgImgOk={}; const L=['A','B','C','D'];
   if(qgCfg.type==='imga'){ const r=await qgPreload([qgCfg.a,qgCfg.b,qgCfg.c,qgCfg.d]); r.forEach((x,i)=>qgImgOk[L[i]]=!!x.ok); const f=r.find(x=>x.ok&&x.w&&x.h); if(f&&f.h>f.w) qgOrient='portrait'; }
   else if(qgCfg.type==='imgq'&&qgCfg.qImg){ const r=await qgPreload([qgCfg.qImg]); if(r[0]&&r[0].ok&&r[0].h>r[0].w) qgOrient='portrait'; } }
-async function qgReplay(){ await qgPrep(); qgRender(); qgStart(); }
+async function qgReplay(){ await qgPrep(); qgRender(); qgStart(); document.getElementById('qgStage').scrollIntoView({block:'start'}); }
 function qgNew(){ clearInterval(qgTimer); document.getElementById('qgStage').classList.remove('on'); document.getElementById('qgSetup').style.display='block'; document.body.classList.remove('qgen-clean'); }
 function qgClean(){ document.body.classList.add('qgen-clean'); }
 function qgRender(){
