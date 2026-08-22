@@ -806,7 +806,6 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
           <div class="fld"><label>Correct answer</label><select id="qgCorrect"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
           <div class="fld"><label>Timer (sec)</label><input id="qgTime" type="number" value="20" min="3" max="120"></div>
         </div>
-        <div class="fld"><label>Points (+X)</label><input id="qgPts" type="number" value="1" min="0"></div>
         <button class="playbtn" onclick="qgPlay()">▶ Play (auto)</button>
         <div style="display:flex;gap:9px;margin-top:9px">
           <button onclick="qgReplay()" style="flex:1;font-family:var(--qdisp);font-weight:500;font-size:.9rem;color:var(--qsoft);background:var(--qbg3);border:1px solid var(--qbd);border-radius:11px;padding:11px;cursor:pointer">⟳ Replay</button>
@@ -1067,7 +1066,6 @@ function qgClear(){
   ['A','B','C','D'].forEach(L=>document.getElementById('qg'+L).value='');
   document.getElementById('qgCorrect').value='A';
   document.getElementById('qgTime').value='20';
-  document.getElementById('qgPts').value='1';
   qgOnType();
   document.getElementById('qgStage').classList.remove('on');
   document.getElementById('qgSetup').style.display='block';
@@ -1093,7 +1091,7 @@ async function qgPlay(){
   qgCfg={ type:document.getElementById('qgType').value, label:document.getElementById('qgLabel').value||'Quiz',
     qImg:document.getElementById('qgQImg').value.trim(), q:document.getElementById('qgQ').value||'',
     a:document.getElementById('qgA').value||'',b:document.getElementById('qgB').value||'',c:document.getElementById('qgC').value||'',d:document.getElementById('qgD').value||'',
-    correct:document.getElementById('qgCorrect').value, time:Math.max(3,parseInt(document.getElementById('qgTime').value)||20), pts:Math.max(0,parseInt(document.getElementById('qgPts').value)||1) };
+    correct:document.getElementById('qgCorrect').value, time:Math.max(3,parseInt(document.getElementById('qgTime').value)||20) };
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
   document.body.classList.add('qgen-clean');
@@ -1121,7 +1119,7 @@ function qgRender(){
   const qText=qgCfg.q?('<div class="q-text">'+escapeHtml(qgCfg.q)+'</div>'):'';
   document.getElementById('qgCard').innerHTML=
     '<div class="timer-section"><div class="timer-top"><span class="timer-label">\u23f1\ufe0f Time to answer</span><span class="timer-value" id="qgTv">'+qgCfg.time+'s</span></div><div class="timer-track"><div class="timer-fill" id="qgTf"></div></div></div>'+
-    '<div class="question-section"><div class="q-number">'+escapeHtml(qgCfg.label)+'</div>'+qImg+qText+'<div class="q-pts">\ud83c\udf81 +'+qgCfg.pts+' points for correct answer</div></div>'+ans;
+    '<div class="question-section"><div class="q-number">'+escapeHtml(qgCfg.label)+'</div>'+qImg+qText+'</div>'+ans;
 }
 function qgStart(){
   clearInterval(qgTimer); qgTimeLeft=qgCfg.time;
