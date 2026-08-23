@@ -310,7 +310,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div class="msg" id="loginMsg"></div>
     <div class="field">
       <label class="field-label">Email</label>
-      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
     </div>
     <div class="field">
       <label class="field-label">Password</label>
@@ -526,7 +526,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       </div>
 
       <div class="card">
-        <input class="field-input" id="userSearch" placeholder="🔍 Search by username, email, or ID..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="renderUsers()">
+        <input class="field-input" id="userSearch" placeholder="🔍 Search by username, email, or ID..." autocomplete="off" oninput="renderUsers()">
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
           <span style="font-size:.72rem;color:var(--muted)">🍪 Cookie:</span>
           <select class="field-input" id="cookieFilter" onchange="renderUsers()" style="width:auto;padding:6px 10px;font-size:.8rem">
@@ -794,13 +794,13 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
             <option value="imga">4 Image Quiz (1 text + 4 images)</option>
           </select>
         </div>
-        <div class="fld"><label>Quiz label</label><input id="qgLabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Quiz 1"></div>
-        <div class="fld" id="qgFQImg" style="display:none"><label>Question Image URL</label><div style="display:flex;gap:6px"><input id="qgQImg" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="https://.../image.jpg"><button type="button" onclick="openImagePicker('qgQImg')" style="flex:none;padding:0 12px;font-size:1.05rem;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div><div class="hint">ერთი სურათი კითხვისთვის</div></div>
-        <div class="fld"><label id="qgLQ">Question</label><input id="qgQ" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="What is the capital of France?"></div>
-        <div class="ansrow"><span class="lp">A</span><div style="display:flex;gap:6px"><input id="qgA" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Paris"><button type="button" id="qgA_btn" onclick="openImagePicker('qgA')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
-        <div class="ansrow"><span class="lp">B</span><div style="display:flex;gap:6px"><input id="qgB" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="London"><button type="button" id="qgB_btn" onclick="openImagePicker('qgB')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
-        <div class="ansrow"><span class="lp">C</span><div style="display:flex;gap:6px"><input id="qgC" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Berlin"><button type="button" id="qgC_btn" onclick="openImagePicker('qgC')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
-        <div class="ansrow"><span class="lp">D</span><div style="display:flex;gap:6px"><input id="qgD" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Madrid"><button type="button" id="qgD_btn" onclick="openImagePicker('qgD')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="fld"><label>Quiz label</label><input id="qgLabel" value="Quiz 1"></div>
+        <div class="fld" id="qgFQImg" style="display:none"><label>Question Image URL</label><div style="display:flex;gap:6px"><input id="qgQImg" placeholder="https://.../image.jpg"><button type="button" onclick="openImagePicker('qgQImg')" style="flex:none;padding:0 12px;font-size:1.05rem;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div><div class="hint">ერთი სურათი კითხვისთვის</div></div>
+        <div class="fld"><label id="qgLQ">Question</label><input id="qgQ" value="What is the capital of France?"></div>
+        <div class="ansrow"><span class="lp">A</span><div style="display:flex;gap:6px"><input id="qgA" value="Paris"><button type="button" id="qgA_btn" onclick="openImagePicker('qgA')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="ansrow"><span class="lp">B</span><div style="display:flex;gap:6px"><input id="qgB" value="London"><button type="button" id="qgB_btn" onclick="openImagePicker('qgB')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="ansrow"><span class="lp">C</span><div style="display:flex;gap:6px"><input id="qgC" value="Berlin"><button type="button" id="qgC_btn" onclick="openImagePicker('qgC')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="ansrow"><span class="lp">D</span><div style="display:flex;gap:6px"><input id="qgD" value="Madrid"><button type="button" id="qgD_btn" onclick="openImagePicker('qgD')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
         <div class="hint" id="qgAnsHint" style="display:none">პასუხების ველებში სურათის URL-ები (ერთი ორიენტაცია)</div>
         <div class="row2">
           <div class="fld"><label>Correct answer</label><select id="qgCorrect"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
@@ -847,25 +847,25 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     </div>
     <div class="field">
       <label class="field-label">Title</label>
-      <input class="field-input" id="taskTitle" placeholder="e.g. Quiz 1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <input class="field-input" id="taskTitle" placeholder="e.g. Quiz 1" autocomplete="off">
     </div>
     <div id="quizFields">
       <div class="field" id="qImageField" style="display:none">
         <label class="field-label">Question Image URL</label>
-        <div style="display:flex;gap:6px"><input class="field-input" id="qImage" placeholder="https://.../image.jpg" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" onclick="openImagePicker('qImage')" style="flex:none;padding:0 12px;font-size:1.05rem;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div>
+        <div style="display:flex;gap:6px"><input class="field-input" id="qImage" placeholder="https://.../image.jpg" autocomplete="off"><button type="button" onclick="openImagePicker('qImage')" style="flex:none;padding:0 12px;font-size:1.05rem;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div>
         <div style="font-size:.66rem;color:var(--muted);margin-top:4px">ერთი სურათი კითხვისთვის (ფაილის სახელი პასუხს ნუ ამხელს)</div>
       </div>
       <div class="field">
         <label class="field-label" id="qTextLabel">Question</label>
-        <input class="field-input" id="qText" placeholder="What is...?" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <input class="field-input" id="qText" placeholder="What is...?" autocomplete="off">
       </div>
       <div class="field-row">
-        <div class="field"><label class="field-label" id="qLabelA">Answer A</label><div style="display:flex;gap:6px"><input class="field-input" id="qA" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qA_btn" onclick="openImagePicker('qA')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
-        <div class="field"><label class="field-label" id="qLabelB">Answer B</label><div style="display:flex;gap:6px"><input class="field-input" id="qB" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qB_btn" onclick="openImagePicker('qB')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
+        <div class="field"><label class="field-label" id="qLabelA">Answer A</label><div style="display:flex;gap:6px"><input class="field-input" id="qA" autocomplete="off"><button type="button" id="qA_btn" onclick="openImagePicker('qA')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
+        <div class="field"><label class="field-label" id="qLabelB">Answer B</label><div style="display:flex;gap:6px"><input class="field-input" id="qB" autocomplete="off"><button type="button" id="qB_btn" onclick="openImagePicker('qB')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label class="field-label" id="qLabelC">Answer C</label><div style="display:flex;gap:6px"><input class="field-input" id="qC" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qC_btn" onclick="openImagePicker('qC')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
-        <div class="field"><label class="field-label" id="qLabelD">Answer D</label><div style="display:flex;gap:6px"><input class="field-input" id="qD" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qD_btn" onclick="openImagePicker('qD')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
+        <div class="field"><label class="field-label" id="qLabelC">Answer C</label><div style="display:flex;gap:6px"><input class="field-input" id="qC" autocomplete="off"><button type="button" id="qC_btn" onclick="openImagePicker('qC')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
+        <div class="field"><label class="field-label" id="qLabelD">Answer D</label><div style="display:flex;gap:6px"><input class="field-input" id="qD" autocomplete="off"><button type="button" id="qD_btn" onclick="openImagePicker('qD')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
       </div>
       <div class="field">
         <label class="field-label">Correct Answer</label>
@@ -875,7 +875,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div id="urlField" style="display:none">
       <div class="field">
         <label class="field-label">URL</label>
-        <input class="field-input" id="taskUrl" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <input class="field-input" id="taskUrl" placeholder="https://..." autocomplete="off">
       </div>
     </div>
     <button class="btn btn-primary" onclick="saveTask()" style="width:100%">Add Task</button>
@@ -1072,18 +1072,11 @@ function qgClear(){
   document.body.classList.remove('qgen-clean');
 }
 // setup-ში დაბრუნება პარამეტრების შენარჩუნებით (ტაიმერის მერე / Esc)
-function qgFullscreen(on){
-  try{
-    if(on){ const el=document.documentElement; const r=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen; if(r) r.call(el); }
-    else { if(document.fullscreenElement||document.webkitFullscreenElement){ const x=document.exitFullscreen||document.webkitExitFullscreen; if(x) x.call(document); } }
-  }catch(_){}
-}
 function qgToSetup(){
   clearInterval(qgTimer); clearTimeout(qgReturnTimer);
   document.body.classList.remove('qgen-clean');
   document.getElementById('qgStage').classList.remove('on');
   document.getElementById('qgSetup').style.display='block';
-  qgFullscreen(false);
 }
 function qgOnType(){
   const t=document.getElementById('qgType').value;
@@ -1102,7 +1095,6 @@ async function qgPlay(){
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
   document.body.classList.add('qgen-clean');
-  qgFullscreen(true);
   await qgPrep(); qgRender(); qgStart();
 }
 async function qgPrep(){ qgOrient='landscape'; qgImgOk={}; const L=['A','B','C','D'];
@@ -1113,7 +1105,6 @@ async function qgReplay(){
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
   document.body.classList.add('qgen-clean');
-  qgFullscreen(true);
   await qgPrep(); qgRender(); qgStart();
 }
 function qgRender(){
@@ -1144,9 +1135,6 @@ function qgReveal(){
   clearTimeout(qgReturnTimer); qgReturnTimer=setTimeout(qgToSetup, 3000);
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.body.classList.contains('qgen-clean')) qgToSetup(); });
-['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev, ()=>{
-  if(!(document.fullscreenElement||document.webkitFullscreenElement) && document.body.classList.contains('qgen-clean')) qgToSetup();
-}));
 
 // ==================== PHOTO GALLERY (Supabase Storage) ====================
 const GALLERY_BUCKET = 'quiz-images';
