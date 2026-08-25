@@ -1072,11 +1072,18 @@ function qgClear(){
   document.body.classList.remove('qgen-clean');
 }
 // setup-ში დაბრუნება პარამეტრების შენარჩუნებით (ტაიმერის მერე / Esc)
+function qgFullscreen(on){
+  try{
+    if(on){ const el=document.documentElement; const r=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen; if(r) r.call(el); }
+    else { if(document.fullscreenElement||document.webkitFullscreenElement){ const x=document.exitFullscreen||document.webkitExitFullscreen; if(x) x.call(document); } }
+  }catch(_){}
+}
 function qgToSetup(){
   clearInterval(qgTimer); clearTimeout(qgReturnTimer);
   document.body.classList.remove('qgen-clean');
   document.getElementById('qgStage').classList.remove('on');
   document.getElementById('qgSetup').style.display='block';
+  qgFullscreen(false);
 }
 function qgOnType(){
   const t=document.getElementById('qgType').value;
@@ -1095,6 +1102,7 @@ async function qgPlay(){
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
   document.body.classList.add('qgen-clean');
+  qgFullscreen(true);
   await qgPrep(); qgRender(); qgStart();
 }
 async function qgPrep(){ qgOrient='landscape'; qgImgOk={}; const L=['A','B','C','D'];
@@ -1105,6 +1113,7 @@ async function qgReplay(){
   document.getElementById('qgSetup').style.display='none';
   document.getElementById('qgStage').classList.add('on');
   document.body.classList.add('qgen-clean');
+  qgFullscreen(true);
   await qgPrep(); qgRender(); qgStart();
 }
 function qgRender(){
@@ -1135,6 +1144,9 @@ function qgReveal(){
   clearTimeout(qgReturnTimer); qgReturnTimer=setTimeout(qgToSetup, 3000);
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.body.classList.contains('qgen-clean')) qgToSetup(); });
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev, ()=>{
+  if(!(document.fullscreenElement||document.webkitFullscreenElement) && document.body.classList.contains('qgen-clean')) qgToSetup();
+}));
 
 // ==================== PHOTO GALLERY (Supabase Storage) ====================
 const GALLERY_BUCKET = 'quiz-images';
