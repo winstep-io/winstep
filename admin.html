@@ -2474,14 +2474,16 @@ async function saveTask(){
     if(tErr){ showMsg('taskMsg', tErr.message, 'err'); return; }
     const built = buildQuizPayload();
     if(built.err){ showMsg('taskMsg', built.err, 'err'); return; }
-    const { data: existing } = await db.from('quiz_questions').select('id').eq('task_id', editId).maybeSingle();
-    if(existing){
-      const { error: qErr } = await db.from('quiz_questions').update(built.payload).eq('task_id', editId);
-      if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
-    } else {
-      const { error: qErr } = await db.from('quiz_questions').insert(Object.assign({ task_id: editId }, built.payload));
-      if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
-    }
+    const { error: qErr } = await db.rpc('admin_upsert_question', {
+      p_task_id: editId,
+      p_question: built.payload.question,
+      p_a: built.payload.answer_a, p_b: built.payload.answer_b,
+      p_c: built.payload.answer_c, p_d: built.payload.answer_d,
+      p_correct: built.payload.correct_answer,
+      p_question_image: built.payload.question_image,
+      p_answer_type: built.payload.answer_type
+    });
+    if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
     closeTaskModal(); loadBoxes(); return;
   }
 
@@ -2508,7 +2510,15 @@ async function saveTask(){
   if(isQuizVariant){
     const built = buildQuizPayload();
     if(built.err){ showMsg('taskMsg', built.err, 'err'); return; }
-    const { error: qErr } = await db.from('quiz_questions').insert(Object.assign({ task_id: newTask.id }, built.payload));
+    const { error: qErr } = await db.rpc('admin_upsert_question', {
+      p_task_id: newTask.id,
+      p_question: built.payload.question,
+      p_a: built.payload.answer_a, p_b: built.payload.answer_b,
+      p_c: built.payload.answer_c, p_d: built.payload.answer_d,
+      p_correct: built.payload.correct_answer,
+      p_question_image: built.payload.question_image,
+      p_answer_type: built.payload.answer_type
+    });
     if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
   }
 
