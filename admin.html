@@ -841,8 +841,8 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <option value="quiz">Quiz</option>
         <option value="image_quiz">Image Quiz (image + 4 text)</option>
         <option value="4image_quiz">4 Image Quiz (text + 4 images)</option>
-        <option value="video">Video Ad</option>
-        <option value="website">Website Visit</option>
+        <option value="video" id="ttVideo">Video Ad</option>
+        <option value="website" id="ttWebsite">Website Visit</option>
       </select>
     </div>
     <div class="field">
@@ -2373,6 +2373,8 @@ function openTaskModal(boxId){
   document.getElementById('taskModal').style.display = 'flex';
   document.getElementById('taskType').value = 'quiz';
   document.getElementById('taskType').disabled = false;
+  document.getElementById('ttVideo').hidden = false;
+  document.getElementById('ttWebsite').hidden = false;
   onTaskTypeChange();
   ['taskTitle','qText','qA','qB','qC','qD','taskUrl','qImage'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('qCorrect').value = 'A';
@@ -2398,7 +2400,9 @@ async function openTaskEdit(taskId){
     else if(q.question_image) variant = 'image_quiz';
   }
   document.getElementById('taskType').value = variant;
-  document.getElementById('taskType').disabled = true; // ტიპს რედაქტირებისას არ ვცვლით
+  document.getElementById('taskType').disabled = false; // Edit-შიც ტიპის შეცვლა შესაძლებელია
+  document.getElementById('ttVideo').hidden = true;      // Edit მხოლოდ ქუიზ-ვარიანტებს შორის
+  document.getElementById('ttWebsite').hidden = true;
   onTaskTypeChange();
 
   document.getElementById('taskTitle').value = t.title || '';
