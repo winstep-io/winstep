@@ -771,7 +771,7 @@ async function pick(btn){
   document.querySelectorAll('.answer').forEach((a,i)=>{
     a.classList.add('disabled');
     const letter = a.getAttribute('data-letter');
-    if(letter===correctLetter){ a.classList.add('correct','ws-pop'); a.querySelector('.answer-mark').textContent='✓'; }
+    if(isCorrect && letter===correctLetter){ a.classList.add('correct','ws-pop'); a.querySelector('.answer-mark').textContent='✓'; }
     else if(a===btn){ a.classList.add('wrong','ws-shake'); a.querySelector('.answer-mark').textContent='✗'; }
     else { a.style.transitionDelay = (i*55)+'ms'; a.classList.add('faded'); }
   });
@@ -833,8 +833,7 @@ async function timeOut(){
   const correctLetter = res ? res.correct_answer : null;
   document.querySelectorAll('.answer').forEach(a=>{
     a.classList.add('disabled');
-    if(a.getAttribute('data-letter')===correctLetter){ a.classList.add('correct'); a.querySelector('.answer-mark').textContent='✓'; }
-    else a.classList.add('faded');
+    a.classList.add('faded');
   });
   showResult('timeout', res ? res.points : 0);
 }
@@ -867,12 +866,12 @@ function showResult(type, points){
   } else if(type==='wrong'){
     icon.className='result-icon wrong';icon.textContent='✗';
     title.className='result-title wrong';title.textContent='Not quite!';
-    sub.textContent='The correct answer is in green.';
+    sub.textContent='Better luck on the next one!';
     pts.className='result-pts wrong';pts.textContent='+'+points;
   } else if(type==='already'){
     icon.className='result-icon wrong';icon.textContent='✓';
     title.className='result-title wrong';title.textContent='Already answered';
-    sub.textContent='This one was already recorded. The correct answer is in green.';
+    sub.textContent='This one was already recorded.';
     pts.className='result-pts wrong';pts.textContent='';
   } else {
     icon.className='result-icon wrong';icon.textContent='⏱️';
