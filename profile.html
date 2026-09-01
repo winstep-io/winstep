@@ -746,7 +746,6 @@ function buildAvatarGrid(selectedId){
     const sel = (a.id===selectedId);
     html += '<div onclick="selectAvatar(\''+a.id+'\')" style="cursor:pointer;border-radius:12px;padding:5px;border:2px solid '+(sel?'var(--teal)':'transparent')+';background:'+(sel?'rgba(46,196,182,.08)':'transparent')+';transition:all .15s;display:flex;flex-direction:column;align-items:center" title="'+a.name+'" id="avopt_'+a.id+'">'
       + avatarSVG(a.id, 62)
-      + '<span style="'+lbl+'">'+a.name+'</span>'
       + '</div>';
   }
   grid.innerHTML = html;
