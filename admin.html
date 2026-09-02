@@ -375,6 +375,41 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <button class="btn btn-primary" onclick="createBox()">Create Box</button>
       </div>
 
+      <div class="card">
+        <div class="card-title">📥 Bulk Create from Excel</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:12px">Excel-ის სვეტები: <b>question, answer_a, answer_b, answer_c, answer_d, correct</b> (correct = A/B/C/D). ავტომატურად შექმნის ბოქსებს + ქუიზებს, ხელით შექმნილის იდენტურად. კონფიგი (დრო, ბონუსის ზღვარი) — მიმდინარე Points Settings-იდან.</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Start date</label><input class="field-input" type="date" id="bgStart"></div>
+          <div class="field"><label class="field-label">End date (incl.)</label><input class="field-input" type="date" id="bgEnd"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Every N days</label><input class="field-input" type="number" id="bgInterval" value="1" min="1"></div>
+          <div class="field"><label class="field-label">Boxes per day</label><input class="field-input" type="number" id="bgBoxes" value="1" min="1"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Questions per box</label><input class="field-input" type="number" id="bgQPerBox" value="5" min="1"></div>
+          <div class="field"><label class="field-label">Excel file</label>
+            <input type="file" id="bgFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="bgFileChosen(this.files[0])">
+            <button class="btn btn-ghost" style="width:100%" onclick="document.getElementById('bgFile').click()">📄 Choose Excel</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">From question #</label><input class="field-input" type="number" id="bgFrom" value="1" min="1"></div>
+          <div class="field"><label class="field-label">To question # (incl.)</label><input class="field-input" type="number" id="bgTo" value="50" min="1"></div>
+        </div>
+        <div id="bgFileInfo" style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
+        <div id="bgPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px;display:none"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-ghost" onclick="bgPreviewRun()">👁 Preview</button>
+          <button class="btn btn-primary" id="bgCreateBtn" onclick="bgCreate()" disabled>🚀 Create</button>
+          <span id="bgMsg" class="msg" style="margin:0"></span>
+        </div>
+        <div id="bgProgress" style="display:none;margin-top:12px">
+          <div style="height:8px;background:var(--bg3);border-radius:6px;overflow:hidden"><div id="bgBar" style="height:100%;width:0;background:var(--teal);transition:width .2s"></div></div>
+          <div id="bgProgTxt" style="font-size:.72rem;color:var(--muted);margin-top:6px"></div>
+        </div>
+      </div>
+
       <div class="card-title" style="margin-top:8px">📦 Boxes</div>
       <div class="ad-mode-row" style="margin-bottom:14px">
         <button class="ad-mode-btn active" id="boxtab_today" onclick="setBoxTab('today')">Today</button>
@@ -2238,6 +2273,172 @@ async function createBox(){
   if(error){ showMsg('boxMsg', error.message, 'err'); return; }
   showMsg('boxMsg', autoName + ' created! ✅','ok');
   loadBoxes();
+}
+
+// ==================== BULK CREATE FROM EXCEL ====================
+let bgQuestions = null;
+
+function bgLoadSheetJS(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX) return resolve();
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=resolve; s.onerror=()=>reject(new Error('Excel-ბიბლიოთეკა ვერ ჩაიტვირთა (ინტერნეტი?)'));
+    document.head.appendChild(s);
+  });
+}
+
+async function bgFileChosen(file){
+  if(!file) return;
+  const info=document.getElementById('bgFileInfo');
+  info.textContent='Loading…';
+  try{
+    await bgLoadSheetJS();
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    const norm=k=>String(k).trim().toLowerCase().replace(/\s+/g,'_');
+    bgQuestions=(rows||[]).map(r=>{
+      const o={}; for(const k in r) o[norm(k)]=r[k];
+      const correct=String(o.correct||o.correct_answer||'').trim().toUpperCase();
+      return {
+        question:String(o.question||o.q||'').trim(),
+        a:String(o.answer_a||o.a||'').trim(),
+        b:String(o.answer_b||o.b||'').trim(),
+        c:String(o.answer_c||o.c||'').trim(),
+        d:String(o.answer_d||o.d||'').trim(),
+        correct:correct
+      };
+    }).filter(q=>q.question&&q.a&&q.b&&q.c&&q.d&&['A','B','C','D'].includes(q.correct));
+    if(!bgQuestions.length){ info.textContent=''; showMsg('bgMsg','ვერ ვიპოვე ვალიდური კითხვა. სვეტები: question, answer_a..d, correct.','err'); return; }
+    info.innerHTML='📄 <b>'+file.name+'</b> — ვალიდური კითხვები: <b>'+bgQuestions.length+'</b>';
+    document.getElementById('bgTo').value=Math.min(parseInt(document.getElementById('bgTo').value)||50, bgQuestions.length);
+    document.getElementById('bgMsg').className='msg';
+  }catch(e){ info.textContent=''; bgQuestions=null; showMsg('bgMsg', e.message||String(e), 'err'); }
+}
+
+function bgDates(){
+  const s=document.getElementById('bgStart').value, e=document.getElementById('bgEnd').value;
+  const iv=Math.max(1,parseInt(document.getElementById('bgInterval').value)||1);
+  if(!s||!e) return [];
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const out=[]; let d=new Date(s+'T00:00:00'); const end=new Date(e+'T00:00:00'); let g=0;
+  while(d<=end && g++<2000){ out.push(fmt(d)); d.setDate(d.getDate()+iv); }
+  return out;
+}
+
+function bgPlan(){
+  const dates=bgDates();
+  const boxes=Math.max(1,parseInt(document.getElementById('bgBoxes').value)||1);
+  const qpb=Math.max(1,parseInt(document.getElementById('bgQPerBox').value)||1);
+  const from=Math.max(1,parseInt(document.getElementById('bgFrom').value)||1);
+  const to=Math.max(from,parseInt(document.getElementById('bgTo').value)||from);
+  const needed=dates.length*boxes*qpb;
+  const slice=bgQuestions?bgQuestions.slice(from-1,to):[];
+  const available=slice.length;
+  // #3: თუ არ ჰყოფნის — შევქმნათ რამდენიც არის (შეცდომის გარეშე). toCreate = min
+  const toCreate=Math.min(needed, available);
+  return {dates,boxes,qpb,from,to,needed,slice,available,toCreate};
+}
+
+async function bgPreviewRun(){
+  const p=document.getElementById('bgPreview');
+  if(!bgQuestions){ showMsg('bgMsg','ჯერ ატვირთე Excel.','err'); return; }
+  const pl=bgPlan();
+  if(!pl.dates.length){ showMsg('bgMsg','მიუთითე სწორი თარიღები (start ≤ end).','err'); return; }
+  // #1: შემოწმება — რომელიმე მოქმედ თარიღზე ხომ არ არსებობს უკვე ბოქси
+  const clash=await bgDateClash(pl.dates);
+  const enough=pl.available>=pl.needed;
+  p.style.display='block';
+  let html='📅 დღეები: <b>'+pl.dates.length+'</b> · ბოქსები სულ: <b>'+(pl.dates.length*pl.boxes)+'</b> · კითხვები საჭირო: <b>'+pl.needed+'</b><br>'
+    +'დიაპაზონი '+pl.from+'–'+pl.to+' → ხელმისაწვდომი: <b>'+pl.available+'</b>';
+  if(clash.length){
+    html+='<br><span style="color:var(--red)">⛔ ამ თარიღ(ებ)ზე უკვე არსებობს ბოქси: <b>'+clash.join(', ')+'</b> — შექმნა შეუძლებელია.</span>';
+    document.getElementById('bgCreateBtn').disabled=true;
+  } else {
+    if(!enough) html+='<br><span style="color:var(--gold)">⚠️ დიაპაზონში კითხვა არ ჰყოფნის — შეიქმნება რამდენიც არის ('+pl.toCreate+' კითხვა).</span>';
+    else html+=' ✅';
+    document.getElementById('bgCreateBtn').disabled=false;
+  }
+  p.innerHTML=html;
+  document.getElementById('bgMsg').className='msg';
+}
+
+// #1: აბრუნებს თარიღებს, რომლებზეც უკვე არსებობს ბოქси
+async function bgDateClash(dates){
+  const { data } = await db.from('boxes').select('date').in('date', dates);
+  const taken=new Set((data||[]).map(r=>r.date));
+  return dates.filter(d=>taken.has(d));
+}
+
+async function bgCreate(){
+  const pl=bgPlan();
+  if(!bgQuestions){ showMsg('bgMsg','ჯერ ატვირთე Excel.','err'); return; }
+  if(!pl.dates.length){ showMsg('bgMsg','მიუთითე სწორი თარიღები.','err'); return; }
+  // #1: თარიღის კონფლიქტი — თუ რომელიმე დღეზე უკვე არსებობს ბოქси, არ ვქმნით
+  const clash=await bgDateClash(pl.dates);
+  if(clash.length){ showMsg('bgMsg','⛔ ამ თარიღ(ებ)ზე უკვე არსებობს ბოქси: '+clash.join(', ')+'. მითითებული პარამეტრებით შექმნა შეუძლებელია.','err'); return; }
+  // #3: რამდენი კითხვაც არის, იმდენს ვქმნით (შეცდომის გარეშე)
+  const toCreate=pl.toCreate;
+  if(toCreate<1){ showMsg('bgMsg','დიაპაზონში კითხვა არ არის.','err'); return; }
+  const totalBoxes=pl.dates.length*pl.boxes;
+  const note = (toCreate<pl.needed) ? ('\n(კითხვა არ ჰყოფნის — შეიქმნება '+toCreate+' კითხვა; ბოლო ბოქსი შესაძლოა ნაკლები კითხვით, ხოლო დარჩენილი ბოქსები საერთოდ არ შეიქმნება)') : '';
+  if(!confirm('შეიქმნება '+totalBoxes+' ბოქси და '+toCreate+' კითხვა.'+note+'\nგავაგრძელო?')) return;
+
+  document.getElementById('bgCreateBtn').disabled=true;
+  const prog=document.getElementById('bgProgress'); prog.style.display='block';
+  const bar=document.getElementById('bgBar'), ptxt=document.getElementById('bgProgTxt');
+
+  const toInt=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:null;};
+  const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct','quiz_correct']);
+  const cfg={}; (cfgRows||[]).forEach(r=>cfg[r.key]=r.value);
+  const { data: intRow } = await db.from('interstitial_settings').select('*').eq('id',1).single();
+  const it=intRow||{};
+  const ad_config={ int_master:it.enabled===true, int_box_enabled:it.box_enabled===true, int_box_after:it.box_after||'', int_quiz_enabled:it.quiz_enabled===true, int_quiz_after:it.quiz_after||'' };
+  const points=(cfg.quiz_correct!=null)?cfg.quiz_correct:10;
+
+  let qi=0, boxDone=0, stop=false;
+  const plannedBoxesWithQ=Math.ceil(pl.toCreate/pl.qpb); // რამდენ ბოქსს ეყოფა კითხვა
+  try{
+    for(const date of pl.dates){
+      if(stop) break;
+      const { data: sameDay } = await db.from('boxes').select('id').eq('date',date);
+      let order=(sameDay?sameDay.length:0);
+      for(let b=0;b<pl.boxes;b++){
+        const remain=pl.slice.length - qi;
+        if(remain<=0){ stop=true; break; } // კითხვა გათავდა — ვჩერდებით, ცარიელ ბოქსს არ ვქმნით
+        const thisQ=Math.min(pl.qpb, remain);
+        order++;
+        const { data: newBox, error: bErr } = await db.from('boxes').insert({
+          name:'Box '+order, date, start_time:'00:00:00', end_time:'23:59:00',
+          sort_order:order, sequence_order:order,
+          interval_minutes:toInt(cfg.box_interval_minutes), unlock_correct:toInt(cfg.bridge_unlock_correct), ad_config
+        }).select().single();
+        if(bErr) throw bErr;
+        const taskRows=[];
+        for(let j=1;j<=thisQ;j++) taskRows.push({ box_id:newBox.id, type:'quiz', title:'Quiz '+j, points, url:null, sort_order:j });
+        const { data: newTasks, error: tErr } = await db.from('tasks').insert(taskRows).select();
+        if(tErr) throw tErr;
+        newTasks.sort((x,y)=>x.sort_order-y.sort_order);
+        const rpcs=newTasks.map((t,idx)=>{
+          const q=pl.slice[qi+idx];
+          return db.rpc('admin_upsert_question',{ p_task_id:t.id, p_question:q.question, p_a:q.a,p_b:q.b,p_c:q.c,p_d:q.d, p_correct:q.correct, p_question_image:null, p_answer_type:'text' });
+        });
+        for(let k=0;k<rpcs.length;k+=6){ await Promise.all(rpcs.slice(k,k+6)); }
+        qi+=thisQ; boxDone++;
+        const pct=Math.round(boxDone/plannedBoxesWithQ*100);
+        bar.style.width=Math.min(100,pct)+'%'; ptxt.textContent='ბოქси '+boxDone+'/'+plannedBoxesWithQ+' · '+qi+' კითხვა';
+      }
+    }
+    bar.style.width='100%';
+    showMsg('bgMsg','✅ შეიქმნა '+boxDone+' ბოქси, '+qi+' კითხვა.','ok');
+    ptxt.textContent='დასრულდა ✅'; loadBoxes();
+  }catch(e){
+    showMsg('bgMsg','შეცდომა: '+(e.message||e),'err');
+    ptxt.textContent='შეჩერდა შეცდომაზე (ნაწილი შესაძლოა შეიქმნა).'; loadBoxes();
+  }
+  document.getElementById('bgCreateBtn').disabled=false;
 }
 
 // ---- BOX TABS (Today / Upcoming / History) ----
