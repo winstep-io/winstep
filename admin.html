@@ -388,16 +388,22 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         </div>
         <div class="field-row">
           <div class="field"><label class="field-label">Questions per box</label><input class="field-input" type="number" id="bgQPerBox" value="5" min="1"></div>
-          <div class="field"><label class="field-label">Excel file</label>
-            <input type="file" id="bgFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="bgFileChosen(this.files[0])">
-            <button class="btn btn-ghost" style="width:100%" onclick="document.getElementById('bgFile').click()">📄 Choose Excel</button>
+          <div class="field"><label class="field-label">Question bank (saved)</label>
+            <input type="file" id="bgBankFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="bgUploadToStorage(this.files[0])">
+            <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('bgBankFile').click()">📤 Upload / Replace</button>
           </div>
         </div>
         <div class="field-row">
           <div class="field"><label class="field-label">From question #</label><input class="field-input" type="number" id="bgFrom" value="1" min="1"></div>
           <div class="field"><label class="field-label">To question # (incl.)</label><input class="field-input" type="number" id="bgTo" value="50" min="1"></div>
         </div>
-        <div id="bgFileInfo" style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
+        <div id="bgFileInfo" style="font-size:.72rem;color:var(--muted);margin-bottom:6px"></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <span id="bgBankStatus" style="font-size:.72rem"></span>
+          <button class="btn btn-ghost btn-sm" id="bgRemoveBtn" onclick="bgRemoveStorage()" style="display:none">🗑 Remove saved</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bgFile').click()">📄 One-time file</button>
+          <input type="file" id="bgFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="bgFileChosen(this.files[0])">
+        </div>
         <div id="bgPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px;display:none"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-ghost" onclick="bgPreviewRun()">👁 Preview</button>
@@ -988,6 +994,7 @@ async function checkAdmin(user){
   updateBoxPreview();
   loadBoxes();
   loadSettings();
+  bgLoadFromStorage();
 }
 
 // ---- SETTINGS ----
@@ -2288,6 +2295,36 @@ function bgLoadSheetJS(){
   });
 }
 
+const QBANK_BUCKET='question-bank', QBANK_FILE='active.xlsx';
+
+// საერთო პარსერი — ArrayBuffer → ვალიდური კითხვების მასივი
+function bgParseBuffer(buf){
+  const wb=XLSX.read(buf,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+  const norm=k=>String(k).trim().toLowerCase().replace(/\s+/g,'_');
+  return (rows||[]).map(r=>{
+    const o={}; for(const k in r) o[norm(k)]=r[k];
+    const correct=String(o.correct||o.correct_answer||'').trim().toUpperCase();
+    return {
+      question:String(o.question||o.q||'').trim(),
+      a:String(o.answer_a||o.a||'').trim(),
+      b:String(o.answer_b||o.b||'').trim(),
+      c:String(o.answer_c||o.c||'').trim(),
+      d:String(o.answer_d||o.d||'').trim(),
+      correct:correct
+    };
+  }).filter(q=>q.question&&q.a&&q.b&&q.c&&q.d&&['A','B','C','D'].includes(q.correct));
+}
+
+function bgRenderBank(hasFile,count){
+  const st=document.getElementById('bgBankStatus'), rm=document.getElementById('bgRemoveBtn');
+  if(!st) return;
+  if(hasFile){ st.innerHTML='💾 შენახული ფაილი აქტიურია — <b>'+count+'</b> კითხვა'; if(rm) rm.style.display='inline-block'; }
+  else { st.innerHTML='<span style="color:var(--muted)">💾 შენახული ფაილი არ არის</span>'; if(rm) rm.style.display='none'; }
+}
+
+// ერთჯერადი ფაილი (არ ინახება Storage-ში)
 async function bgFileChosen(file){
   if(!file) return;
   const info=document.getElementById('bgFileInfo');
@@ -2295,27 +2332,57 @@ async function bgFileChosen(file){
   try{
     await bgLoadSheetJS();
     const buf=await file.arrayBuffer();
-    const wb=XLSX.read(buf,{type:'array'});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-    const norm=k=>String(k).trim().toLowerCase().replace(/\s+/g,'_');
-    bgQuestions=(rows||[]).map(r=>{
-      const o={}; for(const k in r) o[norm(k)]=r[k];
-      const correct=String(o.correct||o.correct_answer||'').trim().toUpperCase();
-      return {
-        question:String(o.question||o.q||'').trim(),
-        a:String(o.answer_a||o.a||'').trim(),
-        b:String(o.answer_b||o.b||'').trim(),
-        c:String(o.answer_c||o.c||'').trim(),
-        d:String(o.answer_d||o.d||'').trim(),
-        correct:correct
-      };
-    }).filter(q=>q.question&&q.a&&q.b&&q.c&&q.d&&['A','B','C','D'].includes(q.correct));
+    bgQuestions=bgParseBuffer(buf);
     if(!bgQuestions.length){ info.textContent=''; showMsg('bgMsg','ვერ ვიპოვე ვალიდური კითხვა. სვეტები: question, answer_a..d, correct.','err'); return; }
-    info.innerHTML='📄 <b>'+file.name+'</b> — ვალიდური კითხვები: <b>'+bgQuestions.length+'</b>';
+    info.innerHTML='📄 <b>'+file.name+'</b> (ერთჯერადი) — კითხვები: <b>'+bgQuestions.length+'</b>';
     document.getElementById('bgTo').value=Math.min(parseInt(document.getElementById('bgTo').value)||50, bgQuestions.length);
     document.getElementById('bgMsg').className='msg';
   }catch(e){ info.textContent=''; bgQuestions=null; showMsg('bgMsg', e.message||String(e), 'err'); }
+}
+
+// Storage-ში ატვირთვა/შეცვლა (მუდმივი — active.xlsx)
+async function bgUploadToStorage(file){
+  if(!file) return;
+  const info=document.getElementById('bgFileInfo');
+  info.textContent='ატვირთვა…';
+  try{
+    await bgLoadSheetJS();
+    const buf=await file.arrayBuffer();
+    const parsed=bgParseBuffer(buf);
+    if(!parsed.length){ info.textContent=''; showMsg('bgMsg','ვერ ვიპოვე ვალიდური კითხვა.','err'); return; }
+    const { error } = await db.storage.from(QBANK_BUCKET).upload(QBANK_FILE, file, { upsert:true, contentType:file.type||'application/octet-stream' });
+    if(error) throw error;
+    bgQuestions=parsed; info.textContent='';
+    bgRenderBank(true, parsed.length);
+    document.getElementById('bgTo').value=Math.min(parseInt(document.getElementById('bgTo').value)||50, parsed.length);
+    showMsg('bgMsg','✅ ფაილი შენახულია სისტემაში — ტელეფონიდანაც ხელმისაწვდომი.','ok');
+  }catch(e){ info.textContent=''; showMsg('bgMsg', e.message||String(e), 'err'); }
+}
+
+// Storage-იდან ავტომატური ჩატვირთვა (გახსნისას)
+async function bgLoadFromStorage(){
+  if(bgQuestions!==null) return; // უკვე ჩატვირთულია
+  if(!document.getElementById('bgBankStatus')) return;
+  try{
+    const { data, error } = await db.storage.from(QBANK_BUCKET).download(QBANK_FILE);
+    if(error || !data){ bgRenderBank(false); return; }
+    await bgLoadSheetJS();
+    const buf=await data.arrayBuffer();
+    const parsed=bgParseBuffer(buf);
+    bgQuestions=parsed;
+    bgRenderBank(true, parsed.length);
+    const toEl=document.getElementById('bgTo');
+    if(toEl && (!toEl.value || parseInt(toEl.value)>parsed.length)) toEl.value=Math.min(50,parsed.length);
+  }catch(e){ bgRenderBank(false); }
+}
+
+// Storage-იდან წაშლა
+async function bgRemoveStorage(){
+  if(!confirm('სისტემიდან წავშალო შენახული ფაილი?')) return;
+  try{ await db.storage.from(QBANK_BUCKET).remove([QBANK_FILE]); }catch(e){}
+  bgQuestions=null; bgRenderBank(false);
+  document.getElementById('bgFileInfo').textContent='';
+  showMsg('bgMsg','ფაილი წაიშალა.','ok');
 }
 
 function bgDates(){
