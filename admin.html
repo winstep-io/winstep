@@ -2307,6 +2307,7 @@ function bgParseBuffer(buf){
     const o={}; for(const k in r) o[norm(k)]=r[k];
     const correct=String(o.correct||o.correct_answer||'').trim().toUpperCase();
     return {
+      id:String(o.id||o.q_id||'').trim(),
       question:String(o.question||o.q||'').trim(),
       a:String(o.answer_a||o.a||'').trim(),
       b:String(o.answer_b||o.b||'').trim(),
@@ -2427,6 +2428,14 @@ async function bgPreviewRun(){
     if(!enough) html+='<br><span style="color:var(--gold)">⚠️ დიაპაზონში კითხვა არ ჰყოფნის — შეიქმნება რამდენიც არის ('+pl.toCreate+' კითხვა).</span>';
     else html+=' ✅';
     document.getElementById('bgCreateBtn').disabled=false;
+  }
+  // პირველი / ბოლო არჩეული კითხვა (ID + ტექსტი) — რანჯის გადასამოწმებლად
+  if(pl.slice.length){
+    const brief=q=>{ const t=q.question.length>60?q.question.slice(0,60)+'…':q.question; return (q.id?('<b>'+escapeHtml(q.id)+'</b> · '):'')+escapeHtml(t); };
+    const first=pl.slice[0], last=pl.slice[pl.slice.length-1];
+    html+='<div style="margin-top:8px;border-top:1px solid var(--border2);padding-top:8px;color:var(--soft)">'
+      +'🔹 პირველი (#'+pl.from+'): '+brief(first)+'<br>'
+      +'🔸 ბოლო (#'+(pl.from+pl.slice.length-1)+'): '+brief(last)+'</div>';
   }
   p.innerHTML=html;
   document.getElementById('bgMsg').className='msg';
