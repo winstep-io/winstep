@@ -110,6 +110,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .badge.quiz{background:var(--teal3);color:var(--teal)}
 .badge.video{background:rgba(230,57,70,.12);color:#ff8a93}
 .badge.website{background:rgba(100,150,255,.12);color:#8ab4ff}
+input[type="date"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.6);cursor:pointer;opacity:.9}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
 
 /* Fredoka/Nunito — quiz card-ისთვის (იგივე /fonts როგორც quiz.html) */
 @font-face{font-family:'Fredoka';font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2')}
