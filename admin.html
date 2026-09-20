@@ -70,9 +70,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 
 /* ── User cards on mobile: fields stacked, actions in two rows ── */
 @media (max-width:768px){
-  /* ბარათი ვერტიკალურად: ინფო ზემოთ, ღილაკები ქვემოთ */
-  .user-item{flex-direction:column;align-items:stretch;gap:10px}
-  .user-item .li-info{width:100%}
+  /* ბარათი: ინფო მარცხნივ, ღილაკები მარჯვნივ (ვერტიკალურ სვეტში).
+     ინფოს ველები ცალკე ხაზებზეა → სივრცე თავისუფლდება, ბარათი დაბლა პატარავდება. */
+  .user-item{flex-direction:row;align-items:flex-start;gap:10px}
+  .user-item .li-info{flex:1;min-width:0}
 
   /* სახელი + #ID პირველ ხაზზე ერთად; დანარჩენი — თითო ცალკე ხაზზე */
   .user-item .li-title{display:block}
@@ -84,12 +85,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   .user-item .li-sub .uf{display:block;margin-top:4px}
   .user-item .li-sub .uf-sep{display:none}
 
-  /* ღილაკები: View + Ban ზედა ხაზზე, Make/Remove Admin ქვედა ხაზზე */
-  .user-item .user-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  /* ღილაკები მარჯვნივ: View + Ban ზედა ხაზზე გვერდიგვერდ, Make/Remove Admin ქვედა ხაზზე */
+  .user-item .user-actions{display:grid;grid-template-columns:auto auto;gap:8px;flex-shrink:0;align-self:flex-start}
   .user-item .user-actions .ua-view{grid-column:1;grid-row:1}
   .user-item .user-actions .ua-ban{grid-column:2;grid-row:1}
   .user-item .user-actions .ua-admin{grid-column:1 / span 2;grid-row:2}
-  .user-item .user-actions .btn{width:100%;justify-content:center}
+  .user-item .user-actions .btn{width:100%;justify-content:center;white-space:nowrap;padding:12px 18px;font-size:.9rem}
 }
 .page-title{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
 .page-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px}
