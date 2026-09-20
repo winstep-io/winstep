@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-boot="pending">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -433,6 +433,14 @@ body.gap-mode #topMeta{min-height:0!important}
 
 /* ── Pause Site overlay — ფასადი, პროცესებს არ ცვლის ──
    z-index ყველაფერზე მაღლა: შუალედის ფანჯარაც და adblock notice-იც დაფაროს. */
+/* ── Pre-paint cover: სანამ boot არ დასრულებულა, dashboard არ ჩანს ──
+   პაუზაზე რეფრეშისას ერთი წამით dashboard-ის გამოკრთომას აღკვეთს.
+   <html data-boot="pending"> თავიდანვე დგას (inline, ქსელამდე). */
+#preCover{display:none}
+html[data-boot="pending"]{background:var(--bg,#080c0b)}
+html[data-boot="pending"] body>*:not(#pauseOverlay){visibility:hidden!important}
+html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
+  z-index:2147483640;background:var(--bg,#080c0b)}
 #pauseOverlay{position:fixed;inset:0;z-index:2147483647;display:none;
   background:var(--bg,#080c0b);
   align-items:center;justify-content:center;padding:24px}
@@ -675,6 +683,7 @@ body.gap-mode #topMeta{min-height:0!important}
   </script>
 </head>
 <body>
+<div id="preCover"></div>
 <!-- Pause overlay — bootstrap-ის მიხედვით ჩნდება/ქრება, dashboard-ს არ ცვლის -->
 <div id="pauseOverlay">
   <div class="pause-card">
@@ -879,6 +888,14 @@ function showTermsGate(){
 let BOOT = null;          // RPC-ის შედეგი (ან null, თუ ჩავარდა)
 let bootPromise = null;   // რომ ერთხელ გაეშვას, პარალელური გამოძახებებისთვის
 
+// უსაფრთხოების ბადე: თუ boot 6წმ-ზე მეტს გაჭიანურდა, cover-ს ვხსნით,
+// რომ გვერდი სამუდამოდ ცარიელი არ დარჩეს (overlay თავისით გამოჩნდება თუ საჭიროა).
+setTimeout(function(){
+  if(document.documentElement.getAttribute('data-boot')==='pending'){
+    document.documentElement.removeAttribute('data-boot');
+  }
+}, 6000);
+
 function loadBootstrap(){
   if(bootPromise) return bootPromise;
   bootPromise = (async ()=>{
@@ -895,14 +912,30 @@ function loadBootstrap(){
   return bootPromise;
 }
 
-function applyPauseOverlay(){
-  // BOOT.pause.paused: 1 = პაუზა. fallback-ზე (BOOT=null) overlay არ ჩნდება.
+// dashboard-ს ხილვადს ხდის: pre-paint cover-ს ხსნის.
+function revealDashboard(){
+  document.documentElement.removeAttribute('data-boot');
+}
+
+// აბრუნებს true-ს თუ საიტი პაუზაზეა.
+function isSitePaused(){
   const p = BOOT && BOOT.pause;
-  if(p && (p.paused === 1 || p.paused === true || p.paused === '1')){
+  return !!(p && (p.paused === 1 || p.paused === true || p.paused === '1'));
+}
+
+function applyPauseOverlay(){
+  // fallback-ზე (BOOT=null) overlay არ ჩნდება — dashboard ნახავს.
+  if(isSitePaused()){
+    const p = BOOT.pause;
     const el = document.getElementById('pauseOverlay');
     const msg = document.getElementById('pauseMsg');
     if(msg) msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
     if(el) el.classList.add('on');
+    // dashboard დამალული რჩება (data-boot=pending): მუქი ფონი + overlay ჩანს.
+    // ადმინის შემოწმებას init() ქვემოთ აკეთებს და საჭიროებისას ხსნის.
+  } else {
+    // პაუზა არ არის — dashboard გამოჩნდეს.
+    revealDashboard();
   }
 }
 
@@ -928,6 +961,29 @@ async function init(){
   }
 
   currentUser = session.user;
+
+  // ── პაუზა + ადმინი ──
+  // საიტი პაუზაზეა? სტუმარი/მომხმარებელი overlay-ს ხედავს (dashboard დამალული).
+  // ადმინისთვის: overlay ვხსნით, dashboard-ს ვაჩვენებთ, რომ იმუშაოს.
+  if(isSitePaused()){
+    let _isAdm = false;
+    try{ const { data } = await db.rpc('is_admin'); _isAdm = (data === true); }catch(_){}
+    if(_isAdm){
+      const _po = document.getElementById('pauseOverlay');
+      if(_po) _po.classList.remove('on');
+      revealDashboard();
+      const _b = document.createElement('div');
+      _b.textContent = '⏸ Site is paused for visitors — you see it as admin';
+      _b.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483646;'
+        + 'background:#f5c842;color:#1a1400;font:700 .8rem/1 sans-serif;padding:9px 16px;border-radius:999px;'
+        + 'box-shadow:0 6px 20px rgba(0,0,0,.4);pointer-events:none';
+      document.body.appendChild(_b);
+    } else {
+      // ადმინი არ არის — overlay რჩება, dashboard დამალული. აქ ვჩერდებით.
+      return;
+    }
+  }
+
   // auth დადგინდა — header-ის ღილაკები ახლა ვაჩვენოთ (ავტორიზებული ვარიანტი)
   { const hr = document.querySelector('.header-right'); if(hr) hr.style.visibility = 'visible'; }
 
