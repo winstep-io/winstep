@@ -313,11 +313,11 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div class="msg" id="loginMsg"></div>
     <div class="field">
       <label class="field-label">Email</label>
-      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" name="ws-noauto-email">
     </div>
     <div class="field">
       <label class="field-label">Password</label>
-      <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password">
+      <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" name="ws-noauto-pass">
     </div>
     <div style="display:flex;justify-content:center;margin:0 0 14px"><div class="cf-turnstile" data-sitekey="0x4AAAAAADuaBdw260z6JkeC" data-theme="dark" data-callback="onCaptcha" data-expired-callback="onCaptchaExpired" data-error-callback="onCaptchaExpired"></div></div>
     <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;margin-top:6px" id="loginBtn">Admin Login</button>
@@ -410,6 +410,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div id="bgPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px;display:none"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-ghost" onclick="bgPreviewRun()">👁 Preview</button>
+          <button class="btn btn-ghost" onclick="bgShowLastCreation()">🕘 Last Creation</button>
           <button class="btn btn-primary" id="bgCreateBtn" onclick="bgCreate()" disabled>🚀 Create</button>
           <span id="bgMsg" class="msg" style="margin:0"></span>
         </div>
@@ -2098,7 +2099,7 @@ function renderUsers(){
     const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'+badgeHtml+'</div><div class="li-sub" style="color:#ffffff">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
       + '<button class="btn btn-ghost btn-sm" onclick="openUserProfile(\''+u.id+'\')">View</button>'
       + '<button class="btn btn-ghost btn-sm" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '<button class="btn btn-danger btn-sm" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
@@ -2222,7 +2223,7 @@ function renderCountryStats(){
   for(const r of rows){
     const isUS = r.code === 'US';
     const label = isUS
-      ? '<span style="color:var(--red);font-weight:700">🇺🇸 United States</span>'
+      ? '<span style="color:#ffffff;font-weight:700">🇺🇸 United States</span>'
       : escapeHtml(r.name);
     html += '<tr>'
       + '<td style="padding:8px 6px;border-bottom:1px solid var(--border)">'+label+'</td>'
@@ -2451,6 +2452,32 @@ async function bgDateClash(dates){
   return dates.filter(d=>taken.has(d));
 }
 
+// ── "Last Creation" — ბოლოს შექმნილი დიაპაზონის ჩვენება ──────────────
+// bgPreview ბლოკს ვიყენებთ საჩვენებლად (იგივე სტილი, ჩართვა-გამორთვა).
+function bgShowLastCreation(){
+  const box=document.getElementById('bgPreview');
+  let raw=null;
+  try{ raw=localStorage.getItem('ws_bg_last_creation'); }catch(_){}
+  if(!raw){
+    box.style.display='block';
+    box.innerHTML='🕘 ჯერ არაფერი შექმნილა ამ ბრაუზერიდან.';
+    return;
+  }
+  let d;
+  try{ d=JSON.parse(raw); }catch(_){ box.style.display='block'; box.innerHTML='🕘 ჩანაწერი დაზიანებულია.'; return; }
+  const when = d.at ? new Date(d.at).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const partial = (d.requestedTo!=null && d.to!=null && d.to < d.requestedTo);
+  box.style.display='block';
+  box.innerHTML =
+      '🕘 <b>ბოლო შექმნა</b><br>'
+    + '📊 კითხვები: <b style="color:var(--gold,#f5c842)">#'+d.from+' → #'+d.to+'</b> ('+d.questions+' ცალი)<br>'
+    + '📦 ბოქסები: <b>'+d.boxes+'</b>'
+    + ((d.start||d.end) ? ' · 📅 '+ (d.start||'?') + ((d.end&&d.end!==d.start)?(' → '+d.end):'') : '')
+    + '<br>➡️ <b style="color:var(--teal,#2ec4b6)">შემდეგი დაიწყე კითხვიდან #'+(d.to+1)+'</b>'
+    + (partial ? '<br>⚠️ მოთხოვნილი იყო #'+d.requestedFrom+' → #'+d.requestedTo+', მაგრამ ბანკს კითხვა არ ეყო.' : '')
+    + '<br><span style="color:var(--muted)">🕒 '+when+'</span>';
+}
+
 async function bgCreate(){
   const pl=bgPlan();
   if(!bgQuestions){ showMsg('bgMsg','ჯერ ატვირთე Excel.','err'); return; }
@@ -2511,6 +2538,20 @@ async function bgCreate(){
       }
     }
     bar.style.width='100%';
+    // ── ბოლო შექმნის დამახსოვრება (localStorage) ──
+    // რეალურად შექმნილი კითხვები: pl.from-იდან qi ცალი (qi შეიძლება ნაკლები იყოს
+    // ვიდრე მოთხოვნილი დიაპაზონი, თუ ბანკს კითხვა არ ეყო).
+    try{
+      const _lastFrom = pl.from;
+      const _lastTo   = (qi>0) ? (pl.from + qi - 1) : pl.from;
+      localStorage.setItem('ws_bg_last_creation', JSON.stringify({
+        from: _lastFrom, to: _lastTo,
+        requestedFrom: pl.from, requestedTo: pl.to,
+        questions: qi, boxes: boxDone,
+        start: (pl.dates[0]||''), end: (pl.dates[pl.dates.length-1]||''),
+        at: new Date().toISOString()
+      }));
+    }catch(_){}
     showMsg('bgMsg','✅ შეიქმნა '+boxDone+' ბოქси, '+qi+' კითხვა.','ok');
     ptxt.textContent='დასრულდა ✅'; loadBoxes();
   }catch(e){
@@ -2595,11 +2636,11 @@ async function loadBoxes(){
     const cfgUnlock   = (box.unlock_correct   != null) ? box.unlock_correct : '—';
     const cfgAfterBox  = adc ? fmtTrig(adc.int_box_enabled,  adc.int_box_after)  : '—';
     const cfgAfterQuiz = adc ? fmtTrig(adc.int_quiz_enabled, adc.int_quiz_after) : '—';
-    const cfgLine = '<div class="li-sub" style="margin-top:4px;opacity:.9;font-size:.68rem">'
+    const cfgLine = '<div class="li-sub" style="margin-top:4px;font-size:.68rem;color:#ffffff">'
       + '⏱ Interval: <b style="color:var(--teal)">'+cfgInterval+'</b> · '
       + '🎮 Unlock: <b style="color:var(--teal)">'+cfgUnlock+'</b> correct · '
-      + '📺 After box: <b style="color:'+(cfgAfterBox==='Off'||cfgAfterBox==='—'?'var(--muted)':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterBox))+'</b> · '
-      + 'After quiz: <b style="color:'+(cfgAfterQuiz==='Off'||cfgAfterQuiz==='—'?'var(--muted)':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterQuiz))+'</b>'
+      + '📺 After box: <b style="color:'+(cfgAfterBox==='Off'||cfgAfterBox==='—'?'#ffffff':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterBox))+'</b> · '
+      + 'After quiz: <b style="color:'+(cfgAfterQuiz==='Off'||cfgAfterQuiz==='—'?'#ffffff':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterQuiz))+'</b>'
       + '</div>';
 
     // History-ში "+ Task" ღილაკი არ ჩანს (წარსულს ვერ შეცვლი)
@@ -2607,7 +2648,8 @@ async function loadBoxes(){
     const dayBall = (boxTab==='upcoming' && dayColor[box.date])
       ? '<span title="'+niceDate+'" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dayColor[box.date]+';margin-right:8px;vertical-align:middle;box-shadow:0 0 7px '+dayColor[box.date]+'99"></span>'
       : '';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+dayBall+'📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div>'+cfgLine+'</div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
+    const delLabel = (boxTab==='upcoming') ? 'Delete Upcoming' : 'Delete';
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+dayBall+'📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub" style="color:#ffffff">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div>'+cfgLine+'</div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">'+delLabel+'</button></div></div>';
     if(tasksHtml) html += tasksHtml;
   }
   list.innerHTML = html;
