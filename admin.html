@@ -67,6 +67,29 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   .main{padding:18px 16px;max-width:100%}
   .nav-item{font-size:.95rem;padding:13px 14px}
 }
+
+/* ── User cards on mobile: fields stacked, actions in two rows ── */
+@media (max-width:768px){
+  /* ბარათი ვერტიკალურად: ინფო ზემოთ, ღილაკები ქვემოთ */
+  .user-item{flex-direction:column;align-items:stretch;gap:10px}
+  .user-item .li-info{width:100%}
+
+  /* თითო მონაცემი ახალ სტრიქონზე; გამყოფი " · " იმალება */
+  .user-item .li-title{display:block}
+  .user-item .li-sub{display:block}
+  .user-item .uf{display:block;margin-top:3px}
+  .user-item .uf-name{margin-top:0}
+  .user-item .uf-sep{display:none}
+  /* status badges (admin/banned) სახელის სტრიქონზევე რჩება */
+  .user-item .li-title .badge{display:inline-block;margin-top:4px}
+
+  /* ღილაკები: View + Ban ზედა ხაზზე, Make/Remove Admin ქვედა ხაზზე */
+  .user-item .user-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  .user-item .user-actions .ua-view{grid-column:1;grid-row:1}
+  .user-item .user-actions .ua-ban{grid-column:2;grid-row:1}
+  .user-item .user-actions .ua-admin{grid-column:1 / span 2;grid-row:2}
+  .user-item .user-actions .btn{width:100%;justify-content:center}
+}
 .page-title{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
 .page-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px}
 
@@ -98,6 +121,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .li-title{font-size:.9rem;font-weight:600}
 .li-sub{font-size:.72rem;color:var(--muted);margin-top:2px}
 .li-actions{display:flex;gap:6px}
+/* ── User cards: desktop = inline fields (უცვლელი იერსახე) ── */
+.user-item .uf{display:inline}
+.user-item .uf-sep{color:var(--muted)}
+.user-item .li-title .uf-name{font-weight:600}
+
 
 .msg{padding:10px 14px;border-radius:9px;font-size:.82rem;margin-bottom:12px;display:none}
 .msg.show{display:block}
@@ -2097,17 +2125,34 @@ function renderUsers(){
 
   let html = '';
   for(const u of filtered){
-    const badges = [];
-    if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
-    if(u.is_banned) badges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
-    if(usPersonSet.has(u.id)) badges.push('<span class="badge" style="background:rgba(46,196,182,.14);color:var(--teal,#2ec4b6)">🇺🇸 US</span>');
-    const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'+badgeHtml+'</div><div class="li-sub" style="color:#ffffff">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
-      + '<button class="btn btn-ghost btn-sm" onclick="openUserProfile(\''+u.id+'\')">View</button>'
-      + '<button class="btn btn-ghost btn-sm" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
-      + '<button class="btn btn-danger btn-sm" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
+    // სტატუსის ბეჯები (admin/banned) სახელის გვერდით რჩება; US დროშა ცალკე ველია ქვემოთ.
+    const statusBadges = [];
+    if(u.is_admin) statusBadges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
+    if(u.is_banned) statusBadges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
+    const statusHtml = statusBadges.length ? ' '+statusBadges.join(' ') : '';
+    const isUS = usPersonSet.has(u.id);
+    const flagField = isUS
+      ? '<span class="uf uf-flag"><span class="uf-sep"> · </span><span class="badge" style="background:rgba(46,196,182,.14);color:var(--teal,#2ec4b6)">🇺🇸 US</span></span>'
+      : '';
+
+    html += '<div class="list-item user-item"><div class="li-info">'
+      + '<div class="li-title">'
+      +   '<span class="uf uf-name">'+escapeHtml(u.username||'(no name)')+'</span>'
+      +   '<span class="uf uf-id"><span class="uf-sep"> · </span><span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span></span>'
+      +   statusHtml
+      + '</div>'
+      + '<div class="li-sub" style="color:#ffffff">'
+      +   flagField
+      +   '<span class="uf uf-email"><span class="uf-sep"> · </span>'+escapeHtml(u.email||'—')+'</span>'
+      +   '<span class="uf uf-points"><span class="uf-sep"> · </span>🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+'</span>'
+      +   '<span class="uf uf-cookie"><span class="uf-sep"> · </span>🍪 '+cc+'</span>'
+      + '</div>'
+      + '</div><div class="li-actions user-actions">'
+      + '<button class="btn btn-ghost btn-sm ua-view" onclick="openUserProfile(\''+u.id+'\')">View</button>'
+      + '<button class="btn btn-ghost btn-sm ua-admin" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
+      + '<button class="btn btn-danger btn-sm ua-ban" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
       + '</div></div>';
   }
   list.innerHTML = html;
