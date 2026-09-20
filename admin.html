@@ -439,6 +439,11 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <button class="btn btn-danger btn-sm" onclick="clearHistory()" style="margin-top:8px">🗑 Clear History</button>
       </div>
 
+      <!-- Upcoming-ის კონტროლი (მხოლოდ Upcoming ჩანართზე ჩანს) -->
+      <div id="upcomingControls" style="display:none;margin-bottom:14px">
+        <button class="btn btn-danger btn-sm" onclick="clearUpcoming()">🗑 Clear Upcoming</button>
+      </div>
+
       <div id="boxesList"><div class="loading">Loading...</div></div>
     </div>
 
@@ -2570,6 +2575,9 @@ function setBoxTab(tab){
   });
   // History-ის კონტროლები მხოლოდ History ჩანართზე
   document.getElementById('historyControls').style.display = (tab==='history') ? 'block' : 'none';
+  // Upcoming-ის კონტროლი მხოლოდ Upcoming ჩანართზე
+  const _uc = document.getElementById('upcomingControls');
+  if(_uc) _uc.style.display = (tab==='upcoming') ? 'block' : 'none';
   loadBoxes();
 }
 function clearHistoryDate(){
@@ -2648,8 +2656,7 @@ async function loadBoxes(){
     const dayBall = (boxTab==='upcoming' && dayColor[box.date])
       ? '<span title="'+niceDate+'" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dayColor[box.date]+';margin-right:8px;vertical-align:middle;box-shadow:0 0 7px '+dayColor[box.date]+'99"></span>'
       : '';
-    const delLabel = (boxTab==='upcoming') ? 'Delete Upcoming' : 'Delete';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+dayBall+'📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub" style="color:#ffffff">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div>'+cfgLine+'</div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">'+delLabel+'</button></div></div>';
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+dayBall+'📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub" style="color:#ffffff">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div>'+cfgLine+'</div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
     if(tasksHtml) html += tasksHtml;
   }
   list.innerHTML = html;
@@ -2670,6 +2677,23 @@ async function clearHistory(){
   await db.from('tasks').delete().in('box_id', ids);
   await db.from('boxes').delete().in('id', ids);
   showMsg('boxMsg','History cleared! ✅','ok');
+  loadBoxes();
+}
+
+// Upcoming-ის სრული გასუფთავება — შლის ყველა მომავალ ბოქსს (date > today) და მათ task-ებს.
+// მომავალ ბოქსებზე მომხმარებლის პასუხები ვერ იქნება (ჯერ არ დამდგარა), ამიტომ
+// პირდაპირი წაშლა უსაფრთხოა — Today/History არ ეხება.
+async function clearUpcoming(){
+  const today = todayStr();
+  const { data: upBoxes } = await db.from('boxes').select('id').gt('date', today);
+  if(!upBoxes || upBoxes.length===0){ showMsg('boxMsg','No upcoming boxes to clear.','err'); return; }
+  if(!confirm('Delete ALL '+upBoxes.length+' upcoming boxes and their tasks? This cannot be undone.')) return;
+
+  const ids = upBoxes.map(b=>b.id);
+  // ჯერ task-ები, მერე ბოქსები (foreign key)
+  await db.from('tasks').delete().in('box_id', ids);
+  await db.from('boxes').delete().in('id', ids);
+  showMsg('boxMsg','Upcoming cleared! ✅','ok');
   loadBoxes();
 }
 
