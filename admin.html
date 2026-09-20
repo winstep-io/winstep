@@ -74,14 +74,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   .user-item{flex-direction:column;align-items:stretch;gap:10px}
   .user-item .li-info{width:100%}
 
-  /* თითო მონაცემი ახალ სტრიქონზე; გამყოფი " · " იმალება */
+  /* სახელი + #ID პირველ ხაზზე ერთად; დანარჩენი — თითო ცალკე ხაზზე */
   .user-item .li-title{display:block}
   .user-item .li-sub{display:block}
-  .user-item .uf{display:block;margin-top:3px}
-  .user-item .uf-name{margin-top:0}
-  .user-item .uf-sep{display:none}
-  /* status badges (admin/banned) სახელის სტრიქონზევე რჩება */
-  .user-item .li-title .badge{display:inline-block;margin-top:4px}
+  /* li-title-ის ველები (name, id) ინლაინ რჩება — ერთ ხაზზე */
+  .user-item .li-title .uf{display:inline}
+  .user-item .li-title .uf-sep{display:inline}
+  /* li-sub-ის ველები (flag, admin/banned, email, points, cookie) — თითო ცალკე ხაზზე */
+  .user-item .li-sub .uf{display:block;margin-top:4px}
+  .user-item .li-sub .uf-sep{display:none}
 
   /* ღილაკები: View + Ban ზედა ხაზზე, Make/Remove Admin ქვედა ხაზზე */
   .user-item .user-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
@@ -2127,24 +2128,26 @@ function renderUsers(){
   for(const u of filtered){
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
-    // სტატუსის ბეჯები (admin/banned) სახელის გვერდით რჩება; US დროშა ცალკე ველია ქვემოთ.
-    const statusBadges = [];
-    if(u.is_admin) statusBadges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
-    if(u.is_banned) statusBadges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
-    const statusHtml = statusBadges.length ? ' '+statusBadges.join(' ') : '';
+    // US დროშა და admin/banned — თითო ცალკე ველი (მობილურზე ცალკე ხაზზე).
     const isUS = usPersonSet.has(u.id);
     const flagField = isUS
       ? '<span class="uf uf-flag"><span class="uf-sep"> · </span><span class="badge" style="background:rgba(46,196,182,.14);color:var(--teal,#2ec4b6)">🇺🇸 US</span></span>'
+      : '';
+    const statusBadges = [];
+    if(u.is_admin) statusBadges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
+    if(u.is_banned) statusBadges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
+    const statusField = statusBadges.length
+      ? '<span class="uf uf-status"><span class="uf-sep"> · </span>'+statusBadges.join(' ')+'</span>'
       : '';
 
     html += '<div class="list-item user-item"><div class="li-info">'
       + '<div class="li-title">'
       +   '<span class="uf uf-name">'+escapeHtml(u.username||'(no name)')+'</span>'
       +   '<span class="uf uf-id"><span class="uf-sep"> · </span><span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span></span>'
-      +   statusHtml
       + '</div>'
       + '<div class="li-sub" style="color:#ffffff">'
       +   flagField
+      +   statusField
       +   '<span class="uf uf-email"><span class="uf-sep"> · </span>'+escapeHtml(u.email||'—')+'</span>'
       +   '<span class="uf uf-points"><span class="uf-sep"> · </span>🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+'</span>'
       +   '<span class="uf uf-cookie"><span class="uf-sep"> · </span>🍪 '+cc+'</span>'
