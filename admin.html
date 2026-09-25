@@ -85,11 +85,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   .user-item .li-sub .uf{display:block;margin-top:4px}
   .user-item .li-sub .uf-sep{display:none}
 
-  /* ღილაკები მარჯვნივ: View + Ban ზედა ხაზზე გვერდიგვერდ, Make/Remove Admin ქვედა ხაზზე */
+  /* ღილაკები მარჯვნივ: View + Change pts ზედა ხაზზე, Ban მეორეზე, Make/Remove Admin მესამეზე */
   .user-item .user-actions{display:grid;grid-template-columns:auto auto;gap:8px;flex-shrink:0;align-self:flex-start}
   .user-item .user-actions .ua-view{grid-column:1;grid-row:1}
-  .user-item .user-actions .ua-ban{grid-column:2;grid-row:1}
-  .user-item .user-actions .ua-admin{grid-column:1 / span 2;grid-row:2}
+  .user-item .user-actions .ua-pts{grid-column:2;grid-row:1}
+  .user-item .user-actions .ua-ban{grid-column:1 / span 2;grid-row:2}
+  .user-item .user-actions .ua-admin{grid-column:1 / span 2;grid-row:3}
   .user-item .user-actions .btn{width:100%;justify-content:center;white-space:nowrap;padding:12px 18px;font-size:.9rem}
 }
 .page-title{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
@@ -980,6 +981,31 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">Read-only preview. Use the buttons in the list to change admin or ban status.</div>
     <div id="upBody"></div>
     <button class="btn btn-ghost" onclick="closeUserProfile()" style="width:100%;margin-top:16px">Close</button>
+  </div>
+</div>
+
+<!-- ხელით რაუნდის ქულის კორექცია — admin_adjust_round_points-ს იძახებს -->
+<div class="gate" id="adjustPtsModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
+  <div class="card" style="width:100%;max-width:440px;margin:0">
+    <div class="card-title">Change round points <span style="cursor:pointer;float:right" onclick="closeAdjustPoints()">✕</span></div>
+    <div id="apWho" style="font-size:.82rem;color:var(--text);margin-bottom:4px"></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:16px">
+      Adjusts this round's points only (🏁). Resets at 00:00 UTC like normal play.
+      Championship points are not touched.
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label class="field-label">Points to add or subtract</label>
+      <input class="field-input" id="apAmount" type="number" step="1" placeholder="e.g. 50 or -50" autocomplete="off">
+      <div style="font-size:.68rem;color:var(--muted);margin-top:5px">Positive adds, negative subtracts. Example: <b>50</b> or <b>-50</b>.</div>
+    </div>
+
+    <div class="msg" id="apMsg"></div>
+
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeAdjustPoints()" style="flex:1">Cancel</button>
+      <button class="btn btn-primary" id="apApply" onclick="applyAdjustPoints()" style="flex:1">Apply</button>
+    </div>
   </div>
 </div>
 
@@ -2155,6 +2181,7 @@ function renderUsers(){
       + '</div>'
       + '</div><div class="li-actions user-actions">'
       + '<button class="btn btn-ghost btn-sm ua-view" onclick="openUserProfile(\''+u.id+'\')">View</button>'
+      + '<button class="btn btn-ghost btn-sm ua-pts" onclick="openAdjustPoints(\''+u.id+'\')">Change pts</button>'
       + '<button class="btn btn-ghost btn-sm ua-admin" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '<button class="btn btn-danger btn-sm ua-ban" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
       + '</div></div>';
@@ -2248,6 +2275,53 @@ async function openUserProfile(userId){
   }
 }
 function closeUserProfile(){ document.getElementById('userProfileModal').style.display = 'none'; }
+
+// ---- ხელით რაუნდის ქულის კორექცია ----
+let apTargetId = null;
+
+function openAdjustPoints(userId){
+  const u = (allUsers||[]).find(x=>x.id===userId);
+  if(!u){ showMsg('userMsg','User not found. Try reloading the list.','err'); return; }
+  apTargetId = userId;
+  document.getElementById('apWho').innerHTML =
+    escapeHtml(u.username||'(no name)')
+    + ' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6)">#'+escapeHtml(u.display_id||'—')+'</span>'
+    + ' <span style="color:var(--muted)">· now 🏁 '+(u.total_points||0)+'</span>';
+  document.getElementById('apAmount').value = '';
+  const msg = document.getElementById('apMsg'); msg.style.display='none'; msg.textContent='';
+  document.getElementById('adjustPtsModal').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('apAmount').focus(); }, 40);
+}
+
+function closeAdjustPoints(){
+  document.getElementById('adjustPtsModal').style.display = 'none';
+  apTargetId = null;
+}
+
+async function applyAdjustPoints(){
+  if(!apTargetId) return;
+  const delta = parseInt(document.getElementById('apAmount').value, 10);
+
+  const apErr = function(t){ const m=document.getElementById('apMsg'); m.textContent=t; m.className='msg show err'; };
+
+  // client-side ვალიდაცია (სერვერიც ამოწმებს, ეს მხოლოდ სწრაფი უკუკავშირია)
+  if(!Number.isInteger(delta) || delta === 0){ apErr('Enter a whole number, e.g. 50 or -50.'); return; }
+
+  const btn = document.getElementById('apApply');
+  btn.disabled = true; btn.textContent = 'Applying…';
+
+  const { data, error } = await db.rpc('admin_adjust_round_points', {
+    p_target_id: apTargetId, p_delta: delta
+  });
+
+  btn.disabled = false; btn.textContent = 'Apply';
+
+  if(error){ apErr(error.message); return; }
+
+  closeAdjustPoints();
+  showMsg('userMsg', 'Round points updated ('+(delta>0?'+':'')+delta+'). New total: '+data+'.', 'ok');
+  loadUsers();
+}
 
 // ---- Users-by-country table (built from already-loaded allUsers; no DB calls) ----
 function renderCountryStats(){
