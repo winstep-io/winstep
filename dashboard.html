@@ -113,10 +113,13 @@ header{display:flex;align-items:center;justify-content:space-between;
 .ad-slot.ad-reserve{display:block!important}
 .ad-slot.ad-reserve.top{min-height:98px}
 .ad-slot.ad-reserve.bottom{min-height:110px}
-.ad-box{width:100%;height:80px;background:var(--bg2);border:0;border-radius:18px;
+.ad-box{width:100%;min-height:80px;background:var(--bg2);border:0;border-radius:18px;
   display:flex;align-items:center;justify-content:center;font-size:.72rem;
   color:rgba(255,255,255,.14);letter-spacing:.15em;text-transform:uppercase;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);overflow:hidden}
+/* Any injected banner (single img, <picture>, or responsive pair) fills the slot at its natural aspect ratio */
+.ad-box img,.ad-box picture{display:block;width:100%;height:auto;max-width:100%}
+.ad-box picture{line-height:0}
 
 /* ── championship badge + round banner ──────────────────── */
 #topMeta.topmeta-reserve{min-height:130px}
