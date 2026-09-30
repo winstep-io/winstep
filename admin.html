@@ -67,6 +67,32 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   .main{padding:18px 16px;max-width:100%}
   .nav-item{font-size:.95rem;padding:13px 14px}
 }
+
+/* ── User cards on mobile: fields stacked, actions in two rows ── */
+@media (max-width:768px){
+  /* ბარათი: ინფო მარცხნივ, ღილაკები მარჯვნივ (ვერტიკალურ სვეტში).
+     ინფოს ველები ცალკე ხაზებზეა → სივრცე თავისუფლდება, ბარათი დაბლა პატარავდება. */
+  .user-item{flex-direction:row;align-items:flex-start;gap:10px}
+  .user-item .li-info{flex:1;min-width:0}
+
+  /* სახელი + #ID პირველ ხაზზე ერთად; დანარჩენი — თითო ცალკე ხაზზე */
+  .user-item .li-title{display:block}
+  .user-item .li-sub{display:block}
+  /* li-title-ის ველები (name, id) ინლაინ რჩება — ერთ ხაზზე */
+  .user-item .li-title .uf{display:inline}
+  .user-item .li-title .uf-sep{display:inline}
+  /* li-sub-ის ველები (flag, admin/banned, email, points, cookie) — თითო ცალკე ხაზზე */
+  .user-item .li-sub .uf{display:block;margin-top:4px}
+  .user-item .li-sub .uf-sep{display:none}
+
+  /* ღილაკები მარჯვნივ: View + Change pts ზედა ხაზზე, Ban შუაზე, Make/Remove Admin ბოლოში */
+  .user-item .user-actions{display:grid;grid-template-columns:auto auto;gap:8px;flex-shrink:0;align-self:flex-start}
+  .user-item .user-actions .ua-view{grid-column:1;grid-row:1}
+  .user-item .user-actions .ua-pts{grid-column:2;grid-row:1}
+  .user-item .user-actions .ua-ban{grid-column:1 / span 2;grid-row:2}
+  .user-item .user-actions .ua-admin{grid-column:1 / span 2;grid-row:3}
+  .user-item .user-actions .btn{width:100%;justify-content:center;white-space:nowrap;padding:12px 18px;font-size:.9rem}
+}
 .page-title{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:4px}
 .page-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px}
 
@@ -97,7 +123,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .li-info{flex:1;min-width:0}
 .li-title{font-size:.9rem;font-weight:600}
 .li-sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+#champsList .li-sub{color:#fff}
 .li-actions{display:flex;gap:6px}
+/* ── User cards: desktop = inline fields (უცვლელი იერსახე) ── */
+.user-item .uf{display:inline}
+.user-item .uf-sep{color:var(--muted)}
+.user-item .li-title .uf-name{font-weight:600}
+
 
 .msg{padding:10px 14px;border-radius:9px;font-size:.82rem;margin-bottom:12px;display:none}
 .msg.show{display:block}
@@ -110,6 +142,71 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .badge.quiz{background:var(--teal3);color:var(--teal)}
 .badge.video{background:rgba(230,57,70,.12);color:#ff8a93}
 .badge.website{background:rgba(100,150,255,.12);color:#8ab4ff}
+input[type="date"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{opacity:.9;cursor:pointer;padding:2px;margin-left:4px}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
+
+/* Fredoka/Nunito — quiz card-ისთვის (იგივე /fonts როგორც quiz.html) */
+@font-face{font-family:'Fredoka';font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Fredoka';font-weight:700;font-display:swap;src:url('/fonts/fredoka-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Nunito';font-weight:400;font-display:swap;src:url('/fonts/nunito-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Nunito';font-weight:700;font-display:swap;src:url('/fonts/nunito-latin-700-normal.woff2') format('woff2')}
+/* ===== Quiz Generator (scoped) ===== */
+#sec-qgen{--qbg2:#0e1a18;--qbg3:#132723;--qbg4:#18332d;--qbd:rgba(255,255,255,.08);--qbd2:rgba(46,196,182,.4);--qteal:#2ec4b6;--qteal4:rgba(46,196,182,.14);--qgold:#f5c842;--qtext:#eaf5f2;--qmuted:#8ba39d;--qsoft:#b6cdc7;--qgreen:#51cf66;--qgreen2:rgba(81,207,102,.14);--qred:#ff6b6b;--qdisp:'Fredoka',sans-serif;--qbody:'Nunito',sans-serif}
+#sec-qgen .qg-setup{width:100%;max-width:460px;background:var(--qbg2);border:1px solid var(--qbd);border-radius:18px;padding:20px}
+#sec-qgen .qg-setup h2{font-family:var(--qdisp);font-weight:600;font-size:1rem;margin:0 0 14px;color:var(--qsoft)}
+#sec-qgen .fld{margin-bottom:13px}
+#sec-qgen .fld label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--qmuted);margin-bottom:5px;font-weight:700}
+#sec-qgen .fld input,#sec-qgen .fld select{width:100%;background:var(--qbg3);border:1.5px solid var(--qbd);border-radius:10px;padding:11px 13px;color:var(--qtext);font-family:var(--qbody);font-size:.95rem;outline:none}
+#sec-qgen .fld input:focus,#sec-qgen .fld select:focus{border-color:var(--qbd2)}
+#sec-qgen .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#sec-qgen .ansrow{display:grid;grid-template-columns:34px 1fr;gap:9px;align-items:center;margin-bottom:9px}
+#sec-qgen .ansrow .lp{width:34px;height:40px;border-radius:9px;background:var(--qteal4);color:var(--qteal);display:flex;align-items:center;justify-content:center;font-family:var(--qdisp);font-weight:700}
+#sec-qgen .hint{font-size:.66rem;color:var(--qmuted);margin:-4px 0 12px}
+#sec-qgen .playbtn{width:100%;margin-top:8px;padding:14px;border:none;border-radius:13px;background:var(--qteal);color:#06231f;font-family:var(--qdisp);font-weight:600;font-size:1.02rem;cursor:pointer}
+#sec-qgen .qg-stage{width:100%;display:none;flex-direction:column;align-items:center;margin-top:18px}
+#sec-qgen .qg-stage.on{display:flex}
+#sec-qgen .phone{width:100%;max-width:392px;border-radius:30px;overflow:hidden;background:linear-gradient(180deg,#0c1a18,#081210);border:1px solid rgba(46,196,182,.18);box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
+#sec-qgen .qg-controls{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+#sec-qgen .qg-controls button{font-family:var(--qdisp);font-weight:500;font-size:.85rem;color:var(--qsoft);background:var(--qbg2);border:1px solid var(--qbd);border-radius:11px;padding:9px 16px;cursor:pointer}
+#sec-qgen .qc-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 0}
+#sec-qgen .qc-back{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--qbd);display:flex;align-items:center;justify-content:center;color:var(--qsoft);font-size:.85rem}
+#sec-qgen .qc-tag{font-family:var(--qdisp);font-weight:600;font-size:.95rem}#sec-qgen .qc-spacer{width:32px}
+#sec-qgen .timer-section{padding:16px 18px 0}
+#sec-qgen .timer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+#sec-qgen .timer-label{font-size:.8rem;color:var(--qsoft);font-weight:600}
+#sec-qgen .timer-value{font-family:var(--qdisp);font-weight:600;font-size:1rem;color:var(--qteal)}
+#sec-qgen .timer-value.warn{color:var(--qgold)}#sec-qgen .timer-value.danger{color:var(--qred)}
+#sec-qgen .timer-track{height:7px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+#sec-qgen .timer-fill{height:100%;width:100%;border-radius:6px;background:var(--qteal);transition:width 1s linear}
+#sec-qgen .timer-fill.warn{background:var(--qgold)}#sec-qgen .timer-fill.danger{background:var(--qred)}
+#sec-qgen .question-section{padding:20px 20px 4px}
+#sec-qgen .q-number{font-family:var(--qdisp);font-weight:600;font-size:.78rem;color:var(--qmuted);margin-bottom:7px}
+#sec-qgen .q-image{display:block;width:100%;max-height:230px;object-fit:contain;border-radius:14px;margin:2px 0 12px;background:#0c1a17;border:1px solid var(--qbd)}
+#sec-qgen .q-image.portrait{max-width:74%;max-height:320px;margin-left:auto;margin-right:auto}
+#sec-qgen .q-text{font-family:var(--qdisp);font-size:1.24rem;font-weight:600;line-height:1.32;color:var(--qtext);margin-bottom:8px}
+#sec-qgen .q-pts{font-size:.82rem;color:var(--qgold);font-weight:700}
+#sec-qgen .answers{padding:14px 20px 22px;display:flex;flex-direction:column;gap:10px}
+#sec-qgen .answer{display:flex;align-items:center;gap:13px;padding:15px 16px;background:var(--qbg3);border:0;border-radius:14px;text-align:left;width:100%;font-family:var(--qbody);transition:all .25s}
+#sec-qgen .answer-letter{width:32px;height:32px;border-radius:10px;background:var(--qteal4);display:flex;align-items:center;justify-content:center;font-family:var(--qdisp);font-weight:700;font-size:1rem;color:var(--qteal);flex-shrink:0;transition:all .25s}
+#sec-qgen .answer-text{font-size:1rem;color:var(--qtext);font-weight:600;flex:1}
+#sec-qgen .answer-mark{font-size:1.15rem;opacity:0;transition:opacity .25s}
+#sec-qgen .answer.correct{background:var(--qgreen2)}#sec-qgen .answer.correct .answer-letter{background:var(--qgreen);color:#04140a}#sec-qgen .answer.correct .answer-text{color:var(--qgreen)}#sec-qgen .answer.correct .answer-mark{opacity:1}
+#sec-qgen .answer.faded{opacity:.4}
+#sec-qgen .answers.img-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#sec-qgen .answers.img-grid .answer{flex-direction:column;gap:0;padding:0;overflow:hidden;position:relative;aspect-ratio:4/3;align-items:stretch}
+#sec-qgen .answers.img-grid.portrait .answer{aspect-ratio:3/4}
+#sec-qgen .answers.img-grid .answer img{width:100%;height:100%;object-fit:cover;display:block}
+#sec-qgen .answers.img-grid .answer .answer-letter{position:absolute;top:7px;left:7px;width:26px;height:26px;z-index:2;background:rgba(6,20,18,.72);color:#fff;border:1px solid rgba(255,255,255,.28)}
+#sec-qgen .answers.img-grid .answer .answer-mark{position:absolute;bottom:5px;right:8px;z-index:2;font-size:1.35rem}
+#sec-qgen .answers.img-grid .answer .imgfallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--qdisp);font-size:1.8rem;color:var(--qmuted);background:var(--qbg3)}
+#sec-qgen .answers.img-grid .answer.correct{outline:3px solid var(--qgreen);outline-offset:-3px;background:transparent}
+body.qgen-clean{overflow:hidden}
+body.qgen-clean #sec-qgen .qg-stage{position:fixed!important;inset:0;z-index:99999;background:radial-gradient(ellipse 700px 500px at 50% -6%,rgba(46,196,182,.12),transparent 60%),#0a1413;display:flex!important;align-items:center;justify-content:center;margin:0;padding:20px}
+body.qgen-clean #sec-qgen .qg-controls{display:none!important}
+.qgen-hint{display:none;position:fixed;top:16px;right:16px;z-index:100000;font-family:'Fredoka',sans-serif;font-size:.8rem;color:#8ba39d;background:rgba(14,26,24,.9);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 13px}
+body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
+@keyframes qgFade{0%,60%{opacity:1}100%{opacity:0}}
 </style>
   <!-- cookie-consent (inlined: removes a render-blocking request; must still
        run BEFORE the GA4 block below so Consent Mode v2 defaults apply first) -->
@@ -248,11 +345,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div class="msg" id="loginMsg"></div>
     <div class="field">
       <label class="field-label">Email</label>
-      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input class="field-input" type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" name="ws-noauto-email">
     </div>
     <div class="field">
       <label class="field-label">Password</label>
-      <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password">
+      <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" name="ws-noauto-pass">
     </div>
     <div style="display:flex;justify-content:center;margin:0 0 14px"><div class="cf-turnstile" data-sitekey="0x4AAAAAADuaBdw260z6JkeC" data-theme="dark" data-callback="onCaptcha" data-expired-callback="onCaptchaExpired" data-error-callback="onCaptchaExpired"></div></div>
     <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;margin-top:6px" id="loginBtn">Admin Login</button>
@@ -290,6 +387,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div class="nav-item" onclick="nav('settings',this)"><span>⚙️</span><span>Points Settings</span></div>
     <div class="nav-item" onclick="nav('ads',this)"><span>📺</span><span>Ad Manager</span></div>
     <div class="nav-item" onclick="nav('emailforms',this)"><span>📧</span><span>E-Mail Forms</span></div>
+    <div class="nav-item" onclick="nav('gallery',this)"><span>📷</span><span>Photo Gallery</span></div>
+    <div class="nav-item" onclick="nav('qgen',this)"><span>🎬</span><span>Quiz Generator</span></div>
   </div>
 
   <div class="main">
@@ -311,6 +410,48 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
         <button class="btn btn-primary" onclick="createBox()">Create Box</button>
       </div>
 
+      <div class="card">
+        <div class="card-title">📥 Bulk Create from Excel</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:12px">Excel-ის სვეტები: <b>question, answer_a, answer_b, answer_c, answer_d, correct</b> (correct = A/B/C/D). ავტომატურად შექმნის ბოქსებს + ქუიზებს, ხელით შექმნილის იდენტურად. კონფიგი (დრო, ბონუსის ზღვარი) — მიმდინარე Points Settings-იდან.</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Start date</label><input class="field-input" type="date" id="bgStart"></div>
+          <div class="field"><label class="field-label">End date (incl.)</label><input class="field-input" type="date" id="bgEnd"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Every N days</label><input class="field-input" type="number" id="bgInterval" value="1" min="1"></div>
+          <div class="field"><label class="field-label">Boxes per day</label><input class="field-input" type="number" id="bgBoxes" value="1" min="1"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Questions per box</label><input class="field-input" type="number" id="bgQPerBox" value="5" min="1"></div>
+          <div class="field"><label class="field-label">Question bank (saved)</label>
+            <input type="file" id="bgBankFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="bgUploadToStorage(this.files[0])">
+            <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('bgBankFile').click()">📤 Upload / Replace</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">From question #</label><input class="field-input" type="number" id="bgFrom" value="1" min="1"></div>
+          <div class="field"><label class="field-label">To question # (incl.)</label><input class="field-input" type="number" id="bgTo" value="50" min="1"></div>
+        </div>
+        <div id="bgFileInfo" style="font-size:.72rem;color:var(--muted);margin-bottom:6px"></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <span id="bgBankStatus" style="font-size:.72rem"></span>
+          <button class="btn btn-ghost btn-sm" id="bgRemoveBtn" onclick="bgRemoveStorage()" style="display:none">🗑 Remove saved</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bgFile').click()">📄 One-time file</button>
+          <input type="file" id="bgFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="bgFileChosen(this.files[0])">
+        </div>
+        <div id="bgPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px;display:none"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-ghost" onclick="bgPreviewRun()">👁 Preview</button>
+          <button class="btn btn-ghost" onclick="bgShowLastCreation()">🕘 Last Creation</button>
+          <button class="btn btn-primary" id="bgCreateBtn" onclick="bgCreate()" disabled>🚀 Create</button>
+          <span id="bgMsg" class="msg" style="margin:0"></span>
+        </div>
+        <div id="bgProgress" style="display:none;margin-top:12px">
+          <div style="height:8px;background:var(--bg3);border-radius:6px;overflow:hidden"><div id="bgBar" style="height:100%;width:0;background:var(--teal);transition:width .2s"></div></div>
+          <div id="bgProgTxt" style="font-size:.72rem;color:var(--muted);margin-top:6px"></div>
+        </div>
+      </div>
+
       <div class="card-title" style="margin-top:8px">📦 Boxes</div>
       <div class="ad-mode-row" style="margin-bottom:14px">
         <button class="ad-mode-btn active" id="boxtab_today" onclick="setBoxTab('today')">Today</button>
@@ -328,6 +469,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
           <button class="btn btn-ghost btn-sm" onclick="clearHistoryDate()" style="margin-bottom:2px">Show all</button>
         </div>
         <button class="btn btn-danger btn-sm" onclick="clearHistory()" style="margin-top:8px">🗑 Clear History</button>
+      </div>
+
+      <!-- Upcoming-ის კონტროლი (მხოლოდ Upcoming ჩანართზე ჩანს) -->
+      <div id="upcomingControls" style="display:none;margin-bottom:14px">
+        <button class="btn btn-danger btn-sm" onclick="clearUpcoming()">🗑 Clear Upcoming</button>
       </div>
 
       <div id="boxesList"><div class="loading">Loading...</div></div>
@@ -466,7 +612,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       </div>
 
       <div class="card">
-        <input class="field-input" id="userSearch" placeholder="🔍 Search by username, email, or ID..." autocomplete="off" oninput="renderUsers()">
+        <input class="field-input" id="userSearch" placeholder="🔍 Search by username, email, or ID..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="renderUsers()">
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
           <span style="font-size:.72rem;color:var(--muted)">🍪 Cookie:</span>
           <select class="field-input" id="cookieFilter" onchange="renderUsers()" style="width:auto;padding:6px 10px;font-size:.8rem">
@@ -712,6 +858,59 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
         <iframe id="cf-preview" style="width:100%;height:760px;border:1px solid var(--border2);border-radius:12px;background:#f2f5f4"></iframe>
       </div>
     </div>
+    <div class="section" id="sec-gallery">
+      <div class="card" style="margin-bottom:16px">
+        <input type="file" id="galleryFile" accept="image/*" multiple style="display:none" onchange="galleryUpload(this.files)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" onclick="document.getElementById('galleryFile').click()">⬆️ Upload images</button>
+          <button class="btn btn-danger" onclick="galleryDeleteAll()">🗑 Delete all</button>
+          <span id="galleryMsg" class="msg" style="margin:0"></span>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:8px">მაქს. 2MB თითო ფაილზე · სახელი ავტომატურად ნეიტრალურდება (პასუხს არ ამხელს)</div>
+      </div>
+      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px"></div>
+    </div>
+    <div class="section" id="sec-qgen">
+      <div class="qg-setup" id="qgSetup">
+        <h2>⚙️ Setup</h2>
+        <div class="fld"><label>Type</label>
+          <select id="qgType" onchange="qgOnType()">
+            <option value="text">Text quiz (text + 4 text)</option>
+            <option value="imgq">Image Quiz (1 image + 4 text)</option>
+            <option value="imga">4 Image Quiz (1 text + 4 images)</option>
+          </select>
+        </div>
+        <div class="fld"><label>Quiz label</label><input id="qgLabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Quiz 1"></div>
+        <div class="fld" id="qgFQImg" style="display:none"><label>Question Image URL</label><div style="display:flex;gap:6px"><input id="qgQImg" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="https://.../image.jpg"><button type="button" onclick="openImagePicker('qgQImg')" style="flex:none;padding:0 12px;font-size:1.05rem;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div><div class="hint">ერთი სურათი კითხვისთვის</div></div>
+        <div class="fld"><label id="qgLQ">Question</label><input id="qgQ" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="What is the capital of France?"></div>
+        <div class="ansrow"><span class="lp">A</span><div style="display:flex;gap:6px"><input id="qgA" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Paris"><button type="button" id="qgA_btn" onclick="openImagePicker('qgA')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="ansrow"><span class="lp">B</span><div style="display:flex;gap:6px"><input id="qgB" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="London"><button type="button" id="qgB_btn" onclick="openImagePicker('qgB')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="ansrow"><span class="lp">C</span><div style="display:flex;gap:6px"><input id="qgC" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Berlin"><button type="button" id="qgC_btn" onclick="openImagePicker('qgC')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="ansrow"><span class="lp">D</span><div style="display:flex;gap:6px"><input id="qgD" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autocorrect="off" autocapitalize="off" spellcheck="false" value="Madrid"><button type="button" id="qgD_btn" onclick="openImagePicker('qgD')" style="display:none;flex:none;padding:0 11px;border:1px solid rgba(46,196,182,.4);background:rgba(46,196,182,.14);border-radius:9px;cursor:pointer;color:#2ec4b6" title="Add from gallery">📷</button></div></div>
+        <div class="hint" id="qgAnsHint" style="display:none">პასუხების ველებში სურათის URL-ები (ერთი ორიენტაცია)</div>
+        <div class="row2">
+          <div class="fld"><label>Correct answer</label><select id="qgCorrect"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+          <div class="fld"><label>Timer (sec)</label><input id="qgTime" type="number" value="20" min="3" max="120"></div>
+        </div>
+        <button class="playbtn" onclick="qgPlay()">▶ Play (auto)</button>
+        <div style="display:flex;gap:9px;margin-top:9px">
+          <button onclick="qgReplay()" style="flex:1;font-family:var(--qdisp);font-weight:500;font-size:.9rem;color:var(--qsoft);background:var(--qbg3);border:1px solid var(--qbd);border-radius:11px;padding:11px;cursor:pointer">⟳ Replay</button>
+          <button onclick="qgClear()" style="flex:1;font-family:var(--qdisp);font-weight:500;font-size:.9rem;color:var(--qsoft);background:var(--qbg3);border:1px solid var(--qbd);border-radius:11px;padding:11px;cursor:pointer">🗑 Clear</button>
+        </div>
+      </div>
+      <div class="qg-stage" id="qgStage">
+        <div class="phone"><div id="qgCard"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ IMAGE PICKER ============ -->
+<div class="gate" id="imagePicker" style="display:none;background:rgba(8,12,11,.9);backdrop-filter:blur(8px);z-index:100000">
+  <div class="card" style="width:100%;max-width:560px;margin:0;max-height:85vh;overflow:auto">
+    <div class="card-title">📷 Select image <span style="cursor:pointer;float:right" onclick="closeImagePicker()">✕</span></div>
+    <div id="pickerMsg" class="msg" style="margin:6px 0"></div>
+    <div id="pickerGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px"></div>
   </div>
 </div>
 
@@ -726,26 +925,33 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       <label class="field-label">Task Type</label>
       <select class="field-select" id="taskType" onchange="onTaskTypeChange()">
         <option value="quiz">Quiz</option>
-        <option value="video">Video Ad</option>
-        <option value="website">Website Visit</option>
+        <option value="image_quiz">Image Quiz (image + 4 text)</option>
+        <option value="4image_quiz">4 Image Quiz (text + 4 images)</option>
+        <option value="video" id="ttVideo">Video Ad</option>
+        <option value="website" id="ttWebsite">Website Visit</option>
       </select>
     </div>
     <div class="field">
       <label class="field-label">Title</label>
-      <input class="field-input" id="taskTitle" placeholder="e.g. Quiz 1" autocomplete="off">
+      <input class="field-input" id="taskTitle" placeholder="e.g. Quiz 1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     </div>
     <div id="quizFields">
+      <div class="field" id="qImageField" style="display:none">
+        <label class="field-label">Question Image URL</label>
+        <div style="display:flex;gap:6px"><input class="field-input" id="qImage" placeholder="https://.../image.jpg" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" onclick="openImagePicker('qImage')" style="flex:none;padding:0 12px;font-size:1.05rem;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div>
+        <div style="font-size:.66rem;color:var(--muted);margin-top:4px">ერთი სურათი კითხვისთვის (ფაილის სახელი პასუხს ნუ ამხელს)</div>
+      </div>
       <div class="field">
-        <label class="field-label">Question</label>
-        <input class="field-input" id="qText" placeholder="What is...?" autocomplete="off">
+        <label class="field-label" id="qTextLabel">Question</label>
+        <input class="field-input" id="qText" placeholder="What is...?" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       </div>
       <div class="field-row">
-        <div class="field"><label class="field-label">Answer A</label><input class="field-input" id="qA" autocomplete="off"></div>
-        <div class="field"><label class="field-label">Answer B</label><input class="field-input" id="qB" autocomplete="off"></div>
+        <div class="field"><label class="field-label" id="qLabelA">Answer A</label><div style="display:flex;gap:6px"><input class="field-input" id="qA" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qA_btn" onclick="openImagePicker('qA')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
+        <div class="field"><label class="field-label" id="qLabelB">Answer B</label><div style="display:flex;gap:6px"><input class="field-input" id="qB" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qB_btn" onclick="openImagePicker('qB')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label class="field-label">Answer C</label><input class="field-input" id="qC" autocomplete="off"></div>
-        <div class="field"><label class="field-label">Answer D</label><input class="field-input" id="qD" autocomplete="off"></div>
+        <div class="field"><label class="field-label" id="qLabelC">Answer C</label><div style="display:flex;gap:6px"><input class="field-input" id="qC" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qC_btn" onclick="openImagePicker('qC')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
+        <div class="field"><label class="field-label" id="qLabelD">Answer D</label><div style="display:flex;gap:6px"><input class="field-input" id="qD" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" id="qD_btn" onclick="openImagePicker('qD')" style="display:none;flex:none;padding:0 11px;border:1px solid var(--border2);background:var(--teal3);border-radius:9px;cursor:pointer;color:var(--teal)" title="Add from gallery">📷</button></div></div>
       </div>
       <div class="field">
         <label class="field-label">Correct Answer</label>
@@ -755,7 +961,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div id="urlField" style="display:none">
       <div class="field">
         <label class="field-label">URL</label>
-        <input class="field-input" id="taskUrl" placeholder="https://..." autocomplete="off">
+        <input class="field-input" id="taskUrl" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       </div>
     </div>
     <button class="btn btn-primary" onclick="saveTask()" style="width:100%">Add Task</button>
@@ -780,6 +986,25 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">Read-only preview. Use the buttons in the list to change admin or ban status.</div>
     <div id="upBody"></div>
     <button class="btn btn-ghost" onclick="closeUserProfile()" style="width:100%;margin-top:16px">Close</button>
+  </div>
+</div>
+
+<!-- Change round points (admin only) -->
+<div class="gate" id="adjustPtsModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
+  <div class="card" style="width:100%;max-width:420px;margin:0;max-height:90vh;overflow-y:auto">
+    <div class="card-title">Change round points <span style="cursor:pointer" onclick="closeAdjustPoints()">✕</span></div>
+    <div id="apWho" style="font-size:.82rem;color:var(--text);margin-bottom:10px"></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">Adjusts this round's points only (🏁). Resets at 00:00 UTC like normal play. Championship points are not touched.</div>
+    <div style="margin-bottom:12px">
+      <label class="field-label">Points to add or subtract</label>
+      <input class="field-input" id="apAmount" type="number" step="1" placeholder="e.g. 50 or -50" autocomplete="off">
+      <div style="font-size:.68rem;color:var(--muted);margin-top:5px">Positive adds, negative subtracts. Example: <b>50</b> or <b>-50</b>.</div>
+    </div>
+    <div class="msg" id="apMsg"></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn btn-ghost" onclick="closeAdjustPoints()" style="flex:1">Cancel</button>
+      <button class="btn btn-primary" id="apApply" onclick="applyAdjustPoints()" style="flex:1">Apply</button>
+    </div>
   </div>
 </div>
 
@@ -833,6 +1058,7 @@ async function checkAdmin(user){
   updateBoxPreview();
   loadBoxes();
   loadSettings();
+  bgLoadFromStorage();
 }
 
 // ---- SETTINGS ----
@@ -908,6 +1134,192 @@ function nav(section, el){
   if(section==='users') loadUsers();
   if(section==='ads'){ loadAds(); loadInterstitial(); }
   if(section==='emailforms'){ wfRender(); cfRender(); }
+  if(section==='gallery') loadGallery();
+  if(section==='qgen') qgClear();
+}
+
+// ==================== IMAGE PICKER (shared: task-modal + generator) ====================
+let imagePickerTarget = null;
+async function openImagePicker(targetId){
+  imagePickerTarget = targetId;
+  document.getElementById('imagePicker').style.display = 'flex';
+  const grid = document.getElementById('pickerGrid');
+  grid.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  const { data, error } = await db.storage.from(GALLERY_BUCKET).list('', { limit:300, sortBy:{ column:'created_at', order:'desc' } });
+  if(error){ grid.innerHTML = '<div style="color:var(--red)">'+escapeHtml(error.message)+'</div>'; return; }
+  const files = (data||[]).filter(f=>f.name && !f.name.startsWith('.'));
+  if(!files.length){ grid.innerHTML = '<div style="color:var(--muted)">გალერეა ცარიელია. ჯერ ატვირთე Photo Gallery-ში.</div>'; return; }
+  grid.innerHTML = files.map(f=>{
+    const url = db.storage.from(GALLERY_BUCKET).getPublicUrl(f.name).data.publicUrl;
+    return '<img src="'+url+'" data-url="'+url+'" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor=\'var(--teal)\'" onmouseout="this.style.borderColor=\'transparent\'">';
+  }).join('');
+  grid.querySelectorAll('img').forEach(im=>{ im.onclick = ()=>pickImage(im.dataset.url); });
+}
+function pickImage(url){
+  if(imagePickerTarget){ const el = document.getElementById(imagePickerTarget); if(el) el.value = url; }
+  closeImagePicker();
+}
+function closeImagePicker(){ document.getElementById('imagePicker').style.display='none'; imagePickerTarget=null; }
+
+// ==================== QUIZ GENERATOR (admin section) ====================
+let qgCfg=null, qgTimer=null, qgReturnTimer=null, qgTimeLeft=0, qgOrient='landscape', qgImgOk={};
+function qgClear(){
+  clearInterval(qgTimer); clearTimeout(qgReturnTimer); qgCfg=null;
+  document.getElementById('qgType').value='text';
+  document.getElementById('qgLabel').value='Quiz 1';
+  document.getElementById('qgQImg').value='';
+  document.getElementById('qgQ').value='';
+  ['A','B','C','D'].forEach(L=>document.getElementById('qg'+L).value='');
+  document.getElementById('qgCorrect').value='A';
+  document.getElementById('qgTime').value='20';
+  qgOnType();
+  document.getElementById('qgStage').classList.remove('on');
+  document.getElementById('qgSetup').style.display='block';
+  document.body.classList.remove('qgen-clean');
+}
+// setup-ში დაბრუნება პარამეტრების შენარჩუნებით (ტაიმერის მერე / Esc)
+function qgFullscreen(on){
+  try{
+    if(on){ const el=document.documentElement; const r=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen; if(r) r.call(el); }
+    else { if(document.fullscreenElement||document.webkitFullscreenElement){ const x=document.exitFullscreen||document.webkitExitFullscreen; if(x) x.call(document); } }
+  }catch(_){}
+}
+function qgToSetup(){
+  clearInterval(qgTimer); clearTimeout(qgReturnTimer);
+  document.body.classList.remove('qgen-clean');
+  document.getElementById('qgStage').classList.remove('on');
+  document.getElementById('qgSetup').style.display='block';
+  qgFullscreen(false);
+}
+function qgOnType(){
+  const t=document.getElementById('qgType').value;
+  document.getElementById('qgFQImg').style.display=(t==='imgq')?'block':'none';
+  const imga=(t==='imga');
+  document.getElementById('qgAnsHint').style.display=imga?'block':'none';
+  ['A','B','C','D'].forEach(L=>{ const i=document.getElementById('qg'+L); i.placeholder=imga?('https://.../'+L.toLowerCase()+'.jpg'):''; const b=document.getElementById('qg'+L+'_btn'); if(b) b.style.display=imga?'block':'none'; });
+  document.getElementById('qgLQ').textContent=(t==='imgq')?'Question (optional)':'Question';
+}
+function qgPreload(urls){ return Promise.all((urls||[]).filter(Boolean).map(u=>new Promise(res=>{ const im=new Image(); im.onload=()=>res({ok:true,w:im.naturalWidth,h:im.naturalHeight,url:u}); im.onerror=()=>res({ok:false,url:u}); im.src=u; }))); }
+async function qgPlay(){
+  qgCfg={ type:document.getElementById('qgType').value, label:document.getElementById('qgLabel').value||'Quiz',
+    qImg:document.getElementById('qgQImg').value.trim(), q:document.getElementById('qgQ').value||'',
+    a:document.getElementById('qgA').value||'',b:document.getElementById('qgB').value||'',c:document.getElementById('qgC').value||'',d:document.getElementById('qgD').value||'',
+    correct:document.getElementById('qgCorrect').value, time:Math.max(3,parseInt(document.getElementById('qgTime').value)||20) };
+  document.getElementById('qgSetup').style.display='none';
+  document.getElementById('qgStage').classList.add('on');
+  document.body.classList.add('qgen-clean');
+  qgFullscreen(true);
+  await qgPrep(); qgRender(); qgStart();
+}
+async function qgPrep(){ qgOrient='landscape'; qgImgOk={}; const L=['A','B','C','D'];
+  if(qgCfg.type==='imga'){ const r=await qgPreload([qgCfg.a,qgCfg.b,qgCfg.c,qgCfg.d]); r.forEach((x,i)=>qgImgOk[L[i]]=!!x.ok); const f=r.find(x=>x.ok&&x.w&&x.h); if(f&&f.h>f.w) qgOrient='portrait'; }
+  else if(qgCfg.type==='imgq'&&qgCfg.qImg){ const r=await qgPreload([qgCfg.qImg]); if(r[0]&&r[0].ok&&r[0].h>r[0].w) qgOrient='portrait'; } }
+async function qgReplay(){
+  if(!qgCfg) return;
+  document.getElementById('qgSetup').style.display='none';
+  document.getElementById('qgStage').classList.add('on');
+  document.body.classList.add('qgen-clean');
+  qgFullscreen(true);
+  await qgPrep(); qgRender(); qgStart();
+}
+function qgRender(){
+  const L=['A','B','C','D'], K={A:'a',B:'b',C:'c',D:'d'};
+  let ans;
+  if(qgCfg.type==='imga'){
+    ans='<div class="answers img-grid '+(qgOrient==='portrait'?'portrait':'')+'">'+L.map(l=>{ const url=qgCfg[K[l]]; const inner=qgImgOk[l]?('<img src="'+escapeHtml(url)+'">'):('<div class="imgfallback">'+l+'</div>'); return '<button class="answer" data-letter="'+l+'"><span class="answer-letter">'+l+'</span>'+inner+'<span class="answer-mark">\u2713</span></button>'; }).join('')+'</div>';
+  } else {
+    ans='<div class="answers">'+L.map(l=>'<button class="answer" data-letter="'+l+'"><span class="answer-letter">'+l+'</span><span class="answer-text">'+escapeHtml(qgCfg[K[l]])+'</span><span class="answer-mark">\u2713</span></button>').join('')+'</div>';
+  }
+  const qImg=(qgCfg.type==='imgq'&&qgCfg.qImg)?('<img class="q-image '+(qgOrient==='portrait'?'portrait':'')+'" src="'+escapeHtml(qgCfg.qImg)+'">'):'';
+  const qText=qgCfg.q?('<div class="q-text">'+escapeHtml(qgCfg.q)+'</div>'):'';
+  document.getElementById('qgCard').innerHTML=
+    '<div class="timer-section"><div class="timer-top"><span class="timer-label">\u23f1\ufe0f Time to answer</span><span class="timer-value" id="qgTv">'+qgCfg.time+'s</span></div><div class="timer-track"><div class="timer-fill" id="qgTf"></div></div></div>'+
+    '<div class="question-section"><div class="q-number">'+escapeHtml(qgCfg.label)+'</div>'+qImg+qText+'</div>'+ans;
+}
+function qgStart(){
+  clearInterval(qgTimer); qgTimeLeft=qgCfg.time;
+  const tv=document.getElementById('qgTv'), tf=document.getElementById('qgTf'); tf.style.width='100%';
+  qgTimer=setInterval(()=>{ qgTimeLeft--; if(!tv||!tf) return;
+    tv.textContent=qgTimeLeft+'s'; tf.style.width=(qgTimeLeft/qgCfg.time*100)+'%';
+    const warn=qgTimeLeft<=10,danger=qgTimeLeft<=5;
+    tv.className='timer-value'+(danger?' danger':warn?' warn':''); tf.className='timer-fill'+(danger?' danger':warn?' warn':'');
+    if(qgTimeLeft<=0){ clearInterval(qgTimer); qgReveal(); } },1000);
+}
+function qgReveal(){
+  document.querySelectorAll('#qgCard .answer').forEach(a=>{ if(a.getAttribute('data-letter')===qgCfg.correct) a.classList.add('correct'); else a.classList.add('faded'); });
+  clearTimeout(qgReturnTimer); qgReturnTimer=setTimeout(qgToSetup, 3000);
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.body.classList.contains('qgen-clean')) qgToSetup(); });
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev, ()=>{
+  if(!(document.fullscreenElement||document.webkitFullscreenElement) && document.body.classList.contains('qgen-clean')) qgToSetup();
+}));
+
+// ==================== PHOTO GALLERY (Supabase Storage) ====================
+const GALLERY_BUCKET = 'quiz-images';
+let galleryUrls = {};
+
+async function loadGallery(){
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  const { data, error } = await db.storage.from(GALLERY_BUCKET).list('', { limit: 300, sortBy:{ column:'created_at', order:'desc' } });
+  if(error){ grid.innerHTML = '<div style="color:var(--red)">'+escapeHtml(error.message)+'</div>'; return; }
+  const files = (data||[]).filter(f=>f.name && !f.name.startsWith('.'));
+  if(!files.length){ grid.innerHTML = '<div style="color:var(--muted)">ჯერ სურათი არ არის. ატვირთე ზემოთ ⬆️</div>'; return; }
+  galleryUrls = {};
+  grid.innerHTML = files.map(f=>{
+    const url = db.storage.from(GALLERY_BUCKET).getPublicUrl(f.name).data.publicUrl;
+    galleryUrls[f.name] = url;
+    return '<div style="position:relative;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg3)">'
+      + '<img src="'+url+'" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;display:block">'
+      + '<div style="display:flex;gap:4px;padding:6px">'
+      + '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="galleryCopy(\''+f.name+'\')">📋 Copy URL</button>'
+      + '<button class="btn btn-danger btn-sm" onclick="galleryDelete(\''+f.name+'\')">✕</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+async function galleryUpload(files){
+  if(!files || !files.length) return;
+  let ok=0, skip=0;
+  for(const file of files){
+    if(!file.type || !file.type.startsWith('image/')){ skip++; continue; }
+    if(file.size > 2*1024*1024){ showMsg('galleryMsg', file.name+' — 2MB-ზე დიდია, გამოტოვდა.', 'err'); skip++; continue; }
+    const ext = ((file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')) || 'jpg';
+    const path = 'q_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3) + '.' + ext;
+    const { error } = await db.storage.from(GALLERY_BUCKET).upload(path, file, { cacheControl:'3600', upsert:false });
+    if(error){ showMsg('galleryMsg', error.message, 'err'); } else { ok++; }
+  }
+  document.getElementById('galleryFile').value = '';
+  if(ok) showMsg('galleryMsg', 'ატვირთულია '+ok+' სურათი ✓'+(skip?(' · გამოტოვდა '+skip):''), 'ok');
+  loadGallery();
+}
+
+async function galleryDelete(name){
+  if(!confirm('წავშალო ეს სურათი?\nთუ ქუიზში გამოყენებულია, იქ ბმული გატყდება.')) return;
+  const { error } = await db.storage.from(GALLERY_BUCKET).remove([name]);
+  if(error){ showMsg('galleryMsg', error.message, 'err'); return; }
+  loadGallery();
+}
+
+async function galleryDeleteAll(){
+  if(!confirm('ყველა სურათი წაიშალოს? ეს შეუქცევადია.')) return;
+  const { data } = await db.storage.from(GALLERY_BUCKET).list('', { limit: 1000 });
+  const names = (data||[]).map(f=>f.name).filter(n=>n && !n.startsWith('.'));
+  if(names.length){
+    const { error } = await db.storage.from(GALLERY_BUCKET).remove(names);
+    if(error){ showMsg('galleryMsg', error.message, 'err'); return; }
+  }
+  showMsg('galleryMsg', 'ყველა სურათი წაიშალა.', 'ok');
+  loadGallery();
+}
+
+function galleryCopy(name){
+  const url = galleryUrls[name];
+  if(!url) return;
+  navigator.clipboard.writeText(url).then(
+    ()=>showMsg('galleryMsg','URL დაკოპირდა ✓','ok'),
+    ()=>{ prompt('დააკოპირე URL:', url); }
+  );
 }
 
 // ==================== AD MANAGER ====================
@@ -1179,13 +1591,14 @@ async function loadPayouts(){
 
   let html = adminBadge + '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">'
     + '<div class="card-title" style="margin:0">Final Results · '+withPrize+' prize winners</div>'
-    + '<div style="display:flex;align-items:center;gap:10px">'
+    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
     + '<div id="paidFilterBox" style="display:flex;gap:4px">'
     +   '<button class="btn btn-sm '+(_paidFilter==='all'?'btn-primary':'btn-ghost')+'" onclick="setPaidFilter(\'all\')">All</button>'
     +   '<button class="btn btn-sm '+(_paidFilter==='paid'?'btn-primary':'btn-ghost')+'" onclick="setPaidFilter(\'paid\')">Paid</button>'
     +   '<button class="btn btn-sm '+(_paidFilter==='unpaid'?'btn-primary':'btn-ghost')+'" onclick="setPaidFilter(\'unpaid\')">Unpaid</button>'
     + '</div>'
     + '<div style="font-size:.74rem;color:var(--muted)">'+totalPaid+'/'+withPrize+' paid</div>'
+    + '<button class="btn btn-ghost btn-sm" onclick="downloadChampionshipExcel(\''+champId+'\')" title="Download full standings as Excel">⬇ Excel File</button>'
     + '</div></div>';
 
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem">'
@@ -1241,6 +1654,82 @@ async function markPaid(payoutId, paid){
   if(error){ showMsg('payoutMsg', error.message, 'err'); return; }
   showMsg('payoutMsg', paid?'Marked as paid. ✅':'Marked as unpaid.','ok');
   loadPayouts();
+}
+
+// ==================== CHAMPIONSHIP EXCEL DOWNLOAD ====================
+async function downloadChampionshipExcel(champId){
+  if(!champId){ showMsg('payoutMsg','Select a championship first.','err'); return; }
+  try{
+    showMsg('payoutMsg','Building Excel…','ok');
+    await bgLoadSheetJS();
+
+    // championship meta
+    const { data: champ, error: cErr } = await db.from('championships')
+      .select('number, start_date, end_date').eq('id', champId).maybeSingle();
+    if(cErr) throw cErr;
+    if(!champ) throw new Error('Championship not found.');
+    const champLabel = String((parseInt(champ.number,10)||0) + 173).padStart(5,'0');
+
+    // all payouts (with & without prize)
+    const { data: payouts, error: pErr } = await db.from('championship_payouts')
+      .select('*').eq('championship_id', champId).order('place');
+    if(pErr) throw pErr;
+    if(!payouts || payouts.length===0){ showMsg('payoutMsg','No results to export.','err'); return; }
+
+    // round points sum for this championship (sum race_points per user across rounds)
+    // championship_id filter goes through rounds table
+    const { data: rounds } = await db.from('rounds').select('id').eq('championship_id', champId);
+    const roundIds = (rounds||[]).map(r=>r.id);
+    let roundPtsByUser = {};
+    if(roundIds.length){
+      const { data: rr } = await db.from('round_results')
+        .select('user_id, race_points').in('round_id', roundIds);
+      (rr||[]).forEach(r=>{
+        if(!r || !r.user_id) return;
+        roundPtsByUser[r.user_id] = (roundPtsByUser[r.user_id]||0) + (Number(r.race_points)||0);
+      });
+    }
+
+    // profiles for usernames, emails, ip_country, display_id
+    const { data: allProfs } = await db.rpc('admin_get_users');
+    const pById = {};
+    (allProfs||[]).forEach(p=>{ pById[p.id]=p; });
+
+    // build AOA
+    const stamp = new Date().toISOString().replace('T',' ').slice(0,16) + ' UTC';
+    const aoa = [];
+    aoa.push(['Championship '+champLabel]);
+    aoa.push(['Period', (champ.start_date||'—')+' → '+(champ.end_date||'—')]);
+    aoa.push(['Generated', stamp]);
+    aoa.push([]);
+    aoa.push(['Place','Player','User ID','Email','IP Country','Champ pts','Round pts','Prize','Status']);
+
+    for(const p of payouts){
+      const prof = pById[p.user_id] || {};
+      const prizeCell = p.prize_amount ? Number(p.prize_amount) : '';
+      const statusCell = p.prize_amount ? (p.paid ? 'Paid' : 'Unpaid') : '';
+      aoa.push([
+        p.place,
+        prof.username || '',
+        prof.display_id ? ('#'+prof.display_id) : '',
+        prof.email || '',
+        prof.ip_country || '',
+        Number(p.championship_points)||0,
+        Number(roundPtsByUser[p.user_id])||0,
+        prizeCell,
+        statusCell
+      ]);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:7},{wch:22},{wch:10},{wch:28},{wch:12},{wch:11},{wch:11},{wch:10},{wch:9}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Results');
+    XLSX.writeFile(wb, 'Championship-'+champLabel+'.xlsx');
+    showMsg('payoutMsg','Excel downloaded. ✅','ok');
+  }catch(e){
+    showMsg('payoutMsg', (e && e.message) || 'Could not build Excel.', 'err');
+  }
 }
 
 // ==================== CHAMPIONSHIP ====================
@@ -1743,20 +2232,70 @@ function renderUsers(){
 
   let html = '';
   for(const u of filtered){
-    const badges = [];
-    if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
-    if(u.is_banned) badges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
-    if(usPersonSet.has(u.id)) badges.push('<span class="badge" style="background:rgba(46,196,182,.14);color:var(--teal,#2ec4b6)">🇺🇸 US</span>');
-    const badgeHtml = badges.length ? ' '+badges.join(' ') : '';
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+escapeHtml(u.username||'(no name)')+' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span>'+badgeHtml+'</div><div class="li-sub">'+escapeHtml(u.email||'—')+' · 🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+' · 🍪 '+cc+'</div></div><div class="li-actions">'
-      + '<button class="btn btn-ghost btn-sm" onclick="openUserProfile(\''+u.id+'\')">View</button>'
-      + '<button class="btn btn-ghost btn-sm" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
-      + '<button class="btn btn-danger btn-sm" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
+    // US დროშა და admin/banned — თითო ცალკე ველი (მობილურზე ცალკე ხაზზე).
+    const isUS = usPersonSet.has(u.id);
+    const flagField = isUS
+      ? '<span class="uf uf-flag"><span class="uf-sep"> · </span><span class="badge" style="background:rgba(46,196,182,.14);color:var(--teal,#2ec4b6)">🇺🇸 US</span></span>'
+      : '';
+    const statusBadges = [];
+    if(u.is_admin) statusBadges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
+    if(u.is_banned) statusBadges.push('<span class="badge" style="background:rgba(230,57,70,.15);color:#ff6b78">banned</span>');
+    const statusField = statusBadges.length
+      ? '<span class="uf uf-status"><span class="uf-sep"> · </span>'+statusBadges.join(' ')+'</span>'
+      : '';
+
+    html += '<div class="list-item user-item"><div class="li-info">'
+      + '<div class="li-title">'
+      +   '<span class="uf uf-name">'+escapeHtml(u.username||'(no name)')+'</span>'
+      +   '<span class="uf uf-id"><span class="uf-sep"> · </span><span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6);font-weight:600">#'+escapeHtml(u.display_id||'—')+'</span></span>'
+      + '</div>'
+      + '<div class="li-sub" style="color:#ffffff">'
+      +   flagField
+      +   statusField
+      +   '<span class="uf uf-email"><span class="uf-sep"> · </span>'+escapeHtml(u.email||'—')+'</span>'
+      +   '<span class="uf uf-points"><span class="uf-sep"> · </span>🏆 '+(u.championship_points||0)+' · 🏁 '+(u.total_points||0)+' · ✅ '+(u.correct_answers||0)+'</span>'
+      +   '<span class="uf uf-cookie"><span class="uf-sep"> · </span>🍪 '+cc+'</span>'
+      + '</div>'
+      + '</div><div class="li-actions user-actions">'
+      + '<button class="btn btn-ghost btn-sm ua-view" onclick="openUserProfile(\''+u.id+'\')">View</button>'
+      + '<button class="btn btn-ghost btn-sm ua-pts" onclick="openAdjustPoints(\''+u.id+'\')">Change pts</button>'
+      + '<button class="btn btn-danger btn-sm ua-ban" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
+      + '<button class="btn btn-ghost btn-sm ua-admin" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '</div></div>';
   }
   list.innerHTML = html;
+}
+
+// ==================== CHANGE ROUND POINTS (admin) ====================
+let apTargetId = null;
+function openAdjustPoints(userId){
+  const u = (allUsers||[]).find(x=>x.id===userId);
+  if(!u){ showMsg('userMsg','User not found. Try reloading the list.','err'); return; }
+  apTargetId = userId;
+  document.getElementById('apWho').innerHTML = escapeHtml(u.username||'(no name)')
+    + ' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6)">#'+escapeHtml(u.display_id||'—')+'</span>'
+    + ' <span style="color:var(--muted)">· now 🏁 '+(u.total_points||0)+'</span>';
+  document.getElementById('apAmount').value = '';
+  const msg = document.getElementById('apMsg'); msg.style.display='none'; msg.textContent=''; msg.className='msg';
+  document.getElementById('adjustPtsModal').style.display = 'flex';
+  setTimeout(function(){ try{ document.getElementById('apAmount').focus(); }catch(e){} }, 40);
+}
+function closeAdjustPoints(){ document.getElementById('adjustPtsModal').style.display = 'none'; apTargetId = null; }
+async function applyAdjustPoints(){
+  if(!apTargetId) return;
+  const delta = parseInt(document.getElementById('apAmount').value, 10);
+  const apErr = function(t){ const m=document.getElementById('apMsg'); m.textContent=t; m.className='msg show err'; };
+  if(!Number.isInteger(delta) || delta === 0){ apErr('Enter a whole number, e.g. 50 or -50.'); return; }
+  const btn = document.getElementById('apApply');
+  btn.disabled = true; btn.textContent = 'Applying…';
+  const { data, error } = await db.rpc('admin_adjust_round_points', { p_target_id: apTargetId, p_delta: delta });
+  btn.disabled = false; btn.textContent = 'Apply';
+  if(error){ apErr(error.message); return; }
+  closeAdjustPoints();
+  showMsg('userMsg', 'Round points updated ('+(delta>0?'+':'')+delta+'). New total: '+data+'.', 'ok');
+  loadUsers();
 }
 
 async function toggleAdmin(userId, isCurrentlyAdmin){
@@ -1874,7 +2413,7 @@ function renderCountryStats(){
   for(const r of rows){
     const isUS = r.code === 'US';
     const label = isUS
-      ? '<span style="color:var(--red);font-weight:700">🇺🇸 United States</span>'
+      ? '<span style="color:#ffffff;font-weight:700">🇺🇸 United States</span>'
       : escapeHtml(r.name);
     html += '<tr>'
       + '<td style="padding:8px 6px;border-bottom:1px solid var(--border)">'+label+'</td>'
@@ -1937,6 +2476,281 @@ async function createBox(){
   loadBoxes();
 }
 
+// ==================== BULK CREATE FROM EXCEL ====================
+let bgQuestions = null;
+
+function bgLoadSheetJS(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX) return resolve();
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=resolve; s.onerror=()=>reject(new Error('Excel-ბიბლიოთეკა ვერ ჩაიტვირთა (ინტერნეტი?)'));
+    document.head.appendChild(s);
+  });
+}
+
+const QBANK_BUCKET='question-bank', QBANK_FILE='active.xlsx';
+
+// საერთო პარსერი — ArrayBuffer → ვალიდური კითხვების მასივი
+function bgParseBuffer(buf){
+  const wb=XLSX.read(buf,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+  const norm=k=>String(k).trim().toLowerCase().replace(/\s+/g,'_');
+  return (rows||[]).map(r=>{
+    const o={}; for(const k in r) o[norm(k)]=r[k];
+    const correct=String(o.correct||o.correct_answer||'').trim().toUpperCase();
+    return {
+      id:String(o.id||o.q_id||'').trim(),
+      question:String(o.question||o.q||'').trim(),
+      a:String(o.answer_a||o.a||'').trim(),
+      b:String(o.answer_b||o.b||'').trim(),
+      c:String(o.answer_c||o.c||'').trim(),
+      d:String(o.answer_d||o.d||'').trim(),
+      correct:correct
+    };
+  }).filter(q=>q.question&&q.a&&q.b&&q.c&&q.d&&['A','B','C','D'].includes(q.correct));
+}
+
+function bgRenderBank(hasFile,count){
+  const st=document.getElementById('bgBankStatus'), rm=document.getElementById('bgRemoveBtn');
+  if(!st) return;
+  if(hasFile){ st.innerHTML='💾 შენახული ფაილი აქტიურია — <b>'+count+'</b> კითხვა'; if(rm) rm.style.display='inline-block'; }
+  else { st.innerHTML='<span style="color:var(--muted)">💾 შენახული ფაილი არ არის</span>'; if(rm) rm.style.display='none'; }
+}
+
+// ერთჯერადი ფაილი (არ ინახება Storage-ში)
+async function bgFileChosen(file){
+  if(!file) return;
+  const info=document.getElementById('bgFileInfo');
+  info.textContent='Loading…';
+  try{
+    await bgLoadSheetJS();
+    const buf=await file.arrayBuffer();
+    bgQuestions=bgParseBuffer(buf);
+    if(!bgQuestions.length){ info.textContent=''; showMsg('bgMsg','ვერ ვიპოვე ვალიდური კითხვა. სვეტები: question, answer_a..d, correct.','err'); return; }
+    info.innerHTML='📄 <b>'+file.name+'</b> (ერთჯერადი) — კითხვები: <b>'+bgQuestions.length+'</b>';
+    document.getElementById('bgTo').value=Math.min(parseInt(document.getElementById('bgTo').value)||50, bgQuestions.length);
+    document.getElementById('bgMsg').className='msg';
+  }catch(e){ info.textContent=''; bgQuestions=null; showMsg('bgMsg', e.message||String(e), 'err'); }
+}
+
+// Storage-ში ატვირთვა/შეცვლა (მუდმივი — active.xlsx)
+async function bgUploadToStorage(file){
+  if(!file) return;
+  const info=document.getElementById('bgFileInfo');
+  info.textContent='ატვირთვა…';
+  try{
+    await bgLoadSheetJS();
+    const buf=await file.arrayBuffer();
+    const parsed=bgParseBuffer(buf);
+    if(!parsed.length){ info.textContent=''; showMsg('bgMsg','ვერ ვიპოვე ვალიდური კითხვა.','err'); return; }
+    const { error } = await db.storage.from(QBANK_BUCKET).upload(QBANK_FILE, file, { upsert:true, contentType:file.type||'application/octet-stream' });
+    if(error) throw error;
+    bgQuestions=parsed; info.textContent='';
+    bgRenderBank(true, parsed.length);
+    document.getElementById('bgTo').value=Math.min(parseInt(document.getElementById('bgTo').value)||50, parsed.length);
+    showMsg('bgMsg','✅ ფაილი შენახულია სისტემაში — ტელეფონიდანაც ხელმისაწვდომი.','ok');
+  }catch(e){ info.textContent=''; showMsg('bgMsg', e.message||String(e), 'err'); }
+}
+
+// Storage-იდან ავტომატური ჩატვირთვა (გახსნისას)
+async function bgLoadFromStorage(){
+  if(bgQuestions!==null) return; // უკვე ჩატვირთულია
+  if(!document.getElementById('bgBankStatus')) return;
+  try{
+    const { data, error } = await db.storage.from(QBANK_BUCKET).download(QBANK_FILE);
+    if(error || !data){ bgRenderBank(false); return; }
+    await bgLoadSheetJS();
+    const buf=await data.arrayBuffer();
+    const parsed=bgParseBuffer(buf);
+    bgQuestions=parsed;
+    bgRenderBank(true, parsed.length);
+    const toEl=document.getElementById('bgTo');
+    if(toEl && (!toEl.value || parseInt(toEl.value)>parsed.length)) toEl.value=Math.min(50,parsed.length);
+  }catch(e){ bgRenderBank(false); }
+}
+
+// Storage-იდან წაშლა
+async function bgRemoveStorage(){
+  if(!confirm('სისტემიდან წავშალო შენახული ფაილი?')) return;
+  try{ await db.storage.from(QBANK_BUCKET).remove([QBANK_FILE]); }catch(e){}
+  bgQuestions=null; bgRenderBank(false);
+  document.getElementById('bgFileInfo').textContent='';
+  showMsg('bgMsg','ფაილი წაიშალა.','ok');
+}
+
+function bgDates(){
+  const s=document.getElementById('bgStart').value, e=document.getElementById('bgEnd').value;
+  const iv=Math.max(1,parseInt(document.getElementById('bgInterval').value)||1);
+  if(!s||!e) return [];
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const out=[]; let d=new Date(s+'T00:00:00'); const end=new Date(e+'T00:00:00'); let g=0;
+  while(d<=end && g++<2000){ out.push(fmt(d)); d.setDate(d.getDate()+iv); }
+  return out;
+}
+
+function bgPlan(){
+  const dates=bgDates();
+  const boxes=Math.max(1,parseInt(document.getElementById('bgBoxes').value)||1);
+  const qpb=Math.max(1,parseInt(document.getElementById('bgQPerBox').value)||1);
+  const from=Math.max(1,parseInt(document.getElementById('bgFrom').value)||1);
+  const to=Math.max(from,parseInt(document.getElementById('bgTo').value)||from);
+  const needed=dates.length*boxes*qpb;
+  const slice=bgQuestions?bgQuestions.slice(from-1,to):[];
+  const available=slice.length;
+  // #3: თუ არ ჰყოფნის — შევქმნათ რამდენიც არის (შეცდომის გარეშე). toCreate = min
+  const toCreate=Math.min(needed, available);
+  return {dates,boxes,qpb,from,to,needed,slice,available,toCreate};
+}
+
+async function bgPreviewRun(){
+  const p=document.getElementById('bgPreview');
+  if(!bgQuestions){ showMsg('bgMsg','ჯერ ატვირთე Excel.','err'); return; }
+  const pl=bgPlan();
+  if(!pl.dates.length){ showMsg('bgMsg','მიუთითე სწორი თარიღები (start ≤ end).','err'); return; }
+  // #1: შემოწმება — რომელიმე მოქმედ თარიღზე ხომ არ არსებობს უკვე ბოქси
+  const clash=await bgDateClash(pl.dates);
+  const enough=pl.available>=pl.needed;
+  p.style.display='block';
+  let html='📅 დღეები: <b>'+pl.dates.length+'</b> · ბოქსები სულ: <b>'+(pl.dates.length*pl.boxes)+'</b> · კითხვები საჭირო: <b>'+pl.needed+'</b><br>'
+    +'დიაპაზონი '+pl.from+'–'+pl.to+' → ხელმისაწვდომი: <b>'+pl.available+'</b>';
+  if(clash.length){
+    html+='<br><span style="color:var(--red)">⛔ ამ თარიღ(ებ)ზე უკვე არსებობს ბოქси: <b>'+clash.join(', ')+'</b> — შექმნა შეუძლებელია.</span>';
+    document.getElementById('bgCreateBtn').disabled=true;
+  } else {
+    if(!enough) html+='<br><span style="color:var(--gold)">⚠️ დიაპაზონში კითხვა არ ჰყოფნის — შეიქმნება რამდენიც არის ('+pl.toCreate+' კითხვა).</span>';
+    else html+=' ✅';
+    document.getElementById('bgCreateBtn').disabled=false;
+  }
+  // პირველი / ბოლო არჩეული კითხვა (ID + ტექსტი) — რანჯის გადასამოწმებლად
+  if(pl.slice.length){
+    const brief=q=>{ const t=q.question.length>60?q.question.slice(0,60)+'…':q.question; return (q.id?('<b>'+escapeHtml(q.id)+'</b> · '):'')+escapeHtml(t); };
+    const first=pl.slice[0], last=pl.slice[pl.slice.length-1];
+    html+='<div style="margin-top:8px;border-top:1px solid var(--border2);padding-top:8px;color:var(--soft)">'
+      +'🔹 პირველი (#'+pl.from+'): '+brief(first)+'<br>'
+      +'🔸 ბოლო (#'+(pl.from+pl.slice.length-1)+'): '+brief(last)+'</div>';
+  }
+  p.innerHTML=html;
+  document.getElementById('bgMsg').className='msg';
+}
+
+// #1: აბრუნებს თარიღებს, რომლებზეც უკვე არსებობს ბოქси
+async function bgDateClash(dates){
+  const { data } = await db.from('boxes').select('date').in('date', dates);
+  const taken=new Set((data||[]).map(r=>r.date));
+  return dates.filter(d=>taken.has(d));
+}
+
+// ── "Last Creation" — ბოლოს შექმნილი დიაპაზონის ჩვენება ──────────────
+// bgPreview ბლოკს ვიყენებთ საჩვენებლად (იგივე სტილი, ჩართვა-გამორთვა).
+function bgShowLastCreation(){
+  const box=document.getElementById('bgPreview');
+  let raw=null;
+  try{ raw=localStorage.getItem('ws_bg_last_creation'); }catch(_){}
+  if(!raw){
+    box.style.display='block';
+    box.innerHTML='🕘 ჯერ არაფერი შექმნილა ამ ბრაუზერიდან.';
+    return;
+  }
+  let d;
+  try{ d=JSON.parse(raw); }catch(_){ box.style.display='block'; box.innerHTML='🕘 ჩანაწერი დაზიანებულია.'; return; }
+  const when = d.at ? new Date(d.at).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const partial = (d.requestedTo!=null && d.to!=null && d.to < d.requestedTo);
+  box.style.display='block';
+  box.innerHTML =
+      '🕘 <b>ბოლო შექმნა</b><br>'
+    + '📊 კითხვები: <b style="color:var(--gold,#f5c842)">#'+d.from+' → #'+d.to+'</b> ('+d.questions+' ცალი)<br>'
+    + '📦 ბოქסები: <b>'+d.boxes+'</b>'
+    + ((d.start||d.end) ? ' · 📅 '+ (d.start||'?') + ((d.end&&d.end!==d.start)?(' → '+d.end):'') : '')
+    + '<br>➡️ <b style="color:var(--teal,#2ec4b6)">შემდეგი დაიწყე კითხვიდან #'+(d.to+1)+'</b>'
+    + (partial ? '<br>⚠️ მოთხოვნილი იყო #'+d.requestedFrom+' → #'+d.requestedTo+', მაგრამ ბანკს კითხვა არ ეყო.' : '')
+    + '<br><span style="color:var(--muted)">🕒 '+when+'</span>';
+}
+
+async function bgCreate(){
+  const pl=bgPlan();
+  if(!bgQuestions){ showMsg('bgMsg','ჯერ ატვირთე Excel.','err'); return; }
+  if(!pl.dates.length){ showMsg('bgMsg','მიუთითე სწორი თარიღები.','err'); return; }
+  // #1: თარიღის კონფლიქტი — თუ რომელიმე დღეზე უკვე არსებობს ბოქси, არ ვქმნით
+  const clash=await bgDateClash(pl.dates);
+  if(clash.length){ showMsg('bgMsg','⛔ ამ თარიღ(ებ)ზე უკვე არსებობს ბოქси: '+clash.join(', ')+'. მითითებული პარამეტრებით შექმნა შეუძლებელია.','err'); return; }
+  // #3: რამდენი კითხვაც არის, იმდენს ვქმნით (შეცდომის გარეშე)
+  const toCreate=pl.toCreate;
+  if(toCreate<1){ showMsg('bgMsg','დიაპაზონში კითხვა არ არის.','err'); return; }
+  const totalBoxes=pl.dates.length*pl.boxes;
+  const note = (toCreate<pl.needed) ? ('\n(კითხვა არ ჰყოფნის — შეიქმნება '+toCreate+' კითხვა; ბოლო ბოქსი შესაძლოა ნაკლები კითხვით, ხოლო დარჩენილი ბოქსები საერთოდ არ შეიქმნება)') : '';
+  if(!confirm('შეიქმნება '+totalBoxes+' ბოქси და '+toCreate+' კითხვა.'+note+'\nგავაგრძელო?')) return;
+
+  document.getElementById('bgCreateBtn').disabled=true;
+  const prog=document.getElementById('bgProgress'); prog.style.display='block';
+  const bar=document.getElementById('bgBar'), ptxt=document.getElementById('bgProgTxt');
+
+  const toInt=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:null;};
+  const { data: cfgRows } = await db.from('settings').select('key,value').in('key',['box_interval_minutes','bridge_unlock_correct','quiz_correct']);
+  const cfg={}; (cfgRows||[]).forEach(r=>cfg[r.key]=r.value);
+  const { data: intRow } = await db.from('interstitial_settings').select('*').eq('id',1).single();
+  const it=intRow||{};
+  const ad_config={ int_master:it.enabled===true, int_box_enabled:it.box_enabled===true, int_box_after:it.box_after||'', int_quiz_enabled:it.quiz_enabled===true, int_quiz_after:it.quiz_after||'' };
+  const points=(cfg.quiz_correct!=null)?cfg.quiz_correct:10;
+
+  let qi=0, boxDone=0, stop=false;
+  const plannedBoxesWithQ=Math.ceil(pl.toCreate/pl.qpb); // რამდენ ბოქსს ეყოფა კითხვა
+  try{
+    for(const date of pl.dates){
+      if(stop) break;
+      const { data: sameDay } = await db.from('boxes').select('id').eq('date',date);
+      let order=(sameDay?sameDay.length:0);
+      for(let b=0;b<pl.boxes;b++){
+        const remain=pl.slice.length - qi;
+        if(remain<=0){ stop=true; break; } // კითხვა გათავდა — ვჩერდებით, ცარიელ ბოქსს არ ვქმნით
+        const thisQ=Math.min(pl.qpb, remain);
+        order++;
+        const { data: newBox, error: bErr } = await db.from('boxes').insert({
+          name:'Box '+order, date, start_time:'00:00:00', end_time:'23:59:00',
+          sort_order:order, sequence_order:order,
+          interval_minutes:toInt(cfg.box_interval_minutes), unlock_correct:toInt(cfg.bridge_unlock_correct), ad_config
+        }).select().single();
+        if(bErr) throw bErr;
+        const taskRows=[];
+        for(let j=1;j<=thisQ;j++) taskRows.push({ box_id:newBox.id, type:'quiz', title:'Quiz '+j, points, url:null, sort_order:j });
+        const { data: newTasks, error: tErr } = await db.from('tasks').insert(taskRows).select();
+        if(tErr) throw tErr;
+        newTasks.sort((x,y)=>x.sort_order-y.sort_order);
+        const rpcs=newTasks.map((t,idx)=>{
+          const q=pl.slice[qi+idx];
+          return db.rpc('admin_upsert_question',{ p_task_id:t.id, p_question:q.question, p_a:q.a,p_b:q.b,p_c:q.c,p_d:q.d, p_correct:q.correct, p_question_image:null, p_answer_type:'text' });
+        });
+        for(let k=0;k<rpcs.length;k+=6){ await Promise.all(rpcs.slice(k,k+6)); }
+        qi+=thisQ; boxDone++;
+        const pct=Math.round(boxDone/plannedBoxesWithQ*100);
+        bar.style.width=Math.min(100,pct)+'%'; ptxt.textContent='ბოქси '+boxDone+'/'+plannedBoxesWithQ+' · '+qi+' კითხვა';
+      }
+    }
+    bar.style.width='100%';
+    // ── ბოლო შექმნის დამახსოვრება (localStorage) ──
+    // რეალურად შექმნილი კითხვები: pl.from-იდან qi ცალი (qi შეიძლება ნაკლები იყოს
+    // ვიდრე მოთხოვნილი დიაპაზონი, თუ ბანკს კითხვა არ ეყო).
+    try{
+      const _lastFrom = pl.from;
+      const _lastTo   = (qi>0) ? (pl.from + qi - 1) : pl.from;
+      localStorage.setItem('ws_bg_last_creation', JSON.stringify({
+        from: _lastFrom, to: _lastTo,
+        requestedFrom: pl.from, requestedTo: pl.to,
+        questions: qi, boxes: boxDone,
+        start: (pl.dates[0]||''), end: (pl.dates[pl.dates.length-1]||''),
+        at: new Date().toISOString()
+      }));
+    }catch(_){}
+    showMsg('bgMsg','✅ შეიქმნა '+boxDone+' ბოქси, '+qi+' კითხვა.','ok');
+    ptxt.textContent='დასრულდა ✅'; loadBoxes();
+  }catch(e){
+    showMsg('bgMsg','შეცდომა: '+(e.message||e),'err');
+    ptxt.textContent='შეჩერდა შეცდომაზე (ნაწილი შესაძლოა შეიქმნა).'; loadBoxes();
+  }
+  document.getElementById('bgCreateBtn').disabled=false;
+}
+
 // ---- BOX TABS (Today / Upcoming / History) ----
 let boxTab = 'today';
 function setBoxTab(tab){
@@ -1946,6 +2760,9 @@ function setBoxTab(tab){
   });
   // History-ის კონტროლები მხოლოდ History ჩანართზე
   document.getElementById('historyControls').style.display = (tab==='history') ? 'block' : 'none';
+  // Upcoming-ის კონტროლი მხოლოდ Upcoming ჩანართზე
+  const _uc = document.getElementById('upcomingControls');
+  if(_uc) _uc.style.display = (tab==='upcoming') ? 'block' : 'none';
   loadBoxes();
 }
 function clearHistoryDate(){
@@ -1982,6 +2799,15 @@ async function loadBoxes(){
   }
 
   let html = '';
+  // Upcoming-ზე: თითო დღეს თავისი ფერის ბურთი (7 ფერი, ციკლურად) — დღეების ვიზუალური გამიჯვნა
+  const DAY_COLORS = ['#2ec4b6','#f5c842','#ff6b6b','#a78bfa','#4dabf7','#ff9f43','#51cf66'];
+  const dayColor = {};
+  if(boxTab==='upcoming'){
+    let di = 0;
+    for(const b of boxes){
+      if(!(b.date in dayColor)){ dayColor[b.date] = DAY_COLORS[di % DAY_COLORS.length]; di++; }
+    }
+  }
   for(const box of boxes){
     const { data: tasks } = await db.from('tasks').select('*').eq('box_id', box.id).order('sort_order');
     let tasksHtml = '';
@@ -1995,9 +2821,27 @@ async function loadBoxes(){
       tasksHtml += '<div class="list-item" style="margin-left:20px;background:var(--bg2)"><span class="badge '+t.type+'">'+t.type+'</span><div class="li-info"><div class="li-title">'+escapeHtml(t.title)+'</div><div class="li-sub">+'+t.points+' points</div></div><div class="li-actions">'+editBtn+delBtn+'</div></div>';
     }
     const niceDate = new Date(box.date+'T00:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+
+    // ბოქსის შექმნის-მომენტის კონფიგი (snapshot) — Upcoming-ზე შეცდომის დასაჭერად
+    const adc = box.ad_config || null;
+    const fmtTrig = (en, val) => (adc && adc.int_master === true && en === true && String(val||'').trim()) ? String(val).trim() : 'Off';
+    const cfgInterval = (box.interval_minutes != null) ? (box.interval_minutes + ' min') : '—';
+    const cfgUnlock   = (box.unlock_correct   != null) ? box.unlock_correct : '—';
+    const cfgAfterBox  = adc ? fmtTrig(adc.int_box_enabled,  adc.int_box_after)  : '—';
+    const cfgAfterQuiz = adc ? fmtTrig(adc.int_quiz_enabled, adc.int_quiz_after) : '—';
+    const cfgLine = '<div class="li-sub" style="margin-top:4px;font-size:.68rem;color:#ffffff">'
+      + '⏱ Interval: <b style="color:var(--teal)">'+cfgInterval+'</b> · '
+      + '🎮 Unlock: <b style="color:var(--teal)">'+cfgUnlock+'</b> correct · '
+      + '📺 After box: <b style="color:'+(cfgAfterBox==='Off'||cfgAfterBox==='—'?'#ffffff':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterBox))+'</b> · '
+      + 'After quiz: <b style="color:'+(cfgAfterQuiz==='Off'||cfgAfterQuiz==='—'?'#ffffff':'var(--gold,#f5c842)')+'">'+escapeHtml(String(cfgAfterQuiz))+'</b>'
+      + '</div>';
+
     // History-ში "+ Task" ღილაკი არ ჩანს (წარსულს ვერ შეცვლი)
     const taskBtn = (boxTab==='history') ? '' : '<button class="btn btn-ghost btn-sm" onclick="openTaskModal(\''+box.id+'\')">+ Task</button>';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div></div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
+    const dayBall = (boxTab==='upcoming' && dayColor[box.date])
+      ? '<span title="'+niceDate+'" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+dayColor[box.date]+';margin-right:8px;vertical-align:middle;box-shadow:0 0 7px '+dayColor[box.date]+'99"></span>'
+      : '';
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+dayBall+'📦 #'+(box.sequence_order||1)+' · '+escapeHtml(box.name)+'</div><div class="li-sub" style="color:#ffffff">'+niceDate+' · '+(tasks?tasks.length:0)+' tasks</div>'+cfgLine+'</div><div class="li-actions">'+taskBtn+'<button class="btn btn-danger btn-sm" onclick="deleteBox(\''+box.id+'\')">Delete</button></div></div>';
     if(tasksHtml) html += tasksHtml;
   }
   list.innerHTML = html;
@@ -2018,6 +2862,23 @@ async function clearHistory(){
   await db.from('tasks').delete().in('box_id', ids);
   await db.from('boxes').delete().in('id', ids);
   showMsg('boxMsg','History cleared! ✅','ok');
+  loadBoxes();
+}
+
+// Upcoming-ის სრული გასუფთავება — შლის ყველა მომავალ ბოქსს (date > today) და მათ task-ებს.
+// მომავალ ბოქსებზე მომხმარებლის პასუხები ვერ იქნება (ჯერ არ დამდგარა), ამიტომ
+// პირდაპირი წაშლა უსაფრთხოა — Today/History არ ეხება.
+async function clearUpcoming(){
+  const today = todayStr();
+  const { data: upBoxes } = await db.from('boxes').select('id').gt('date', today);
+  if(!upBoxes || upBoxes.length===0){ showMsg('boxMsg','No upcoming boxes to clear.','err'); return; }
+  if(!confirm('Delete ALL '+upBoxes.length+' upcoming boxes and their tasks? This cannot be undone.')) return;
+
+  const ids = upBoxes.map(b=>b.id);
+  // ჯერ task-ები, მერე ბოქსები (foreign key)
+  await db.from('tasks').delete().in('box_id', ids);
+  await db.from('boxes').delete().in('id', ids);
+  showMsg('boxMsg','Upcoming cleared! ✅','ok');
   loadBoxes();
 }
 
@@ -2043,8 +2904,10 @@ function openTaskModal(boxId){
   document.getElementById('taskModal').style.display = 'flex';
   document.getElementById('taskType').value = 'quiz';
   document.getElementById('taskType').disabled = false;
+  document.getElementById('ttVideo').hidden = false;
+  document.getElementById('ttWebsite').hidden = false;
   onTaskTypeChange();
-  ['taskTitle','qText','qA','qB','qC','qD','taskUrl'].forEach(id=>document.getElementById(id).value='');
+  ['taskTitle','qText','qA','qB','qC','qD','taskUrl','qImage'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('qCorrect').value = 'A';
   document.getElementById('taskMsg').className = 'msg';
 }
@@ -2061,11 +2924,20 @@ async function openTaskEdit(taskId){
   document.querySelector('#taskModal button.btn-primary').textContent = 'Save Changes';
   document.getElementById('taskModal').style.display = 'flex';
 
-  document.getElementById('taskType').value = 'quiz';
-  document.getElementById('taskType').disabled = true; // ტიპს რედაქტირებისას არ ვცვლით
+  // ვარიანტის ამოცნობა შენახული მონაცემიდან
+  let variant = 'quiz';
+  if(q){
+    if(q.answer_type === 'image') variant = '4image_quiz';
+    else if(q.question_image) variant = 'image_quiz';
+  }
+  document.getElementById('taskType').value = variant;
+  document.getElementById('taskType').disabled = false; // Edit-შიც ტიპის შეცვლა შესაძლებელია
+  document.getElementById('ttVideo').hidden = true;      // Edit მხოლოდ ქუიზ-ვარიანტებს შორის
+  document.getElementById('ttWebsite').hidden = true;
   onTaskTypeChange();
 
   document.getElementById('taskTitle').value = t.title || '';
+  document.getElementById('qImage').value = q ? (q.question_image||'') : '';
   document.getElementById('qText').value = q ? (q.question||'') : '';
   document.getElementById('qA').value = q ? (q.answer_a||'') : '';
   document.getElementById('qB').value = q ? (q.answer_b||'') : '';
@@ -2081,88 +2953,106 @@ function closeTaskModal(){
 
 function onTaskTypeChange(){
   const type = document.getElementById('taskType').value;
-  document.getElementById('quizFields').style.display = type==='quiz' ? 'block' : 'none';
-  // ყველა ტიპი quiz-ის გარდა URL ველს აჩვენებს (გარე ოფერი)
-  document.getElementById('urlField').style.display = (type==='quiz') ? 'none' : 'block';
+  const isQuiz = ['quiz','image_quiz','4image_quiz'].includes(type);
+  document.getElementById('quizFields').style.display = isQuiz ? 'block' : 'none';
+  // ყველა არა-quiz ტიპი URL ველს აჩვენებს (გარე ოფერი)
+  document.getElementById('urlField').style.display = isQuiz ? 'none' : 'block';
+
+  // კითხვის სურათი — მხოლოდ "Image Quiz"-ზე (სურათი-კითხვა)
+  document.getElementById('qImageField').style.display = (type==='image_quiz') ? 'block' : 'none';
+
+  // "4 Image Quiz" — პასუხები URL-ებია; ველების ლეიბლი/placeholder შესაბამისად
+  const imgAns = (type==='4image_quiz');
+  [['qLabelA','qA','A'],['qLabelB','qB','B'],['qLabelC','qC','C'],['qLabelD','qD','D']].forEach(([lid,iid,ltr])=>{
+    const lab = document.getElementById(lid), inp = document.getElementById(iid);
+    if(lab) lab.textContent = imgAns ? ('Image '+ltr+' URL') : ('Answer '+ltr);
+    if(inp) inp.placeholder = imgAns ? ('https://.../'+ltr.toLowerCase()+'.jpg') : '';
+    const pb = document.getElementById(iid+'_btn'); if(pb) pb.style.display = imgAns ? 'block' : 'none';
+  });
+  // Image Quiz-ზე კითხვის ტექსტი არასავალდებულოა (სურათი თავად კითხვაა)
+  const qtl = document.getElementById('qTextLabel');
+  if(qtl) qtl.textContent = (type==='image_quiz') ? 'Question (optional)' : 'Question';
 }
 
 async function saveTask(){
   const boxId = document.getElementById('taskBoxId').value;
   const editId = document.getElementById('editTaskId').value;
-  const type = document.getElementById('taskType').value;
+  const rawType = document.getElementById('taskType').value;
   const title = document.getElementById('taskTitle').value.trim();
   if(!title){ showMsg('taskMsg','Please enter a title.','err'); return; }
 
-  // ===== EDIT MODE (quiz მხოლოდ) =====
-  if(editId){
-    const { error: tErr } = await db.from('tasks').update({ title }).eq('id', editId);
-    if(tErr){ showMsg('taskMsg', tErr.message, 'err'); return; }
+  const isQuizVariant = ['quiz','image_quiz','4image_quiz'].includes(rawType);
+  const taskType = isQuizVariant ? 'quiz' : rawType;   // tasks.type ყოველთვის 'quiz' quiz-ვარიანტებზე
 
+  // quiz payload (ADD + EDIT-ისთვის საერთო) + ვალიდაცია
+  function buildQuizPayload(){
     const q = document.getElementById('qText').value.trim();
     const a = document.getElementById('qA').value.trim();
     const b = document.getElementById('qB').value.trim();
     const c = document.getElementById('qC').value.trim();
     const d = document.getElementById('qD').value.trim();
     const correct = document.getElementById('qCorrect').value;
-    if(!q||!a||!b||!c||!d){ showMsg('taskMsg','Please fill the question and all answers.','err'); return; }
+    const qImage = document.getElementById('qImage').value.trim();
+    if(!a||!b||!c||!d){ return { err:'Please fill all 4 answers.' }; }
+    if(rawType==='image_quiz' && !qImage){ return { err:'Please add the question image URL.' }; }
+    if(rawType!=='image_quiz' && !q){ return { err:'Please enter the question.' }; }
+    return { payload: {
+      question: q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct,
+      question_image: (rawType==='image_quiz') ? (qImage||null) : null,
+      answer_type:    (rawType==='4image_quiz') ? 'image' : 'text'
+    }};
+  }
 
-    // quiz_questions — update თუ არსებობს, თორემ insert
-    const { data: existing } = await db.from('quiz_questions').select('id').eq('task_id', editId).maybeSingle();
-    if(existing){
-      const { error: qErr } = await db.from('quiz_questions').update({
-        question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
-      }).eq('task_id', editId);
-      if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
-    } else {
-      const { error: qErr } = await db.from('quiz_questions').insert({
-        task_id: editId, question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
-      });
-      if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
-    }
-    closeTaskModal();
-    loadBoxes();
-    return;
+  // ===== EDIT MODE =====
+  if(editId){
+    const { error: tErr } = await db.from('tasks').update({ title }).eq('id', editId);
+    if(tErr){ showMsg('taskMsg', tErr.message, 'err'); return; }
+    const built = buildQuizPayload();
+    if(built.err){ showMsg('taskMsg', built.err, 'err'); return; }
+    const { error: qErr } = await db.rpc('admin_upsert_question', {
+      p_task_id: editId,
+      p_question: built.payload.question,
+      p_a: built.payload.answer_a, p_b: built.payload.answer_b,
+      p_c: built.payload.answer_c, p_d: built.payload.answer_d,
+      p_correct: built.payload.correct_answer,
+      p_question_image: built.payload.question_image,
+      p_answer_type: built.payload.answer_type
+    });
+    if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
+    closeTaskModal(); loadBoxes(); return;
   }
 
   // ===== ADD MODE =====
-  // points come from global settings, per task type
   const POINT_KEYS = {
-    quiz:        'quiz_correct',
-    video:       'video_points',
-    website:     'website_points',
-    app_install: 'app_install_points',
-    survey:      'survey_points',
-    signup:      'signup_points',
-    trial:       'trial_points',
-    social:      'social_points',
-    custom:      'custom_points'
+    quiz:'quiz_correct', image_quiz:'quiz_correct', '4image_quiz':'quiz_correct',
+    video:'video_points', website:'website_points',
+    app_install:'app_install_points', survey:'survey_points', signup:'signup_points',
+    trial:'trial_points', social:'social_points', custom:'custom_points'
   };
-  const settingKey = POINT_KEYS[type] || 'custom_points';
+  const settingKey = POINT_KEYS[rawType] || 'custom_points';
   const { data: setting } = await db.from('settings').select('value').eq('key', settingKey).single();
   const points = setting ? setting.value : 10;
 
   const url = document.getElementById('taskUrl').value.trim();
-  // ბოქსის ბოლო sort_order-ს ვპოულობთ — ახალი task ბოლოში, სწორი ნომრით ჩაემატოს
-  // (თუ ყველას 0 ჰქონდა, tie-ს ვერ არჩევდა და რიგი ირღვეოდა)
   const { data: last } = await db.from('tasks').select('sort_order')
     .eq('box_id', boxId).order('sort_order',{ascending:false}).limit(1).maybeSingle();
   const nextSort = (last && typeof last.sort_order === 'number') ? last.sort_order + 1 : 1;
   const { data: newTask, error } = await db.from('tasks').insert({
-    box_id: boxId, type, title, points, url: url||null, sort_order: nextSort
+    box_id: boxId, type: taskType, title, points, url: url||null, sort_order: nextSort
   }).select().single();
-
   if(error){ showMsg('taskMsg', error.message, 'err'); return; }
 
-  if(type==='quiz'){
-    const q = document.getElementById('qText').value.trim();
-    const a = document.getElementById('qA').value.trim();
-    const b = document.getElementById('qB').value.trim();
-    const c = document.getElementById('qC').value.trim();
-    const d = document.getElementById('qD').value.trim();
-    const correct = document.getElementById('qCorrect').value;
-    if(!q||!a||!b||!c||!d){ showMsg('taskMsg','Please fill the question and all answers.','err'); return; }
-    const { error: qErr } = await db.from('quiz_questions').insert({
-      task_id: newTask.id, question:q, answer_a:a, answer_b:b, answer_c:c, answer_d:d, correct_answer:correct
+  if(isQuizVariant){
+    const built = buildQuizPayload();
+    if(built.err){ showMsg('taskMsg', built.err, 'err'); return; }
+    const { error: qErr } = await db.rpc('admin_upsert_question', {
+      p_task_id: newTask.id,
+      p_question: built.payload.question,
+      p_a: built.payload.answer_a, p_b: built.payload.answer_b,
+      p_c: built.payload.answer_c, p_d: built.payload.answer_d,
+      p_correct: built.payload.correct_answer,
+      p_question_image: built.payload.question_image,
+      p_answer_type: built.payload.answer_type
     });
     if(qErr){ showMsg('taskMsg', qErr.message, 'err'); return; }
   }
