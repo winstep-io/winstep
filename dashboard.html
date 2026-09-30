@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-boot="pending">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,10 +113,13 @@ header{display:flex;align-items:center;justify-content:space-between;
 .ad-slot.ad-reserve{display:block!important}
 .ad-slot.ad-reserve.top{min-height:98px}
 .ad-slot.ad-reserve.bottom{min-height:110px}
-.ad-box{width:100%;height:80px;background:var(--bg2);border:0;border-radius:18px;
+.ad-box{width:100%;min-height:80px;background:var(--bg2);border:0;border-radius:18px;
   display:flex;align-items:center;justify-content:center;font-size:.72rem;
   color:rgba(255,255,255,.14);letter-spacing:.15em;text-transform:uppercase;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);overflow:hidden}
+/* Any injected banner (single img, <picture>, or responsive pair) fills the slot at its natural aspect ratio */
+.ad-box img,.ad-box picture{display:block;width:100%;height:auto;max-width:100%}
+.ad-box picture{line-height:0}
 
 /* ── championship badge + round banner ──────────────────── */
 #topMeta.topmeta-reserve{min-height:130px}
@@ -433,6 +436,14 @@ body.gap-mode #topMeta{min-height:0!important}
 
 /* ── Pause Site overlay — ფასადი, პროცესებს არ ცვლის ──
    z-index ყველაფერზე მაღლა: შუალედის ფანჯარაც და adblock notice-იც დაფაროს. */
+/* ── Pre-paint cover: სანამ boot არ დასრულებულა, dashboard არ ჩანს ──
+   პაუზაზე რეფრეშისას ერთი წამით dashboard-ის გამოკრთომას აღკვეთს.
+   <html data-boot="pending"> თავიდანვე დგას (inline, ქსელამდე). */
+#preCover{display:none}
+html[data-boot="pending"]{background:var(--bg,#080c0b)}
+html[data-boot="pending"] body>*:not(#pauseOverlay){visibility:hidden!important}
+html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
+  z-index:2147483640;background:var(--bg,#080c0b)}
 #pauseOverlay{position:fixed;inset:0;z-index:2147483647;display:none;
   background:var(--bg,#080c0b);
   align-items:center;justify-content:center;padding:24px}
@@ -675,7 +686,7 @@ body.gap-mode #topMeta{min-height:0!important}
   </script>
 </head>
 <body>
-  <div id="bootVeil" style="position:fixed;inset:0;z-index:99998;background:#0a0f0e"></div>
+<div id="preCover"></div>
 <!-- Pause overlay — bootstrap-ის მიხედვით ჩნდება/ქრება, dashboard-ს არ ცვლის -->
 <div id="pauseOverlay">
   <div class="pause-card">
@@ -729,8 +740,8 @@ body.gap-mode #topMeta{min-height:0!important}
 
 <div class="layout ws-in">
   <div class="main-col">
-    <div class="welcome">Welcome, <span id="userName">...</span>!</div>
-    <div class="welcome-sub">Complete tasks to earn points and climb the leaderboard.</div>
+    <div class="welcome" style="visibility:hidden">Welcome, <span id="userName">...</span>!</div>
+    <div class="welcome-sub" style="visibility:hidden">Complete tasks to earn points and climb the leaderboard.</div>
 
     <div id="topMeta" class="topmeta-reserve">
       <div class="champ-badge" id="champBadge" style="display:none"></div>
@@ -880,6 +891,14 @@ function showTermsGate(){
 let BOOT = null;          // RPC-ის შედეგი (ან null, თუ ჩავარდა)
 let bootPromise = null;   // რომ ერთხელ გაეშვას, პარალელური გამოძახებებისთვის
 
+// უსაფრთხოების ბადე: თუ boot 6წმ-ზე მეტს გაჭიანურდა, cover-ს ვხსნით,
+// რომ გვერდი სამუდამოდ ცარიელი არ დარჩეს (overlay თავისით გამოჩნდება თუ საჭიროა).
+setTimeout(function(){
+  if(document.documentElement.getAttribute('data-boot')==='pending'){
+    document.documentElement.removeAttribute('data-boot');
+  }
+}, 6000);
+
 function loadBootstrap(){
   if(bootPromise) return bootPromise;
   bootPromise = (async ()=>{
@@ -896,25 +915,39 @@ function loadBootstrap(){
   return bootPromise;
 }
 
-function applyPauseOverlay(){
-  // BOOT.pause.paused: 1 = პაუზა. fallback-ზე (BOOT=null) overlay არ ჩნდება.
+// dashboard-ს ხილვადს ხდის: pre-paint cover-ს ხსნის.
+function revealDashboard(){
+  document.documentElement.removeAttribute('data-boot');
+}
+
+// აბრუნებს true-ს თუ საიტი პაუზაზეა.
+function isSitePaused(){
   const p = BOOT && BOOT.pause;
-  if(p && (p.paused === 1 || p.paused === true || p.paused === '1')){
+  return !!(p && (p.paused === 1 || p.paused === true || p.paused === '1'));
+}
+
+function applyPauseOverlay(){
+  // fallback-ზე (BOOT=null) overlay არ ჩნდება — dashboard ნახავს.
+  if(isSitePaused()){
+    const p = BOOT.pause;
     const el = document.getElementById('pauseOverlay');
     const msg = document.getElementById('pauseMsg');
     if(msg) msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
     if(el) el.classList.add('on');
+    // dashboard დამალული რჩება (data-boot=pending): მუქი ფონი + overlay ჩანს.
+    // ადმინის შემოწმებას init() ქვემოთ აკეთებს და საჭიროებისას ხსნის.
+  } else {
+    // პაუზა არ არის — dashboard გამოჩნდეს.
+    revealDashboard();
   }
 }
 
 async function init(){
-  setTimeout(removeBootVeil, 4000);   // safety: veil არასდროს დარჩეს
   await loadBootstrap();   // ერთი მოთხოვნა ყველასთვის — ადრევე ვიწყებთ
 
   // Pause overlay: თუ საიტი პაუზაზეა, ფასადი გადაეფარება (ავტორიზებულს და
   // სტუმარსაც). dashboard-ის ლოგიკა ქვემოთ განაგრძობს მუშაობას უცვლელად.
   applyPauseOverlay();
-  removeBootVeil();
 
   const { data: { session } } = await db.auth.getSession();
 
@@ -931,6 +964,29 @@ async function init(){
   }
 
   currentUser = session.user;
+
+  // ── პაუზა + ადმინი ──
+  // საიტი პაუზაზეა? სტუმარი/მომხმარებელი overlay-ს ხედავს (dashboard დამალული).
+  // ადმინისთვის: overlay ვხსნით, dashboard-ს ვაჩვენებთ, რომ იმუშაოს.
+  if(isSitePaused()){
+    let _isAdm = false;
+    try{ const { data } = await db.rpc('is_admin'); _isAdm = (data === true); }catch(_){}
+    if(_isAdm){
+      const _po = document.getElementById('pauseOverlay');
+      if(_po) _po.classList.remove('on');
+      revealDashboard();
+      const _b = document.createElement('div');
+      _b.textContent = '⏸ Site is paused for visitors — you see it as admin';
+      _b.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483646;'
+        + 'background:#f5c842;color:#1a1400;font:700 .8rem/1 sans-serif;padding:9px 16px;border-radius:999px;'
+        + 'box-shadow:0 6px 20px rgba(0,0,0,.4);pointer-events:none';
+      document.body.appendChild(_b);
+    } else {
+      // ადმინი არ არის — overlay რჩება, dashboard დამალული. აქ ვჩერდებით.
+      return;
+    }
+  }
+
   // auth დადგინდა — header-ის ღილაკები ახლა ვაჩვენოთ (ავტორიზებული ვარიანტი)
   { const hr = document.querySelector('.header-right'); if(hr) hr.style.visibility = 'visible'; }
 
@@ -983,6 +1039,9 @@ async function init(){
 
   if(profile){
     document.getElementById('userName').textContent = profile.username;
+    // სახელი მზადაა — მისალმება ახლა ვაჩვენოთ (ავტორიზებული რეჟიმი)
+    { const w = document.querySelector('.welcome'), ws = document.querySelector('.welcome-sub');
+      if(w) w.style.visibility = 'visible'; if(ws) ws.style.visibility = 'visible'; }
     // Total Round Points = authoritative sum of finished rounds + live (matches profile & round table)
     let _trp = (profile.season_points||0) + (profile.total_points||0);
     try{
@@ -1057,13 +1116,6 @@ function showAuthPrompt(){
 let currentRound = null;
 let betweenTimer = null;   // ჩემპიონატებს შორის countdown-ის ტაიმერი
 let inGap = false;         // true = ჩემპიონატებს შორის შუალედი (მხოლოდ შეტყობინება ჩანს)
-function removeBootVeil(){
-  var v = document.getElementById('bootVeil');
-  if(!v) return;
-  v.style.transition = 'opacity .25s';
-  v.style.opacity = '0';
-  setTimeout(function(){ if(v && v.parentNode) v.parentNode.removeChild(v); }, 260);
-}
 async function loadRound(){
   // once we know what to render, release the CLS space reservation
   const releaseTopMeta = ()=>{ const tm=document.getElementById('topMeta'); if(tm) tm.classList.remove('topmeta-reserve'); };
@@ -1120,7 +1172,6 @@ async function loadRound(){
     badge.style.display = 'inline-block';
   }
   releaseTopMeta();
-  removeBootVeil();
 }
 
 // ჩემპიონატებს შორის შუალედი — დიდი შეტყობინება
@@ -1155,7 +1206,6 @@ async function showBetweenChampionships(){
 
   const verbEl = document.getElementById('betweenVerb');
   if(upcoming && upcoming.start_date){
-    // ჩემპიონატი იწყება 00:00 UTC-ზე იმ თარიღისა.
     const startMs = new Date(upcoming.start_date + 'T00:00:00Z').getTime();
     const pad = (n)=> String(n).padStart(2,'0');
     const d0 = new Date(upcoming.start_date + 'T00:00:00Z');
@@ -1189,11 +1239,10 @@ async function showBetweenChampionships(){
     };
 
     clearInterval(betweenTimer);
-    tick();                              // მაშინვე, ლოდინის გარეშე
+    tick();
     betweenTimer = setInterval(tick, 1000);
 
   } else {
-    // Upcoming არ შექმნილა — fallback
     if(verbEl) verbEl.textContent = 'starts in';
     titleEl.textContent = 'soon';
   }
@@ -1204,7 +1253,6 @@ async function showBetweenChampionships(){
   // ერთი კლასი <body>-ზე — CSS ყველაფერს მალავს (!important-ით),
   // ასე ასინქრონული ჩატვირთვები ვეღარ გადაფარავენ.
   document.body.classList.add('gap-mode');
-  removeBootVeil();
 }
 
 // ---- round info modal ----
