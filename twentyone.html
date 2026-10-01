@@ -531,21 +531,26 @@ const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let youCards = [], oppCards = [];
-let handNo = 1, score = 0, turn = 'you', handOver = false, busy = false;
+let handNo = 1, score = 0, handOver = false, busy = false;
 let currentSession = null, gameActive = false, ended = false;
+const OPP_DELAY = 560;   // gap between each revealed tile (turn-by-turn feel)
 
-/* ---- render helpers (values the server revealed) ---- */
+/* ---- render helpers ---- */
 function dom(cls, txt){ return '<div class="dom '+cls+'">'+(txt||'')+'</div>'; }
 function faceOf(v){
   if(v===11) return '<div class="dom dface ace"><span class="a-top">11</span><span class="a-bot">1</span></div>';
   return dom('dface', String(v));
 }
-function renderHands(youTotal, oppTotal){
+/* same total rule as the server (display only) */
+function tLocal(cards){ let t=0,a=0; for(const v of cards){ t+=v; if(v===11)a++; } while(t>21&&a>0){t-=10;a--;} return t; }
+function renderHands(){
   document.getElementById('youHand').innerHTML = youCards.map(faceOf).join('');
   document.getElementById('oppHand').innerHTML = oppCards.map(faceOf).join('');
+  const yt = tLocal(youCards), ot = tLocal(oppCards);
   const yE = document.getElementById('youTot'), oE = document.getElementById('oppTot');
-  yE.textContent = youTotal; oE.textContent = oppTotal;
-  yE.className = 'tot' + (youTotal>21?' bust':''); oE.className = 'tot' + (oppTotal>21?' bust':'');
+  yE.textContent = yt; oE.textContent = ot;
+  yE.className = 'tot' + (yt>21?' bust':(yE.classList.contains('win')?' win':''));
+  oE.className = 'tot' + (ot>21?' bust':'');
 }
 function renderPool(poolFilled){
   const p = document.getElementById('pool'); p.innerHTML = '';
@@ -556,25 +561,31 @@ function renderPool(poolFilled){
     p.appendChild(slot);
   });
 }
-function enablePool(on){ document.getElementById('pool').classList.toggle('active', !!on); }
 function setMsg(h){ document.getElementById('msg').innerHTML = h; }
 function updateHud(){ document.getElementById('handNo').textContent = handNo; document.getElementById('score').textContent = score; }
+function setTurn(who){
+  document.getElementById('youSide').classList.toggle('turn', who==='you' && !handOver);
+  document.getElementById('oppSide').classList.toggle('turn', who==='opp' && !handOver);
+}
+function enablePlay(on){
+  document.getElementById('pool').classList.toggle('active', !!on);
+  document.getElementById('standBtn').disabled = !(on && youCards.length>0);
+  setTurn(on ? 'you' : 'opp');
+}
 
-/* reveal opponent's drawn cards one-by-one, then run cb */
+/* reveal the opponent's drawn tiles ONE BY ONE, then run cb */
 function animateOpp(moves, cb){
   moves = moves || [];
-  let k = 0;
-  function step(){
-    if(k >= moves.length){ cb && cb(); return; }
-    oppCards.push(moves[k][0]); k++;
-    renderHands(tLocal(youCards), tLocal(oppCards));
-    setTimeout(step, 520);
-  }
   if(moves.length === 0){ cb && cb(); return; }
-  step();
+  setTurn('opp');
+  let k = 0;
+  (function step(){
+    if(k >= moves.length){ cb && cb(); return; }
+    oppCards.push(moves[k]); k++;      // moves[k] is the card value
+    renderHands();
+    setTimeout(step, OPP_DELAY);
+  })();
 }
-/* local total — ONLY for the smooth animation in-between server totals */
-function tLocal(cards){ let t=0,a=0; for(const v of cards){ t+=v; if(v===11)a++; } while(t>21&&a>0){t-=10;a--;} return t; }
 
 /* ---- auth ---- */
 async function init(){
@@ -600,57 +611,64 @@ async function startGame(){
     return;
   }
   gameActive = true; ended = false;
-  handNo = res.hand_no; score = res.score; turn = res.turn; handOver = false;
+  handNo = res.hand_no; score = res.score; handOver = false;
   youCards = res.you || []; oppCards = res.opp || [];
+  document.getElementById('youTot').classList.remove('win');
   document.getElementById('ov').classList.remove('show');
-  updateHud(); renderHands(res.you_total, res.opp_total); renderPool(res.pool_filled);
-  document.getElementById('standBtn').style.display = ''; document.getElementById('standBtn').disabled = false;
+  updateHud(); renderHands(); renderPool(res.pool_filled);
+  document.getElementById('standBtn').style.display = '';
   document.getElementById('nextBtn').style.display = 'none';
-  enablePool(true);
-  setMsg('Your turn — flip a tile to Hit, or Stand.');
+  enablePlay(true);
+  setMsg('Your turn — flip a tile to start.');
 }
 
-/* ---- HIT ---- */
+/* ---- HIT: your tile first, then (after a beat) the opponent's ---- */
 async function playerHit(slot){
-  if(!gameActive || handOver || busy || turn!=='you') return;
-  busy = true; enablePool(false); document.getElementById('standBtn').disabled = true;
+  if(!gameActive || handOver || busy) return;
+  busy = true; enablePlay(false);
   let res;
   try{ const q = await db.rpc('twentyone_hit', { p_slot: slot }); res = q.data; }catch(e){ res = null; }
-  if(!res || !res.ok){ busy = false; enablePool(true); document.getElementById('standBtn').disabled = false; return; }
-  youCards = res.you; renderHands(res.you_total, res.opp_total); renderPool(res.pool_filled);
-  animateOpp(res.opp_moves, () => {
-    oppCards = res.opp; renderHands(res.you_total, res.opp_total);
-    score = res.score; handNo = res.hand_no; updateHud();
-    if(res.hand_over){ finishHand(res); }
-    else { busy = false; enablePool(true); document.getElementById('standBtn').disabled = false;
-           setMsg('Your turn — flip a tile to Hit, or Stand.'); }
-  });
+  if(!res || !res.ok){ busy = false; enablePlay(true); return; }
+
+  // 1) show YOUR move
+  youCards = res.you; renderHands(); renderPool(res.pool_filled);
+  setMsg('You drew ' + res.player_card + '.');
+
+  // 2) after a beat, the opponent opens its tile(s)
+  setTimeout(() => {
+    animateOpp(res.opp_moves, () => {
+      oppCards = res.opp; renderHands();
+      score = res.score; handNo = res.hand_no; updateHud();
+      if(res.hand_over){ finishHand(res); }
+      else { busy = false; enablePlay(true); setMsg('Your turn — Hit or Stand.'); }
+    });
+  }, 460);
 }
 
-/* ---- STAND ---- */
+/* ---- STAND: opponent plays out, tile by tile ---- */
 async function playerStand(){
-  if(!gameActive || handOver || busy || turn!=='you') return;
-  busy = true; enablePool(false); document.getElementById('standBtn').disabled = true;
+  if(!gameActive || handOver || busy || youCards.length===0) return;
+  busy = true; enablePlay(false);
   setMsg('You stand on ' + tLocal(youCards) + '.');
   let res;
   try{ const q = await db.rpc('twentyone_stand'); res = q.data; }catch(e){ res = null; }
   if(!res || !res.ok){ busy = false; return; }
-  renderHands(res.you_total, res.opp_total); renderPool(res.pool_filled);
-  animateOpp(res.opp_moves, () => {
-    oppCards = res.opp; renderHands(res.you_total, res.opp_total);
-    score = res.score; handNo = res.hand_no; updateHud();
-    finishHand(res);
-  });
+  renderPool(res.pool_filled);
+  setTimeout(() => {
+    animateOpp(res.opp_moves, () => {
+      oppCards = res.opp; renderHands();
+      score = res.score; handNo = res.hand_no; updateHud();
+      finishHand(res);
+    });
+  }, 320);
 }
 
 /* ---- end of a hand ---- */
 function finishHand(res){
-  handOver = true;
-  document.getElementById('youSide').classList.remove('turn');
-  document.getElementById('oppSide').classList.remove('turn');
+  handOver = true; setTurn(null);
   document.getElementById('standBtn').style.display = 'none';
   if(res.result === 'win'){
-    document.getElementById('youTot').classList.add('win');
+    document.getElementById('youTot').classList.add('win'); renderHands();
     setMsg('<span class="win">You win this hand!</span>');
   } else if(res.result === 'lose'){
     setMsg('<span class="lose">' + (res.you_total>21 ? 'Bust — you lose.' : 'Opponent wins.') + '</span>');
@@ -658,7 +676,6 @@ function finishHand(res){
     setMsg('Push — equal totals. No points.');
   }
   updateHud();
-
   if(res.game_over){
     setTimeout(showGameOver, 1600);
   } else {
@@ -672,23 +689,27 @@ function finishHand(res){
 async function nextHand(){
   if(busy) return;
   busy = true;
-  const nb = document.getElementById('nextBtn'); nb.style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
   let res;
   try{ const q = await db.rpc('twentyone_next'); res = q.data; }catch(e){ res = null; }
   if(!res || !res.ok){ busy = false; return; }
-  handNo = res.hand_no; score = res.score; turn = res.turn; handOver = false;
+  handNo = res.hand_no; score = res.score; handOver = false;
   youCards = res.you || []; oppCards = [];
   document.getElementById('youTot').classList.remove('win');
   document.getElementById('standBtn').style.display = ''; document.getElementById('standBtn').disabled = true;
-  renderHands(res.you_total, 0); renderPool(res.pool_filled); updateHud();
-  // animate opponent's opening move (if opponent started this hand)
-  animateOpp(res.opp_moves, () => {
-    oppCards = res.opp || []; renderHands(res.you_total, res.opp_total);
-    document.getElementById('standBtn').disabled = false;
-    enablePool(true);
-    setMsg('Your turn — flip a tile to Hit, or Stand.');
-    busy = false;
-  });
+  renderHands(); renderPool(res.pool_filled); updateHud();
+
+  const openMoves = res.opp_moves || [];
+  if(openMoves.length){
+    setMsg('Opponent starts this try…');
+    animateOpp(openMoves, () => {
+      oppCards = res.opp || []; renderHands();
+      enablePlay(true); setMsg('Your turn — flip a tile to start.'); busy = false;
+    });
+  } else {
+    oppCards = res.opp || []; renderHands();
+    enablePlay(true); setMsg('Your turn — flip a tile to start.'); busy = false;
+  }
 }
 
 /* ---- game over ---- */
