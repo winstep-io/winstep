@@ -679,6 +679,14 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       </div>
 
       <div class="card">
+        <div class="card-title">💣 Minefield Game</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Finish Bonus</label><input class="field-input" type="number" id="set_minefield_bonus"></div>
+        </div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Each safe step scores the row number (+1 … +10) automatically. Finish Bonus is added for clearing all 10 rows.</div>
+      </div>
+
+      <div class="card">
         <div class="card-title">⏱️ Game Timing</div>
         <div class="field-row">
           <div class="field"><label class="field-label">Box Interval (min)</label><input class="field-input" type="number" id="set_box_interval_minutes"></div>
@@ -1062,7 +1070,7 @@ async function checkAdmin(user){
 }
 
 // ---- SETTINGS ----
-const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step'];
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step','minefield_bonus'];
 async function loadSettings(){
   const { data: rows } = await db.from('settings').select('*');
   if(!rows) return;
