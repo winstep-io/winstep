@@ -1804,15 +1804,17 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
 
 // game metadata
 const GAME_INFO = {
-  bridge: { icon:'🌉', name:'Bridge',     url:'/bridge.html',     fn:'playGame(\'bridge\')' },
-  spin:   { icon:'🎡', name:'Spin Wheel', url:'/spin-wheel.html', fn:'playGame(\'spin\')' },
-  hilo:   { icon:'🃏', name:'Hi-Lo',      url:'/hilo.html',       fn:'playGame(\'hilo\')' }
+  bridge:    { icon:'🌉', name:'Bridge',     url:'/bridge.html',     fn:'playGame(\'bridge\')' },
+  spin:      { icon:'🎡', name:'Spin Wheel', url:'/spin-wheel.html', fn:'playGame(\'spin\')' },
+  hilo:      { icon:'🃏', name:'Hi-Lo',      url:'/hilo.html',       fn:'playGame(\'hilo\')' },
+  minefield: { icon:'💣', name:'Minefield',  url:'/minefield.html',  fn:'playGame(\'minefield\')' }
 };
 
 function gamePlayed(prog, type){
-  if(type==='bridge') return prog.bridge_played;
-  if(type==='spin')   return prog.spin_played;
-  if(type==='hilo')   return prog.hilo_played;
+  if(type==='bridge')    return prog.bridge_played;
+  if(type==='spin')      return prog.spin_played;
+  if(type==='hilo')      return prog.hilo_played;
+  if(type==='minefield') return prog.minefield_played;
   return true;
 }
 
