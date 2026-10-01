@@ -533,7 +533,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let youCards = [], oppCards = [];
 let handNo = 1, score = 0, handOver = false, busy = false;
 let currentSession = null, gameActive = false, ended = false;
-const OPP_DELAY = 560;   // gap between each revealed tile (turn-by-turn feel)
+const OPP_DELAY = 820;   // gap between each revealed tile (turn-by-turn feel)
 
 /* ---- render helpers ---- */
 function dom(cls, txt){ return '<div class="dom '+cls+'">'+(txt||'')+'</div>'; }
@@ -642,7 +642,7 @@ async function playerHit(slot){
       if(res.hand_over){ finishHand(res); }
       else { busy = false; enablePlay(true); setMsg('Your turn — Hit or Stand.'); }
     });
-  }, 460);
+  }, 580);
 }
 
 /* ---- STAND: opponent plays out, tile by tile ---- */
@@ -660,7 +660,7 @@ async function playerStand(){
       score = res.score; handNo = res.hand_no; updateHud();
       finishHand(res);
     });
-  }, 320);
+  }, 450);
 }
 
 /* ---- end of a hand ---- */
