@@ -1807,7 +1807,8 @@ const GAME_INFO = {
   bridge:    { icon:'🌉', name:'Bridge',     url:'/bridge.html',     fn:'playGame(\'bridge\')' },
   spin:      { icon:'🎡', name:'Spin Wheel', url:'/spin-wheel.html', fn:'playGame(\'spin\')' },
   hilo:      { icon:'🃏', name:'Hi-Lo',      url:'/hilo.html',       fn:'playGame(\'hilo\')' },
-  minefield: { icon:'💣', name:'Minefield',  url:'/minefield.html',  fn:'playGame(\'minefield\')' }
+  minefield: { icon:'💣', name:'Minefield',  url:'/minefield.html',  fn:'playGame(\'minefield\')' },
+  twentyone: { icon:'🃏', name:'21',         url:'/twentyone.html',  fn:'playGame(\'twentyone\')' }
 };
 
 function gamePlayed(prog, type){
@@ -1815,6 +1816,7 @@ function gamePlayed(prog, type){
   if(type==='spin')      return prog.spin_played;
   if(type==='hilo')      return prog.hilo_played;
   if(type==='minefield') return prog.minefield_played;
+  if(type==='twentyone') return prog.twentyone_played;
   return true;
 }
 

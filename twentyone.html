@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — 21</title>
+
+<!-- self-hosted @font-face (inlined: removes the last render-blocking
+       request; the .woff2 files are still fetched & cached normally) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842;
+  --text:#e8f0ee; --muted:#4a6660;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:rgba(8,12,11,.95);backdrop-filter:blur(20px);width:100%;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-badge{width:38px;height:38px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(46,196,182,.3)}
+.logo-name{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.01em}
+.logo-name,.logo-name *{color:var(--text)}
+.logo-name span{color:var(--teal)}
+.back-btn{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;letter-spacing:.05em;padding:8px 16px;border-radius:8px;transition:all .2s}
+.back-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+#wrap{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:480px;padding:20px 16px}
+
+/* info bar */
+
+.hud{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--bg3);border-radius:14px;padding:12px 18px;border:1px solid var(--border)}
+.hud-title{font-family:'Fredoka',sans-serif;font-size:1.4rem;letter-spacing:.15em;color:var(--text)}
+.hud-title span{color:var(--teal)}
+.hud-r{display:flex;gap:16px}
+.hs .l{font-size:.55rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;display:block;text-align:right}
+.hs .v{font-family:'Fredoka',sans-serif;font-size:1.1rem;color:var(--teal);letter-spacing:.1em;display:block;text-align:right}
+.hs .v.g{color:var(--gold)}
+#cw{width:100%;position:relative;border-radius:16px;overflow:hidden;border:1.5px solid var(--border2);box-shadow:0 4px 24px rgba(0,0,0,.5)}
+canvas{display:block;width:100%;height:auto}
+/* step timer */
+.step-timer{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:11px 16px;display:none}
+.step-timer.show{display:block}
+.st-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.st-label{font-size:.66rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.st-val{font-family:'Fredoka',sans-serif;font-size:1.2rem;color:var(--teal);letter-spacing:.05em}
+.st-val.warn{color:var(--gold)}
+.st-val.danger{color:#e63946}
+.st-track{width:100%;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.st-fill{height:100%;background:var(--teal);border-radius:3px;width:100%;transition:width 1s linear,background .3s}
+.st-fill.warn{background:var(--gold)}
+.st-fill.danger{background:#e63946}
+
+.sb{width:100%;display:flex;gap:3px}
+.pip{flex:1;height:4px;border-radius:2px;background:#1a2420;transition:background .3s}
+.pip.done{background:var(--teal)}
+.pip.cur{background:rgba(46,196,182,.5);animation:pp 1s infinite}
+@keyframes pp{0%,100%{opacity:.4}50%{opacity:1}}
+.btns{display:flex;gap:10px;width:100%}
+.btn{flex:1;padding:14px;border:1.5px solid var(--border2);background:var(--bg3);border-radius:12px;font-family:'Fredoka',sans-serif;font-size:1rem;letter-spacing:.12em;color:var(--teal);cursor:pointer;transition:all .15s}
+.btn:hover:not(:disabled){background:var(--teal);color:#000}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.25;cursor:not-allowed}
+#ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,12,11,.93);backdrop-filter:blur(6px);gap:12px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:20;padding:24px}
+#ov.show{opacity:1;pointer-events:all}
+#ovT{font-family:'Fredoka',sans-serif;font-size:2rem;letter-spacing:.12em;color:var(--text);text-align:center;line-height:1.2}
+#ovS{font-size:.82rem;letter-spacing:.08em;color:var(--muted);text-align:center;line-height:1.6;padding:0 16px}
+#ovP{font-family:'Fredoka',sans-serif;font-size:1.8rem;color:var(--teal);letter-spacing:.1em;display:none}
+#ovB{margin-top:6px;padding:12px 32px;background:var(--teal);color:#000;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.05em}
+#ovB:hover{background:#44ffe8;box-shadow:0 4px 16px rgba(46,196,182,.3)}
+.demo-note{font-size:.64rem;color:var(--muted);text-align:center;letter-spacing:.05em;margin-top:2px;max-width:300px;line-height:1.5}
+</style>
+  <!-- cookie-consent (inlined: removes a render-blocking request; must still
+       run BEFORE the GA4 block below so Consent Mode v2 defaults apply first) -->
+  <script>
+(function () {
+  'use strict';
+
+  var KEY = 'winstep_cookie_consent'; // 'accepted' | 'rejected'
+
+  // ---- Google Consent Mode v2 plumbing (ready for GA / AdSense) ----
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { window.dataLayer.push(arguments); }
+  window.gtag = window.gtag || gtag;
+
+  var stored = null;
+  try { stored = localStorage.getItem(KEY); } catch (e) {}
+
+  // Default = everything denied (must run before GA/AdSense load).
+  // With ad_storage denied, AdSense auto-serves NON-personalized ads (variant B).
+  window.gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    wait_for_update: 500
+  });
+
+  function applyConsent(state) {
+    var granted = (state === 'accepted');
+    window.gtag('consent', 'update', {
+      analytics_storage: granted ? 'granted' : 'denied',
+      ad_storage:        granted ? 'granted' : 'denied',
+      ad_user_data:      granted ? 'granted' : 'denied',
+      ad_personalization:granted ? 'granted' : 'denied'
+    });
+    // Simple flag any ad-loading code can read: true = personalized, false = contextual
+    window.winstepAds = { personalized: granted };
+  }
+
+  // Re-apply a previously saved choice on every page load (no banner re-show)
+  if (stored === 'accepted' || stored === 'rejected') {
+    applyConsent(stored);
+  } else {
+    window.winstepAds = { personalized: false }; // safe default until they choose
+  }
+
+  // ---- Banner UI ----
+  function buildBanner() {
+    if (document.getElementById('ws-cookie-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'ws-cookie-banner';
+    b.setAttribute('role', 'dialog');
+    b.setAttribute('aria-label', 'Cookie consent');
+    b.style.cssText =
+      'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+      'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
+      'box-shadow:0 -8px 30px rgba(0,0,0,.45);padding:16px 20px;' +
+      "font-family:Nunito,'Segoe UI',sans-serif;color:#c9d4d1";
+    b.innerHTML =
+      '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
+      'gap:18px;flex-wrap:wrap;justify-content:center">' +
+        '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
+          '\uD83C\uDF6A Winstep is completely free for everyone, and ads are our only source of income. ' +
+          'Accepting cookies helps us keep it that way \u2014 but the choice is yours. Thank you for understanding! ' +
+          '<a href="/privacy.html" target="_blank" rel="noopener" ' +
+          'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:center">' +
+          '<button id="ws-cookie-reject" type="button" ' +
+          'style="padding:11px 22px;background:transparent;border:1.5px solid rgba(159,181,176,.55);' +
+          "color:#c9d4d1;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer\">" +
+          'Reject All</button>' +
+          '<button id="ws-cookie-accept" type="button" ' +
+          'style="padding:11px 26px;background:#2ec4b6;border:1.5px solid #2ec4b6;' +
+          "color:#0a1413;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer\">" +
+          'Accept All</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(b);
+    document.getElementById('ws-cookie-accept').onclick = function () { choose('accepted'); };
+    document.getElementById('ws-cookie-reject').onclick = function () { choose('rejected'); };
+  }
+
+  function removeBanner() {
+    var el = document.getElementById('ws-cookie-banner');
+    if (el) el.remove();
+  }
+
+  function choose(state) {
+    try { localStorage.setItem(KEY, state); } catch (e) {}
+    applyConsent(state);
+    removeBanner();
+    // let other on-page scripts know the cookie question is now resolved
+    try { window.dispatchEvent(new CustomEvent('winstep:consent', { detail: { state: state } })); } catch (e) {}
+  }
+
+  function showBannerIfNeeded() {
+    if (stored !== 'accepted' && stored !== 'rejected') buildBanner();
+  }
+
+  // ---- Public API (for the "Cookie Settings" footer link) ----
+  window.winstepConsent = {
+    get: function () { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
+    open: function () { buildBanner(); }  // re-open to change choice anytime
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showBannerIfNeeded);
+  } else {
+    showBannerIfNeeded();
+  }
+})();
+  </script>
+<style>
+/* ============================================================
+   winstep — "crate" skin, shared override layer
+   Appended AFTER each page's own stylesheet, so it only reshapes
+   what it names. Anything not covered keeps its original rule
+   (in the new colours, because the tokens below are overridden).
+   ============================================================ */
+:root{
+  --bg:#0a0f0e; --bg2:#111a18; --bg3:#182421; --bg4:#20302c;
+  --teal:#2ec4b6; --teal2:#6fd8cc;
+  --teal-btn:#2ec4b6; --teal-lip:#15756c; --teal-hi:#48ded0;
+  --teal3:rgba(46,196,182,.15); --teal4:rgba(46,196,182,.07);
+  --gold:#f5c842; --gold2:rgba(245,200,66,.13); --gold-lip:#a8831c;
+  --green:#3ddc84; --green2:rgba(61,220,132,.16);
+  --silver:#c9d2d0; --bronze:#d69a5c;
+  --red:#ff6b78; --red2:rgba(255,107,120,.16);
+  --on-accent:#04100e;
+  --text:#e8f0ee; --text2:#c9d4d1; --muted:#7e9a94; --soft:#9fb5b0;
+  --paper:#f6ecd9; --paper-ink:#241a08;
+  --border:rgba(255,255,255,.06); --border2:rgba(46,196,182,.34);
+  --lift:inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px -14px rgba(0,0,0,.75);
+  --disp:'Fredoka',system-ui,sans-serif;
+  --body:'Nunito',system-ui,sans-serif;
+}
+
+/* ── ground ─────────────────────────────────────────────── */
+body{background:var(--bg);font-family:var(--body)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),
+    radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)}
+
+/* ── header + logo ──────────────────────────────────────── */
+/* მხოლოდ ნამდვილი <header> — .topbar სამართლებრივ გვერდებზე უბრალო
+   რიგია ლოგოთი და Back-ით, არა ზოლი. მისთვის ფონის მიცემა ზედა
+   კიდეზე შავ ლენტს ქმნიდა. */
+header{background-color:rgba(10,15,14,.9)!important;
+  background-image:radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)!important;
+  background-size:100% 100vh!important;background-repeat:no-repeat!important;
+  background-position:top center!important;
+  border-bottom:1px solid var(--border)!important}
+.logo-badge{border-radius:13px!important;
+  box-shadow:0 4px 12px -7px rgba(46,196,182,.55),inset 0 1px 0 rgba(255,255,255,.28)!important}
+.logo-name{font-family:var(--disp)!important;font-weight:700!important;letter-spacing:-.01em!important}
+
+/* ── chunky plastic keys (pressable, with a lip) ────────── */
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.next-btn,.continue-btn,
+.btn,.btn-lg,.btn-solid,.btn-ghost,.btn-hero,.submit-btn,.verify-btn,
+.guess-btn,.h-btn,.over-btn,.spin-btn,.task-b,.bridge-b,.verify-resend,.btns .btn{
+  font-family:var(--disp)!important;font-weight:600!important;letter-spacing:0!important;
+  border-radius:13px!important;transition:transform .08s,box-shadow .08s,background .15s!important}
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.btn-ghost,.h-btn{
+  background:var(--bg3)!important;border:0!important;color:var(--text2)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+.back-btn:hover,.back-link:hover,.back:hover,.logout-btn:hover,.logout-btn2:hover,
+.acc-btn:hover,.btn-ghost:hover,.h-btn:hover{background:var(--bg4)!important;color:var(--text)!important}
+.btn,.btn-lg,.btn-solid,.btn-hero,.submit-btn,.next-btn,.continue-btn,.verify-btn,
+.guess-btn,.over-btn,.spin-btn,.task-b,.bridge-b{
+  background:var(--teal-btn)!important;border:0!important;color:var(--on-accent)!important;
+  box-shadow:0 2px 0 var(--teal-lip),0 5px 12px -9px rgba(46,196,182,.45)!important}
+.btn:hover,.btn-lg:hover,.btn-solid:hover,.btn-hero:hover,.submit-btn:hover,
+.next-btn:hover,.continue-btn:hover,.guess-btn:hover,.spin-btn:hover{
+  background:var(--teal-hi)!important}
+.back-btn:active,.back-link:active,.back:active,.logout-btn:active,.logout-btn2:active,
+.acc-btn:active,.btn:active,.btn-lg:active,.btn-solid:active,.btn-hero:active,
+.submit-btn:active,.next-btn:active,.continue-btn:active,.guess-btn:active,
+.h-btn:active,.over-btn:active,.spin-btn:active{transform:translateY(2px)!important;
+  box-shadow:0 0 0 currentColor!important}
+/* .google-btn is intentionally NOT restyled here — see crate-index.css */
+
+/* ── surfaces ───────────────────────────────────────────── */
+.card,.stat-card,.standing-card,.auth-card,.quiz-card,.result-card,.over-card,
+.modal-card,.boxc,.c,.frame,.callout,.current-box,.score-box,.hud,.scoreboard,
+.msg-box,.settings-row,.history-row,.verify-card,.task,.champ,.faq{
+  border:0!important;box-shadow:var(--lift)!important}
+.card,.auth-card,.quiz-card,.result-card,.over-card,.modal-card,.boxc,.c,.frame,
+.verify-card,.champ,.faq{border-radius:24px!important}
+.stat-card,.standing-card,.callout,.current-box,.score-box,.hud,.scoreboard,
+.msg-box,.settings-row,.history-row,.task{border-radius:18px!important}
+.card,.stat-card,.standing-card,.auth-card,.quiz-card,.over-card,.modal-card,
+.boxc,.verify-card{background:var(--bg2)!important}
+
+/* ── form fields ────────────────────────────────────────── */
+.input-field,.acc-input,input[type=text],input[type=email],input[type=password]{
+  background:var(--bg3)!important;border:0!important;border-radius:14px!important;
+  font-family:var(--body)!important;font-weight:600!important;color:var(--text)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
+.input-field:focus,.acc-input:focus,input:focus{outline:0!important;
+  box-shadow:0 0 0 2px var(--teal)!important}
+.input-label,.field-label,.s-label,.sp-label,.stat-lbl,.sr-label,.timer-label{
+  font-family:var(--body)!important;font-weight:700!important;color:var(--muted)!important}
+
+/* ── headings + section titles ──────────────────────────── */
+.section-title,.sec-h,.title,.hud-title,.modal-title,.q-text,.result-title,
+.over-title,.next-title,.rh-title,.profile-name,.quiz-tag,.hero{
+  font-family:var(--disp)!important;letter-spacing:-.015em!important}
+.section-title{font-size:1.2rem!important;letter-spacing:-.01em!important;
+  text-transform:none!important;color:var(--text)!important;font-weight:600!important}
+.section-title::after{content:none!important}
+
+/* ── pills, badges, tags ────────────────────────────────── */
+.profile-rank-pill,.rh-tag,.quiz-tag,.rs-live-badge,.pts,.champ-badge{
+  border:0!important;border-radius:999px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+
+/* ── numbers that used to be Bebas (condensed) ──────────── */
+/* Fredoka is wider, so the sizes tuned for Bebas are stepped down */
+.stat-val{font-family:var(--disp)!important;font-weight:700!important;font-size:1.75rem!important;
+  letter-spacing:-.02em!important}
+.standing-rank{font-family:var(--disp)!important;font-weight:700!important;font-size:2rem!important}
+.profile-avatar{font-family:var(--disp)!important;font-weight:700!important;font-size:1.9rem!important;
+  color:var(--on-accent)!important;
+  background:linear-gradient(150deg,var(--teal-hi),var(--teal))!important;
+  box-shadow:0 6px 18px -10px rgba(46,196,182,.6)!important}
+.rh-title{font-family:var(--disp)!important;font-weight:700!important;font-size:2.1rem!important;
+  letter-spacing:-.025em!important}
+.podium-avatar{font-family:var(--disp)!important;font-weight:700!important;color:var(--on-accent)!important}
+.p1 .podium-avatar{font-size:1.9rem!important}
+.p2 .podium-avatar,.p3 .podium-avatar{font-size:1.5rem!important}
+.podium-pts{font-family:var(--disp)!important;font-weight:700!important;font-size:1rem!important}
+.podium-bar{font-family:var(--disp)!important;font-weight:700!important;font-size:1.1rem!important;
+  border-radius:14px 14px 0 0!important}
+.podium-name,.podium-prize,.lb-pts,.lb-rank,.s-pts,.sp-val,.rs-round,.rs-pts,
+.history-pts,.result-pts,.q-pts,.over-score,.result-num,.st-val,.tt-val,.timer-value{
+  font-family:var(--disp)!important;font-weight:700!important}
+.lb-avatar,.lb-avatar-initial{font-family:var(--disp)!important;font-weight:700!important}
+.lb-avatar-initial{background:linear-gradient(150deg,var(--teal-hi),var(--teal))!important;
+  color:var(--on-accent)!important}
+.next-title{font-family:var(--disp)!important;font-weight:600!important;font-size:1.3rem!important;
+  letter-spacing:-.02em!important}
+
+/* ── tables + rows ──────────────────────────────────────── */
+.rs-table th{font-family:var(--body)!important;font-weight:700!important;
+  font-size:.7rem!important;color:var(--muted)!important;border-bottom:1px solid var(--border)!important}
+.rs-table td{font-size:.92rem!important;font-weight:600!important;border-bottom:1px solid var(--border)!important}
+.lb-row,.history-row,.settings-row{border-bottom:0!important;border-radius:16px!important}
+.lb-row.me{background:rgba(46,196,182,.13)!important}
+
+/* ── footers ────────────────────────────────────────────── */
+.ws-mini-foot,.footer,.foot-links,.legal,.foot-disclaimer{border-top:0!important;
+  font-family:var(--body)!important;font-weight:600!important;color:var(--muted)!important}
+.ws-mini-foot a,.ws-mini-foot button.ws-link,.footer a,.foot-links a{
+  color:var(--muted)!important;padding:6px 2px!important;display:inline-block!important}
+.ws-mini-foot a:hover,.footer a:hover,.foot-links a:hover{color:var(--teal)!important}
+
+/* ── small fixes found by measuring, not by eye ─────────── */
+/* results.html: the decorative hero glow is a fixed 400px pseudo-element and
+   pushed 5px past the viewport on a 390px phone (pre-existing, fixed here) */
+.results-hero::after{width:min(400px,100%)!important}
+/* nothing below 11px — these three were 10.2–10.9px */
+.rh-tag{font-size:.74rem!important}
+.prize-note .disclaimer,.prize-note a{font-size:.78rem!important}
+.sr-desc,.acc-note,div[style*="font-size:.68rem"],
+div[style*="font-size:.66rem"]{font-size:.78rem!important}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── games: page-specific ────────────────────────────────── */
+
+/* quiz — answers keep their green/red semantics, only the shape changes */
+.answer{border:0!important;border-radius:16px!important;background:var(--bg3)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;
+  font-family:var(--body)!important;font-weight:600!important}
+.answer:hover:not(.disabled){background:var(--bg4)!important;transform:translateX(3px)!important}
+.answer-letter{border:0!important;border-radius:11px!important;font-family:var(--disp)!important;
+  font-weight:700!important;background:var(--teal3)!important;color:var(--teal)!important}
+.answer-text{font-weight:600!important;font-size:1rem!important}
+.answer.correct{background:var(--green2)!important;
+  box-shadow:0 0 0 1.5px var(--green),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.answer.correct .answer-letter{background:var(--green)!important;color:#04140a!important}
+.answer.correct .answer-text{color:var(--green)!important}
+.answer.wrong{background:var(--red2)!important;
+  box-shadow:0 0 0 1.5px var(--red),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.answer.wrong .answer-letter{background:var(--red)!important;color:#2a0508!important}
+.answer.wrong .answer-text{color:var(--red)!important}
+.timer-section{border-bottom:0!important;background:transparent!important}
+.timer-track,.st-track,.tt-track{border-radius:99px!important;background:rgba(255,255,255,.07)!important}
+.timer-fill,.st-fill,.tt-fill{border-radius:99px!important}
+.q-text{font-size:1.3rem!important;font-weight:600!important;line-height:1.3!important}
+.quiz-tag{background:var(--teal3)!important;color:var(--teal)!important;
+  font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
+
+/* hilo — the playing card must stay a real white card, untouched by the
+   card/shadow rules above; only its corner type is restyled */
+.playing-card{border-radius:20px!important;background:#f6f4ef!important;
+  box-shadow:0 12px 30px -12px rgba(0,0,0,.75)!important;
+  /* the card ships without .red/.black until JS deals — without this the
+     placeholder pips inherit the light page text colour on a white card */
+  color:var(--card-black,#1a2422)!important}
+.pc-corner,.pc-rank,.pc-center{font-family:var(--disp)!important;font-weight:700!important}
+.guess-btn.low{background:var(--bg3)!important;color:var(--text)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+.guess-btn.low:hover:not(:disabled){background:var(--bg4)!important;color:var(--text)!important}
+.guess-btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+.score-box .k{font-family:var(--body)!important;font-weight:700!important;
+  font-size:.7rem!important;color:var(--muted)!important}
+.score-box .v{font-family:var(--disp)!important;font-weight:700!important;font-size:1.5rem!important}
+.eyebrow{font-family:var(--body)!important;font-weight:700!important;color:var(--teal)!important;
+  font-size:.74rem!important}
+.title{font-size:1.9rem!important;font-weight:600!important}
+.subtitle{font-size:.95rem!important;color:var(--muted)!important;font-weight:600!important}
+.feedback{font-family:var(--disp)!important;font-weight:600!important;font-size:1rem!important}
+.over-card{border-radius:24px!important}
+.over-title{font-family:var(--disp)!important;font-weight:600!important}
+.over-score{font-size:2rem!important}
+
+/* spin wheel — the wheel itself is canvas/SVG, only its frame is restyled */
+.wheel-ring{box-shadow:0 0 0 4px var(--bg3),0 0 0 6px rgba(46,196,182,.3),
+  0 12px 34px -14px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.55)!important}
+.wheel-ring.spinning{box-shadow:0 0 0 4px var(--bg3),0 0 0 6px var(--teal),
+  0 0 30px var(--teal3),0 12px 34px -14px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.55)!important}
+.hub{border:0!important;background:var(--bg3)!important;
+  box-shadow:0 3px 10px -4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)!important}
+.result-num{font-family:var(--disp)!important;font-weight:700!important;font-size:2.1rem!important}
+.result-label{font-weight:600!important;color:var(--soft)!important}
+
+/* bridge — HUD, pips and the two pick buttons */
+.demo-note{font-size:.78rem!important;font-weight:600!important}
+.hud{background:var(--bg2)!important}
+.hud-title{font-family:var(--disp)!important;font-weight:700!important;
+  font-size:1.15rem!important;letter-spacing:0!important}
+.hs .l{font-family:var(--body)!important;font-weight:700!important;font-size:.74rem!important;
+  color:var(--muted)!important}
+.hs .v{font-family:var(--disp)!important;font-weight:700!important;font-size:1.05rem!important;
+  letter-spacing:0!important}
+#cw{border:0!important;border-radius:20px!important;
+  box-shadow:0 8px 22px -14px rgba(0,0,0,.8)!important}
+.pip{border-radius:99px!important;background:rgba(255,255,255,.08)!important}
+.pip.done{background:var(--teal)!important}
+.pip.cur{background:rgba(46,196,182,.5)!important}
+.step-timer{background:var(--bg2)!important;border:0!important;border-radius:18px!important;
+  box-shadow:var(--lift)!important}
+.st-label{font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
+.btns .btn{font-size:.95rem!important;letter-spacing:0!important;padding:15px!important}
+.btns .btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+</style>
+<style>
+/* ===== 21 (blackjack, platform) — Bridge shell ===== */
+#wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  width:100%;max-width:480px;padding:16px;margin:0 auto;min-height:calc(100dvh - 92px);box-sizing:border-box}
+.mhud{width:100%;display:flex;justify-content:space-around;align-items:center;gap:8px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:11px 14px;box-shadow:var(--lift)}
+.mstat{display:flex;align-items:center;gap:5px;font-family:var(--body);font-weight:700;font-size:.86rem;color:var(--soft);white-space:nowrap}
+.mstat .ic{font-size:1.05em;line-height:1}
+.mstat b{font-family:var(--disp);color:var(--gold);font-size:1.02rem}
+
+#cw{position:relative;background:transparent!important;padding:0!important;border:0!important;box-shadow:none!important;
+  width:100%;min-height:430px;display:flex;flex-direction:column;gap:8px;align-items:center}
+
+.side{width:min(94vw,360px);background:var(--bg2);border-radius:14px;box-shadow:var(--lift);padding:9px 11px;transition:box-shadow .15s}
+.side.turn{box-shadow:inset 0 0 0 1.5px var(--teal),var(--lift)}
+.side .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.side .who{font-family:var(--body);font-weight:800;font-size:.82rem;color:var(--soft)}
+.tot{font-family:var(--disp);font-weight:700;font-size:1.05rem;color:var(--gold);background:var(--bg3);border-radius:8px;padding:2px 12px;min-width:34px;text-align:center}
+.tot.bust{color:var(--red)} .tot.win{color:var(--green)}
+.hand{display:flex;gap:5px;flex-wrap:wrap;min-height:44px;align-items:center}
+
+.dom{border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;line-height:1;flex-shrink:0}
+.dom.dback{background:linear-gradient(150deg,var(--teal),#1c8f83);box-shadow:inset 0 2px 0 rgba(255,255,255,.25),inset 0 -4px 8px rgba(0,0,0,.25),0 3px 8px -3px rgba(0,0,0,.5)}
+.dom.dface{background:#eef3f1;color:#0c211d;box-shadow:0 3px 8px -3px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.08)}
+.hand .dom{width:34px;height:44px;font-size:.98rem}
+.hand .dom.ace{flex-direction:column;justify-content:center;align-items:center;font-size:.9rem;line-height:1;gap:0}
+.hand .dom.ace .a-bot{border-top:1.6px solid rgba(12,33,29,.55);padding-top:1px;margin-top:2px;min-width:56%;text-align:center}
+
+.pool-label{font-family:var(--body);font-weight:700;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:4px 0 2px}
+.pool{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:min(94vw,360px);opacity:.55;transition:opacity .15s}
+.pool.active{opacity:1}
+.pool .slot{aspect-ratio:3/4}
+.pool .dom{width:100%;height:100%;font-size:1.1rem}
+.pool.active .dom.dback{cursor:pointer}
+.pool.active .dom.dback:hover{filter:brightness(1.14)}
+.pool .slot.empty{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+
+.controls{display:flex;gap:10px;justify-content:center;min-height:48px;align-items:center}
+.tw-btn{padding:12px 30px;border:none;border-radius:13px;font-family:var(--disp);font-size:1rem;font-weight:700;cursor:pointer;user-select:none;background:var(--teal);color:#04100e;box-shadow:0 2px 0 var(--teal-lip);transition:transform .08s}
+.tw-btn.alt{background:var(--gold);color:#241a08;box-shadow:0 2px 0 var(--gold-lip)}
+.tw-btn:active:not(:disabled){transform:translateY(2px)}
+.tw-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+.mmsg{min-height:22px;text-align:center;font-family:var(--disp);font-weight:600;font-size:.92rem;color:var(--soft)}
+.mmsg b{color:var(--gold)} .mmsg .win{color:var(--green)} .mmsg .lose{color:var(--red)}
+
+#ovT{font-weight:700!important}
+#ov{background:#080c0b!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" style="cursor:pointer" onclick="window.location.href='/dashboard.html'">
+    <div class="logo-badge">
+      <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+  </div>
+  <button class="back-btn" onclick="window.location.href='/dashboard.html'">◀ Back to Tasks</button>
+</header>
+
+<div id="wrap">
+  <div class="mhud" id="mhud">
+    <div class="mstat"><span class="ic">🃏</span><span>Try <b id="handNo">1</b>/4</span></div>
+    <div class="mstat"><span class="ic">🏁</span><span><b id="score">0</b> pts</span></div>
+  </div>
+
+  <div id="cw">
+    <div class="side" id="oppSide">
+      <div class="top"><span class="who">🤖 Opponent</span><span class="tot" id="oppTot">0</span></div>
+      <div class="hand" id="oppHand"></div>
+    </div>
+    <div class="side" id="youSide">
+      <div class="top"><span class="who">🧑 You</span><span class="tot" id="youTot">0</span></div>
+      <div class="hand" id="youHand"></div>
+    </div>
+
+    <div class="mmsg" id="msg"></div>
+    <div class="controls">
+      <button class="tw-btn" id="standBtn" disabled>Stand</button>
+      <button class="tw-btn alt" id="nextBtn" style="display:none">Next try →</button>
+    </div>
+
+    <div class="pool-label">Pick a tile to Hit</div>
+    <div class="pool" id="pool"></div>
+
+    <div id="ov" class="show">
+      <div id="ovT" style="color:#2ec4b6">21</div>
+      <div id="ovS">Get closer to 21 than your opponent — without going over. Flip the dominoes.</div>
+      <div id="ovP"></div>
+      <button id="ovB" onclick="startGame()">START GAME</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== 21 (blackjack with dominoes) — server-authoritative ===== */
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let youCards = [], oppCards = [];
+let handNo = 1, score = 0, turn = 'you', handOver = false, busy = false;
+let currentSession = null, gameActive = false, ended = false;
+
+/* ---- render helpers (values the server revealed) ---- */
+function dom(cls, txt){ return '<div class="dom '+cls+'">'+(txt||'')+'</div>'; }
+function faceOf(v){
+  if(v===11) return '<div class="dom dface ace"><span class="a-top">11</span><span class="a-bot">1</span></div>';
+  return dom('dface', String(v));
+}
+function renderHands(youTotal, oppTotal){
+  document.getElementById('youHand').innerHTML = youCards.map(faceOf).join('');
+  document.getElementById('oppHand').innerHTML = oppCards.map(faceOf).join('');
+  const yE = document.getElementById('youTot'), oE = document.getElementById('oppTot');
+  yE.textContent = youTotal; oE.textContent = oppTotal;
+  yE.className = 'tot' + (youTotal>21?' bust':''); oE.className = 'tot' + (oppTotal>21?' bust':'');
+}
+function renderPool(poolFilled){
+  const p = document.getElementById('pool'); p.innerHTML = '';
+  (poolFilled||[]).forEach((filled, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (filled ? '' : ' empty');
+    if(filled){ slot.innerHTML = dom('dback'); slot.querySelector('.dom').onclick = () => playerHit(i); }
+    p.appendChild(slot);
+  });
+}
+function enablePool(on){ document.getElementById('pool').classList.toggle('active', !!on); }
+function setMsg(h){ document.getElementById('msg').innerHTML = h; }
+function updateHud(){ document.getElementById('handNo').textContent = handNo; document.getElementById('score').textContent = score; }
+
+/* reveal opponent's drawn cards one-by-one, then run cb */
+function animateOpp(moves, cb){
+  moves = moves || [];
+  let k = 0;
+  function step(){
+    if(k >= moves.length){ cb && cb(); return; }
+    oppCards.push(moves[k][0]); k++;
+    renderHands(tLocal(youCards), tLocal(oppCards));
+    setTimeout(step, 520);
+  }
+  if(moves.length === 0){ cb && cb(); return; }
+  step();
+}
+/* local total — ONLY for the smooth animation in-between server totals */
+function tLocal(cards){ let t=0,a=0; for(const v of cards){ t+=v; if(v===11)a++; } while(t>21&&a>0){t-=10;a--;} return t; }
+
+/* ---- auth ---- */
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){ window.location.href = '/index.html'; return; }
+  currentSession = session;
+  document.getElementById('standBtn').onclick = playerStand;
+}
+
+/* ---- START ---- */
+async function startGame(){
+  if(gameActive) return;
+  const { data: res } = await db.rpc('twentyone_start');
+  if(!res || !res.ok){
+    const t = document.getElementById('ovT');
+    t.textContent = (res && res.reason==='already_played') ? 'Already played' : '21 not available';
+    t.style.color = '#e8f0ee';
+    document.getElementById('ovS').innerHTML = 'This game attempt is no longer available.<br>It unlocks during the break after a box.';
+    document.getElementById('ovP').style.display = 'none';
+    const b = document.getElementById('ovB'); b.textContent = 'BACK TO DASHBOARD';
+    b.onclick = () => { window.location.href='/dashboard.html'; };
+    document.getElementById('ov').classList.add('show');
+    return;
+  }
+  gameActive = true; ended = false;
+  handNo = res.hand_no; score = res.score; turn = res.turn; handOver = false;
+  youCards = res.you || []; oppCards = res.opp || [];
+  document.getElementById('ov').classList.remove('show');
+  updateHud(); renderHands(res.you_total, res.opp_total); renderPool(res.pool_filled);
+  document.getElementById('standBtn').style.display = ''; document.getElementById('standBtn').disabled = false;
+  document.getElementById('nextBtn').style.display = 'none';
+  enablePool(true);
+  setMsg('Your turn — flip a tile to Hit, or Stand.');
+}
+
+/* ---- HIT ---- */
+async function playerHit(slot){
+  if(!gameActive || handOver || busy || turn!=='you') return;
+  busy = true; enablePool(false); document.getElementById('standBtn').disabled = true;
+  let res;
+  try{ const q = await db.rpc('twentyone_hit', { p_slot: slot }); res = q.data; }catch(e){ res = null; }
+  if(!res || !res.ok){ busy = false; enablePool(true); document.getElementById('standBtn').disabled = false; return; }
+  youCards = res.you; renderHands(res.you_total, res.opp_total); renderPool(res.pool_filled);
+  animateOpp(res.opp_moves, () => {
+    oppCards = res.opp; renderHands(res.you_total, res.opp_total);
+    score = res.score; handNo = res.hand_no; updateHud();
+    if(res.hand_over){ finishHand(res); }
+    else { busy = false; enablePool(true); document.getElementById('standBtn').disabled = false;
+           setMsg('Your turn — flip a tile to Hit, or Stand.'); }
+  });
+}
+
+/* ---- STAND ---- */
+async function playerStand(){
+  if(!gameActive || handOver || busy || turn!=='you') return;
+  busy = true; enablePool(false); document.getElementById('standBtn').disabled = true;
+  setMsg('You stand on ' + tLocal(youCards) + '.');
+  let res;
+  try{ const q = await db.rpc('twentyone_stand'); res = q.data; }catch(e){ res = null; }
+  if(!res || !res.ok){ busy = false; return; }
+  renderHands(res.you_total, res.opp_total); renderPool(res.pool_filled);
+  animateOpp(res.opp_moves, () => {
+    oppCards = res.opp; renderHands(res.you_total, res.opp_total);
+    score = res.score; handNo = res.hand_no; updateHud();
+    finishHand(res);
+  });
+}
+
+/* ---- end of a hand ---- */
+function finishHand(res){
+  handOver = true;
+  document.getElementById('youSide').classList.remove('turn');
+  document.getElementById('oppSide').classList.remove('turn');
+  document.getElementById('standBtn').style.display = 'none';
+  if(res.result === 'win'){
+    document.getElementById('youTot').classList.add('win');
+    setMsg('<span class="win">You win this hand!</span>');
+  } else if(res.result === 'lose'){
+    setMsg('<span class="lose">' + (res.you_total>21 ? 'Bust — you lose.' : 'Opponent wins.') + '</span>');
+  } else {
+    setMsg('Push — equal totals. No points.');
+  }
+  updateHud();
+
+  if(res.game_over){
+    setTimeout(showGameOver, 1600);
+  } else {
+    const nb = document.getElementById('nextBtn'); nb.style.display = ''; nb.textContent = 'Next try →';
+    nb.onclick = nextHand;
+    busy = false;
+  }
+}
+
+/* ---- NEXT HAND ---- */
+async function nextHand(){
+  if(busy) return;
+  busy = true;
+  const nb = document.getElementById('nextBtn'); nb.style.display = 'none';
+  let res;
+  try{ const q = await db.rpc('twentyone_next'); res = q.data; }catch(e){ res = null; }
+  if(!res || !res.ok){ busy = false; return; }
+  handNo = res.hand_no; score = res.score; turn = res.turn; handOver = false;
+  youCards = res.you || []; oppCards = [];
+  document.getElementById('youTot').classList.remove('win');
+  document.getElementById('standBtn').style.display = ''; document.getElementById('standBtn').disabled = true;
+  renderHands(res.you_total, 0); renderPool(res.pool_filled); updateHud();
+  // animate opponent's opening move (if opponent started this hand)
+  animateOpp(res.opp_moves, () => {
+    oppCards = res.opp || []; renderHands(res.you_total, res.opp_total);
+    document.getElementById('standBtn').disabled = false;
+    enablePool(true);
+    setMsg('Your turn — flip a tile to Hit, or Stand.');
+    busy = false;
+  });
+}
+
+/* ---- game over ---- */
+function showGameOver(){
+  gameActive = false; ended = true;
+  document.getElementById('mhud').style.display = 'none';
+  const ovT = document.getElementById('ovT'); ovT.textContent = 'Game Over!'; ovT.style.color = '#e8f0ee';
+  document.getElementById('ovS').style.display = 'none';
+  const p = document.getElementById('ovP'); p.style.display = 'block'; p.textContent = 'You earned ' + score + ' pts!';
+  const btn = document.getElementById('ovB'); btn.textContent = 'BACK TO DASHBOARD';
+  btn.onclick = () => { window.location.href = '/dashboard.html'; };
+  document.getElementById('ov').classList.add('show');
+}
+
+/* ---- leaving mid-game keeps accumulated score (sync, like bridge) ---- */
+function endOnLeave(){
+  if(!gameActive || ended) return;
+  ended = true;
+  try{
+    var token = (currentSession && currentSession.access_token) || SUPABASE_KEY;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/rpc/twentyone_end', false);
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send('{}');
+  }catch(e){}
+}
+window.addEventListener('pagehide', endOnLeave);
+
+init();
+</script>
+
+</body>
+</html>
