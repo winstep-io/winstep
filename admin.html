@@ -500,6 +500,24 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
           <label class="field-label">Message shown to visitors</label>
           <input class="field-input" id="pauseMsgInput" placeholder="We'll be back shortly...">
         </div>
+        <div class="field-row" style="margin-bottom:12px">
+          <div class="field"><label class="field-label">Icon</label>
+            <select class="field-input" id="pauseIconSel">
+              <option value="none">None (text only)</option>
+              <option value="wrench">🔧 Wrench</option>
+              <option value="clock">⏰ Clock</option>
+            </select>
+          </div>
+          <div class="field"><label class="field-label">Font style</label>
+            <select class="field-input" id="pauseFontSel">
+              <option value="normal">Normal</option>
+              <option value="bold">Bold</option>
+              <option value="light">Light</option>
+              <option value="display">Display (Fredoka)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="pauseSaveBtn" onclick="savePauseText()" style="margin-bottom:12px">💾 Save message & style</button>
         <div id="pauseStatus" style="font-size:.8rem;margin-bottom:12px;color:var(--muted)">Loading...</div>
         <button class="btn btn-primary" id="pauseBtn" onclick="togglePause()">Pause Site</button>
       </div>
@@ -1760,8 +1778,14 @@ async function loadPauseState(){
 
   const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
   const { data: m } = await db.from('site_state').select('value').eq('key','pause_message').maybeSingle();
+  const { data: ic } = await db.from('site_state').select('value').eq('key','pause_icon').maybeSingle();
+  const { data: ft } = await db.from('site_state').select('value').eq('key','pause_font').maybeSingle();
   const paused = s && s.value === 1;
   if(msgIn && m) msgIn.value = m.value || '';
+  const iconSel = document.getElementById('pauseIconSel');
+  const fontSel = document.getElementById('pauseFontSel');
+  if(iconSel) iconSel.value = (ic && ic.value) ? ic.value : 'wrench';
+  if(fontSel) fontSel.value = (ft && ft.value) ? ft.value : 'normal';
 
   if(paused){
     btn.textContent = 'Unpause Site';
@@ -1774,6 +1798,20 @@ async function loadPauseState(){
   }
 }
 
+// ტექსტის/იკონის/ფონტის შენახვა პაუზის მდგომარეობის შეცვლის გარეშე.
+// ვრცელდება ხელითაც და ავტომატურ (ტესტ-ჩემპიონატის) პაუზაზეც — ერთი site_state.
+async function savePauseText(){
+  const msg  = (document.getElementById('pauseMsgInput')||{}).value || '';
+  const icon = (document.getElementById('pauseIconSel')||{}).value || 'wrench';
+  const font = (document.getElementById('pauseFontSel')||{}).value || 'normal';
+  const u1 = await db.from('site_state').update({ value: msg.trim() }).eq('key','pause_message');
+  const u2 = await db.from('site_state').update({ value: icon }).eq('key','pause_icon');
+  const u3 = await db.from('site_state').update({ value: font }).eq('key','pause_font');
+  const err = (u1&&u1.error) || (u2&&u2.error) || (u3&&u3.error);
+  if(err){ showMsg('champMsg', err.message, 'err'); return; }
+  showMsg('champMsg','Pause message & style saved. ✅','ok');
+}
+
 async function togglePause(){
   const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
   const nowPaused = !(s && s.value === 1);
@@ -1782,6 +1820,11 @@ async function togglePause(){
   if(msg){
     await db.from('site_state').update({ value: msg }).eq('key','pause_message');
   }
+  // იკონი/ფონტიც შევინახოთ, რომ პაუზისას მიმდინარე არჩევანი აისახოს
+  const _ic = (document.getElementById('pauseIconSel')||{}).value;
+  const _ft = (document.getElementById('pauseFontSel')||{}).value;
+  if(_ic) await db.from('site_state').update({ value: _ic }).eq('key','pause_icon');
+  if(_ft) await db.from('site_state').update({ value: _ft }).eq('key','pause_font');
 
   const { error } = await db.from('settings').update({ value: nowPaused ? 1 : 0 }).eq('key','site_paused');
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
@@ -1943,14 +1986,32 @@ async function editChampionship(champId){
   if(newDur===null) return;
   const newStart = prompt('Start date (YYYY-MM-DD):', c.start_date);
   if(newStart===null) return;
+  const nr = parseInt(newRounds)||c.total_rounds;
+  const nd = parseInt(newDur)||c.round_duration_days;
+  const ns = newStart||c.start_date;
   const { error } = await db.from('championships').update({
-    total_rounds: parseInt(newRounds)||c.total_rounds,
-    round_duration_days: parseInt(newDur)||c.round_duration_days,
-    start_date: newStart||c.start_date
+    total_rounds: nr, round_duration_days: nd, start_date: ns
   }).eq('id', champId);
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-  showMsg('champMsg',champTitle(c)+' updated. ✅','ok');
+
+  // ⚠️ რაუნდების თავიდან აგება ახალი თარიღებით (ძველები რომ არ დარჩეს)
+  await db.from('rounds').delete().eq('championship_id', champId);
+  const erows = [];
+  const estartMs = new Date(ns + 'T00:00:00Z').getTime();
+  for(let i = 0; i < nr; i++){
+    const ers = new Date(estartMs + (i * nd) * 86400000);
+    const ere = new Date(estartMs + ((i + 1) * nd - 1) * 86400000);
+    erows.push({ round_number: i+1, total_rounds: nr,
+      start_date: ers.toISOString().split('T')[0],
+      end_date: ere.toISOString().split('T')[0],
+      status: 'upcoming', championship_id: champId });
+  }
+  const { error: erErr } = await db.from('rounds').insert(erows);
+  if(erErr){ showMsg('champMsg','Updated, but rounds rebuild failed: '+erErr.message,'err'); loadChampionship(); return; }
+
+  showMsg('champMsg',champTitle(c)+' updated (rounds rebuilt). ✅','ok');
   loadChampionship();
+  if(typeof loadRounds === 'function') loadRounds();
 }
 
 async function deleteChampionship(champId, num){
