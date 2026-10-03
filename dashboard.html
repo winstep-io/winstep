@@ -453,10 +453,6 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
   border-radius:20px;padding:44px 32px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .pause-ico{font-size:3rem;margin-bottom:18px}
 .pause-msg{font-size:1.08rem;line-height:1.6;color:var(--soft,#c9d4d1)}
-.pause-msg.pf-normal{font-weight:400}
-.pause-msg.pf-bold{font-weight:800}
-.pause-msg.pf-light{font-weight:300}
-.pause-msg.pf-display{font-family:var(--disp,'Fredoka');font-weight:700;font-size:1.35rem;letter-spacing:.3px}
 
 /* ── championship countdown — per-digit slide transition ──────
    მხოლოდ შეცვლილი ციფრი ცოცდება ზემოდან თავის ადგილზე; unchanged
@@ -694,7 +690,7 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
 <!-- Pause overlay — bootstrap-ის მიხედვით ჩნდება/ქრება, dashboard-ს არ ცვლის -->
 <div id="pauseOverlay">
   <div class="pause-card">
-    <div class="pause-ico" id="pauseIco"></div>
+    <div class="pause-ico">🔧</div>
     <div class="pause-msg" id="pauseMsg"></div>
   </div>
 </div>
@@ -910,16 +906,6 @@ function loadBootstrap(){
       const { data, error } = await db.rpc('get_dashboard_bootstrap');
       if(error || !data) throw error || new Error('no data');
       BOOT = data;
-      // პაუზის ხატულა/შრიფტი: თუ bootstrap-ში არ მოდის, ცალკე helper RPC-დან ვიღებთ
-      // (მხოლოდ პაუზის დროს — ზედმეტ მოთხოვნას თავიდან ავიცილებთ).
-      try{
-        const pp = BOOT && BOOT.pause;
-        const paused = pp && (pp.paused===1 || pp.paused===true || pp.paused==='1');
-        if(paused && pp && pp.icon===undefined){
-          const { data: st } = await db.rpc('get_pause_style');
-          if(st){ pp.icon = st.icon; pp.font = st.font; }
-        }
-      }catch(_){}
     }catch(e){
       BOOT = null;   // fallback: ძველი მოთხოვნები იმუშავებს
       console.warn('bootstrap RPC failed, using legacy queries', e);
@@ -946,19 +932,7 @@ function applyPauseOverlay(){
     const p = BOOT.pause;
     const el = document.getElementById('pauseOverlay');
     const msg = document.getElementById('pauseMsg');
-    const ico = document.getElementById('pauseIco');
-    if(msg){
-      msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
-      // შრიფტის სტილი ადმინიდან (normal/bold/light/display)
-      const font = (p.font || 'normal');
-      msg.className = 'pause-msg pf-' + font;
-    }
-    if(ico){
-      // ხატულა ადმინიდან: none → ტექსტი მარტო, wrench → 🔧, clock → ⏰
-      const icon = (p.icon || 'wrench');
-      if(icon === 'none'){ ico.textContent = ''; ico.style.display = 'none'; }
-      else { ico.textContent = (icon === 'clock' ? '⏰' : '🔧'); ico.style.display = ''; }
-    }
+    if(msg) msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
     if(el) el.classList.add('on');
     // dashboard დამალული რჩება (data-boot=pending): მუქი ფონი + overlay ჩანს.
     // ადმინის შემოწმებას init() ქვემოთ აკეთებს და საჭიროებისას ხსნის.
@@ -1863,13 +1837,11 @@ function renderInterval(data){
   // ===== LAST BOX OF THE DAY =====
   if(isLastBox){
     if(gameAvailable){
-      const banner = '<div class="interval-banner">'
-        + '<div class="bridge-notice" style="margin-top:0">'
-        + '<div class="bridge-notice-icon">'+g.icon+'</div>'
+      const banner = '<div class="interval-banner"><div class="interval-title">⏳ Bonus game closes in</div><div class="interval-count" id="intervalCountdown">—</div>'
+        + '<div class="bridge-notice"><div class="bridge-notice-icon">'+g.icon+'</div>'
         + '<div class="bridge-notice-info"><div class="bridge-notice-title">'+g.name+' unlocked!</div>'
-        + '<div class="bridge-notice-sub">Bonus game — closes in <b id="intervalCountdown">—</b></div></div>'
-        + '<button class="bridge-play-btn" onclick="'+g.fn+'">Play</button>'
-        + '</div></div>';
+        + '<div class="bridge-notice-sub">Play now for bonus points — available during this break only</div></div>'
+        + '<button class="bridge-play-btn" onclick="'+g.fn+'">Play</button></div></div>';
       place(banner);
       startIntervalCountdown(new Date(data.prog.interval_ends_at));
     } else {
@@ -2064,7 +2036,7 @@ if(document.readyState === 'loading'){
       <button class="modal-close" onclick="closeRoundInfo()">✕</button>
     </div>
     <div class="modal-text">
-      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo). At the end of each round, the <b>top 10</b> players earn championship points:
+      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo, Minefield, 21). At the end of each round, the <b>top 10</b> players earn championship points:
     </div>
     <div class="pts-grid" id="ptsGrid">
       <div class="loading" style="padding:10px">Loading...</div>
