@@ -440,7 +440,8 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .mrow.active{background:rgba(46,196,182,.12);box-shadow:inset 0 0 0 1px var(--teal)}
 .mrow.locked{opacity:.4}
 .mfield.over .mrow.locked{opacity:1}
-.mgut{width:26px;flex-shrink:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:.66rem;color:var(--muted)}
+.mgut{width:28px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.02;font-family:var(--disp);font-weight:700;font-size:.66rem;color:var(--muted)}
+.mgut .u{font-size:.5rem;font-weight:600;opacity:.7;letter-spacing:.02em}
 .mrow.active .mgut{color:var(--teal-hi)} .mrow.passed .mgut{color:var(--green)}
 .mcell{flex:1 1 0;aspect-ratio:1;border-radius:6px;background:#12312c;
   box-shadow:inset 0 0 0 1px rgba(46,196,182,.08);display:flex;align-items:center;justify-content:center;
@@ -535,7 +536,7 @@ function buildField(){
   const f = document.getElementById('field'); f.innerHTML = '';
   for(let r = ROWS - 1; r >= 0; r--){
     const row = document.createElement('div'); row.className = 'mrow'; row.id = 'row'+r;
-    const g = document.createElement('div'); g.className = 'mgut'; g.textContent = '+'+(r+1); row.appendChild(g);
+    const g = document.createElement('div'); g.className = 'mgut'; g.innerHTML = '+'+(r+1)+'<span class="u">pts</span>'; row.appendChild(g);
     for(let c = 0; c < COLS; c++){
       const cell = document.createElement('div'); cell.className = 'mcell'; cell.id = 'm'+r+'_'+c;
       cell.onclick = () => pick(r, c); row.appendChild(cell);
@@ -611,7 +612,7 @@ async function pick(r, c){
     if(cell) cell.classList.add('mine');
     score = res.score;            // 0 — a mine loses everything
     updateHud();
-    endGame('Game Over!', '#e8f0ee', res.score);
+    endGame('Game Over!', '#e8f0ee', res.score, res.mines);
     return;
   }
 
@@ -621,7 +622,7 @@ async function pick(r, c){
   updateHud();
 
   if(res.finished && res.win){
-    endGame('Well done!', '#2ec4b6', res.score);
+    endGame('Well done!', '#2ec4b6', res.score, res.mines);
     return;
   }
   updateRows();
@@ -638,12 +639,24 @@ async function takePoints(){
   try{ const q = await db.rpc('minefield_take'); res = q.data; }catch(e){ res = null; }
   busy = false;
   if(!res || !res.ok) return;
-  endGame('Nice!', '#2ec4b6', res.score);
+  endGame('Nice!', '#2ec4b6', res.score, res.mines);
 }
 
 /* ---- end-of-game UI (points already finalized server-side) ---- */
-function endGame(title, color, pts){
+function revealMines(mines){
+  if(!mines) return;
+  mines.forEach((cols, r) => {
+    (cols||[]).forEach(c => {
+      const cell = document.getElementById('m'+r+'_'+c);
+      if(cell && !cell.classList.contains('mine') && !cell.classList.contains('safe')){
+        cell.classList.add('reveal-mine');
+      }
+    });
+  });
+}
+function endGame(title, color, pts, mines){
   over = true; gameActive = false; ended = true;
+  revealMines(mines);
   document.getElementById('field').classList.add('over');
   updateRows();
   document.getElementById('msg').style.display = 'none';
