@@ -965,6 +965,10 @@ async function init(){
 
   currentUser = session.user;
 
+  // capture client IP (first-seen signup_ip + rolling last_ip) — fire-and-forget,
+  // never blocks dashboard load; server-side (touch_ip) does all the work.
+  try{ db.rpc('touch_ip').then(()=>{}).catch(()=>{}); }catch(_){}
+
   // ── პაუზა + ადმინი ──
   // საიტი პაუზაზეა? სტუმარი/მომხმარებელი overlay-ს ხედავს (dashboard დამალული).
   // ადმინისთვის: overlay ვხსნით, dashboard-ს ვაჩვენებთ, რომ იმუშაოს.

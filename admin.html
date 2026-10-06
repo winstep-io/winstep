@@ -384,6 +384,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div class="nav-item" onclick="nav('rounds',this)"><span>🏁</span><span>Rounds</span></div>
     <div class="nav-item" onclick="nav('prizes',this)"><span>🎁</span><span>Prizes</span></div>
     <div class="nav-item" onclick="nav('users',this)"><span>👥</span><span>Users</span></div>
+    <div class="nav-item" onclick="nav('ipdetect',this)"><span>🛡️</span><span>IP Detection</span><span id="ipUnreadNav" style="display:none;margin-left:auto;color:#ff5a67;font-weight:800;font-size:.82rem"></span></div>
     <div class="nav-item" onclick="nav('settings',this)"><span>⚙️</span><span>Points Settings</span></div>
     <div class="nav-item" onclick="nav('ads',this)"><span>📺</span><span>Ad Manager</span></div>
     <div class="nav-item" onclick="nav('emailforms',this)"><span>📧</span><span>E-Mail Forms</span></div>
@@ -500,24 +501,6 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
           <label class="field-label">Message shown to visitors</label>
           <input class="field-input" id="pauseMsgInput" placeholder="We'll be back shortly...">
         </div>
-        <div class="field-row" style="margin-bottom:12px">
-          <div class="field"><label class="field-label">Icon</label>
-            <select class="field-input" id="pauseIconSel">
-              <option value="none">None (text only)</option>
-              <option value="wrench">🔧 Wrench</option>
-              <option value="clock">⏰ Clock</option>
-            </select>
-          </div>
-          <div class="field"><label class="field-label">Font style</label>
-            <select class="field-input" id="pauseFontSel">
-              <option value="normal">Normal</option>
-              <option value="bold">Bold</option>
-              <option value="light">Light</option>
-              <option value="display">Display (Fredoka)</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-ghost" id="pauseSaveBtn" onclick="savePauseText()" style="margin-bottom:12px">💾 Save message & style</button>
         <div id="pauseStatus" style="font-size:.8rem;margin-bottom:12px;color:var(--muted)">Loading...</div>
         <button class="btn btn-primary" id="pauseBtn" onclick="togglePause()">Pause Site</button>
       </div>
@@ -652,6 +635,29 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px">🌍 Users by country</div>
         <div id="countryStats"><div class="loading">Loading...</div></div>
       </div>
+    </div>
+
+    <!-- ============ IP DETECTION ============ -->
+    <div class="section" id="sec-ipdetect">
+      <div class="page-title">IP Detection</div>
+      <div class="page-sub">Alerts when two or more accounts share the same signup IP — a strong multi-account / bot signal. This is a review queue, not an auto-ban: shared home, office and mobile IPs can match legitimately.</div>
+
+      <div class="msg" id="ipMsg"></div>
+
+      <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2)">
+        <div style="font-size:1.8rem">🛡️</div>
+        <div style="flex:1;min-width:150px">
+          <div style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600">Unread alerts</div>
+          <div id="ipUnreadBig" style="font-size:1.7rem;font-weight:700;line-height:1.1;color:#ff5a67">—</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);cursor:pointer">
+          <input type="checkbox" id="ipUnreadOnly" onchange="loadIpDetect()" style="width:15px;height:15px;accent-color:var(--teal,#2ec4b6);cursor:pointer">Unread only
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="loadIpDetect()">↻ Refresh</button>
+        <button class="btn btn-primary btn-sm" id="ipMarkAll" onclick="ipMarkAllRead()">Mark all as read</button>
+      </div>
+
+      <div id="ipAlertsList"><div class="loading">Loading...</div></div>
     </div>
 
     <!-- ============ POINTS SETTINGS ============ -->
@@ -1023,6 +1029,15 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
   </div>
 </div>
 
+<!-- Same-IP accounts (opened from the Users view) -->
+<div class="gate" id="sameIpModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
+  <div class="card" style="width:100%;max-width:460px;margin:0;max-height:90vh;overflow-y:auto">
+    <div class="card-title" id="sameIpTitle">Accounts on this IP <span style="cursor:pointer;float:right" onclick="closeSameIp()">✕</span></div>
+    <div id="sameIpBody" style="margin-top:10px"></div>
+    <button class="btn btn-ghost" onclick="closeSameIp()" style="width:100%;margin-top:16px">Close</button>
+  </div>
+</div>
+
 <!-- Change round points (admin only) -->
 <div class="gate" id="adjustPtsModal" style="display:none;background:rgba(8,12,11,.85);backdrop-filter:blur(8px)">
   <div class="card" style="width:100%;max-width:420px;margin:0;max-height:90vh;overflow-y:auto">
@@ -1093,6 +1108,7 @@ async function checkAdmin(user){
   loadBoxes();
   loadSettings();
   bgLoadFromStorage();
+  updateIpBadge();
 }
 
 // ---- SETTINGS ----
@@ -1166,6 +1182,7 @@ function nav(section, el){
   if(section==='rounds') loadRounds();
   if(section==='prizes') loadPrizes();
   if(section==='users') loadUsers();
+  if(section==='ipdetect') loadIpDetect();
   if(section==='ads'){ loadAds(); loadInterstitial(); }
   if(section==='emailforms'){ wfRender(); cfRender(); }
   if(section==='gallery') loadGallery();
@@ -1778,14 +1795,8 @@ async function loadPauseState(){
 
   const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
   const { data: m } = await db.from('site_state').select('value').eq('key','pause_message').maybeSingle();
-  const { data: ic } = await db.from('site_state').select('value').eq('key','pause_icon').maybeSingle();
-  const { data: ft } = await db.from('site_state').select('value').eq('key','pause_font').maybeSingle();
   const paused = s && s.value === 1;
   if(msgIn && m) msgIn.value = m.value || '';
-  const iconSel = document.getElementById('pauseIconSel');
-  const fontSel = document.getElementById('pauseFontSel');
-  if(iconSel) iconSel.value = (ic && ic.value) ? ic.value : 'wrench';
-  if(fontSel) fontSel.value = (ft && ft.value) ? ft.value : 'normal';
 
   if(paused){
     btn.textContent = 'Unpause Site';
@@ -1798,20 +1809,6 @@ async function loadPauseState(){
   }
 }
 
-// ტექსტის/იკონის/ფონტის შენახვა პაუზის მდგომარეობის შეცვლის გარეშე.
-// ვრცელდება ხელითაც და ავტომატურ (ტესტ-ჩემპიონატის) პაუზაზეც — ერთი site_state.
-async function savePauseText(){
-  const msg  = (document.getElementById('pauseMsgInput')||{}).value || '';
-  const icon = (document.getElementById('pauseIconSel')||{}).value || 'wrench';
-  const font = (document.getElementById('pauseFontSel')||{}).value || 'normal';
-  const u1 = await db.from('site_state').update({ value: msg.trim() }).eq('key','pause_message');
-  const u2 = await db.from('site_state').update({ value: icon }).eq('key','pause_icon');
-  const u3 = await db.from('site_state').update({ value: font }).eq('key','pause_font');
-  const err = (u1&&u1.error) || (u2&&u2.error) || (u3&&u3.error);
-  if(err){ showMsg('champMsg', err.message, 'err'); return; }
-  showMsg('champMsg','Pause message & style saved. ✅','ok');
-}
-
 async function togglePause(){
   const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
   const nowPaused = !(s && s.value === 1);
@@ -1820,11 +1817,6 @@ async function togglePause(){
   if(msg){
     await db.from('site_state').update({ value: msg }).eq('key','pause_message');
   }
-  // იკონი/ფონტიც შევინახოთ, რომ პაუზისას მიმდინარე არჩევანი აისახოს
-  const _ic = (document.getElementById('pauseIconSel')||{}).value;
-  const _ft = (document.getElementById('pauseFontSel')||{}).value;
-  if(_ic) await db.from('site_state').update({ value: _ic }).eq('key','pause_icon');
-  if(_ft) await db.from('site_state').update({ value: _ft }).eq('key','pause_font');
 
   const { error } = await db.from('settings').update({ value: nowPaused ? 1 : 0 }).eq('key','site_paused');
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
@@ -1986,32 +1978,14 @@ async function editChampionship(champId){
   if(newDur===null) return;
   const newStart = prompt('Start date (YYYY-MM-DD):', c.start_date);
   if(newStart===null) return;
-  const nr = parseInt(newRounds)||c.total_rounds;
-  const nd = parseInt(newDur)||c.round_duration_days;
-  const ns = newStart||c.start_date;
   const { error } = await db.from('championships').update({
-    total_rounds: nr, round_duration_days: nd, start_date: ns
+    total_rounds: parseInt(newRounds)||c.total_rounds,
+    round_duration_days: parseInt(newDur)||c.round_duration_days,
+    start_date: newStart||c.start_date
   }).eq('id', champId);
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-
-  // ⚠️ რაუნდების თავიდან აგება ახალი თარიღებით (ძველები რომ არ დარჩეს)
-  await db.from('rounds').delete().eq('championship_id', champId);
-  const erows = [];
-  const estartMs = new Date(ns + 'T00:00:00Z').getTime();
-  for(let i = 0; i < nr; i++){
-    const ers = new Date(estartMs + (i * nd) * 86400000);
-    const ere = new Date(estartMs + ((i + 1) * nd - 1) * 86400000);
-    erows.push({ round_number: i+1, total_rounds: nr,
-      start_date: ers.toISOString().split('T')[0],
-      end_date: ere.toISOString().split('T')[0],
-      status: 'upcoming', championship_id: champId });
-  }
-  const { error: erErr } = await db.from('rounds').insert(erows);
-  if(erErr){ showMsg('champMsg','Updated, but rounds rebuild failed: '+erErr.message,'err'); loadChampionship(); return; }
-
-  showMsg('champMsg',champTitle(c)+' updated (rounds rebuilt). ✅','ok');
+  showMsg('champMsg',champTitle(c)+' updated. ✅','ok');
   loadChampionship();
-  if(typeof loadRounds === 'function') loadRounds();
 }
 
 async function deleteChampionship(champId, num){
@@ -2423,6 +2397,8 @@ async function openUserProfile(userId){
     ['🇺🇸 U.S. person', usPersonSet.has(u.id) ? '<span style="color:var(--teal,#2ec4b6);font-weight:700">Yes</span>' : 'No'],
     ['Registered', reg],
     ['Cookie consent', cc],
+    ['🛡️ Signup IP', '<span id="upSignupIp" style="color:var(--muted)">…</span>'],
+    ['🛡️ Last IP', '<span id="upLastIp" style="color:var(--muted)">…</span>'],
     ['🏆 Championship points', (u.championship_points||0)],
     ['🏁 Current round points', (u.total_points||0)],
     ['🏁 Total round points', '<span id="upTotalRound" style="color:var(--muted)">…</span>'],
@@ -2459,8 +2435,168 @@ async function openUserProfile(userId){
     const trEl = document.getElementById('upTotalRound'); if(trEl) trEl.textContent = '—';
     const taEl = document.getElementById('upTotalActivity'); if(taEl) taEl.textContent = '—';
   }
+
+  // IP info (signup/last) + same-IP multi-account detection
+  try{
+    const { data: ipInfo } = await db.rpc('admin_user_ip_info', { p_user_id: userId });
+    const info = Array.isArray(ipInfo) ? ipInfo[0] : ipInfo;
+    const sEl = document.getElementById('upSignupIp');
+    const lEl = document.getElementById('upLastIp');
+    if(info){
+      const cnt = info.same_ip_count || 0;
+      _sameIpData = { ip: info.signup_ip || '', accounts: Array.isArray(info.same_ip_accounts) ? info.same_ip_accounts : [] };
+      if(sEl){
+        if(info.signup_ip){
+          let s = '<span style="font-family:monospace;color:var(--text,#e8f0ee)">'+escapeHtml(info.signup_ip)+'</span>';
+          if(cnt > 0){
+            s += ' <span style="color:#ff5a67;font-weight:700">⚠ Same IP: '+cnt+'</span>'
+               + ' <button class="btn btn-ghost btn-sm" onclick="openSameIp()" style="padding:2px 9px;margin-left:4px">View</button>';
+          }
+          sEl.innerHTML = s;
+        } else { sEl.textContent = '—'; sEl.style.color = 'var(--muted)'; }
+      }
+      if(lEl){
+        lEl.innerHTML = info.last_ip
+          ? '<span style="font-family:monospace;color:var(--text,#e8f0ee)">'+escapeHtml(info.last_ip)+'</span>'
+          : '—';
+      }
+    } else {
+      if(sEl) sEl.textContent = '—';
+      if(lEl) lEl.textContent = '—';
+    }
+  }catch(err){
+    const sEl = document.getElementById('upSignupIp'); if(sEl) sEl.textContent = '—';
+    const lEl = document.getElementById('upLastIp'); if(lEl) lEl.textContent = '—';
+  }
 }
 function closeUserProfile(){ document.getElementById('userProfileModal').style.display = 'none'; }
+
+// same-IP accounts (opened from the Users view "View" button)
+let _sameIpData = { ip:'', accounts:[] };
+function openSameIp(){
+  const body = document.getElementById('sameIpBody');
+  const accs = _sameIpData.accounts || [];
+  document.getElementById('sameIpTitle').innerHTML =
+    'Accounts on IP <span style="font-family:monospace;color:var(--teal,#2ec4b6)">'+escapeHtml(_sameIpData.ip||'—')+'</span>'
+    + ' <span style="cursor:pointer;float:right" onclick="closeSameIp()">✕</span>';
+  if(!accs.length){ body.innerHTML = '<div class="empty">No other accounts on this IP.</div>'; }
+  else {
+    let h = '<div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">'+accs.length+' other account'+(accs.length>1?'s':'')+' registered from this IP:</div>';
+    for(const u of accs){
+      const uid = u.user_id || '';
+      h += '<div onclick="closeSameIp();openUserProfile(\''+uid+'\')" '
+        + 'style="cursor:pointer;padding:9px 11px;border:1px solid var(--border2);border-radius:8px;margin-top:6px">'
+        + '<div style="font-size:.85rem;color:var(--text,#e8f0ee);font-weight:600">'
+        +   escapeHtml(u.username||'(no name)')
+        +   ' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6)">#'+escapeHtml(u.display_id||'—')+'</span>'
+        + '</div>'
+        + '<div style="font-size:.74rem;color:var(--muted);word-break:break-word">'+escapeHtml(u.email||'—')+'</div>'
+        + '<div style="font-size:.7rem;color:var(--muted)">ID: <span style="font-family:monospace">'+escapeHtml(uid)+'</span> · Registered '+ipFmtDate(u.created_at)+'</div>'
+        + '</div>';
+    }
+    body.innerHTML = h;
+  }
+  document.getElementById('sameIpModal').style.display = 'flex';
+}
+
+// ==================== IP DETECTION ====================
+function ipFmtDate(s){ try{ return s ? new Date(s).toLocaleString() : '—'; }catch(_){ return '—'; } }
+
+// red unread number on the nav item + the big number in the section
+async function updateIpBadge(){
+  try{
+    const { data } = await db.rpc('admin_ip_alerts_unread_count');
+    const n = (typeof data === 'number') ? data : (data|0);
+    const nav = document.getElementById('ipUnreadNav');
+    if(nav){
+      if(n > 0){ nav.textContent = n; nav.style.display = ''; }
+      else { nav.textContent = ''; nav.style.display = 'none'; }
+    }
+    const big = document.getElementById('ipUnreadBig');
+    if(big) big.textContent = n;
+  }catch(_){}
+}
+
+async function loadIpDetect(){
+  const list = document.getElementById('ipAlertsList');
+  if(list) list.innerHTML = '<div class="loading">Loading...</div>';
+  const unreadOnly = !!(document.getElementById('ipUnreadOnly') && document.getElementById('ipUnreadOnly').checked);
+  try{
+    const { data, error } = await db.rpc('admin_ip_alerts', { p_unread_only: unreadOnly });
+    if(error) throw error;
+    renderIpAlerts(Array.isArray(data) ? data : []);
+  }catch(err){
+    if(list) list.innerHTML = '<div class="empty">Could not load alerts.</div>';
+    console.error('admin_ip_alerts error:', err && err.message);
+  }
+  updateIpBadge();
+}
+
+function renderIpAlerts(alerts){
+  const list = document.getElementById('ipAlertsList');
+  if(!list) return;
+  if(!alerts.length){ list.innerHTML = '<div class="empty">No IP matches detected. 🎉</div>'; return; }
+
+  let html = '';
+  for(const a of alerts){
+    const unread = !a.is_read;
+    const accs = Array.isArray(a.accounts) ? a.accounts : [];
+    const sideColor = unread ? '#ff5a67' : 'var(--border2)';
+    const titleColor = unread ? 'var(--text,#e8f0ee)' : 'var(--muted)';
+    const bg = unread ? 'rgba(255,90,103,.05)' : 'transparent';
+    const weight = unread ? '700' : '500';
+
+    let accHtml = '';
+    for(const u of accs){
+      const uid = u.user_id || '';
+      accHtml += '<div class="ip-acc" onclick="ipAlertAccount(\''+a.id+'\',\''+uid+'\')" '
+        + 'style="cursor:pointer;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;margin-top:6px;'
+        + 'display:flex;flex-direction:column;gap:2px;'+(unread?'':'opacity:.78;')+'">'
+        + '<div style="font-size:.84rem;color:var(--text,#e8f0ee);font-weight:600">'
+        +   escapeHtml(u.username||'(no name)')
+        +   ' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6)">#'+escapeHtml(u.display_id||'—')+'</span>'
+        + '</div>'
+        + '<div style="font-size:.74rem;color:var(--muted);word-break:break-word">'+escapeHtml(u.email||'—')+'</div>'
+        + '<div style="font-size:.7rem;color:var(--muted)">ID: <span style="font-family:monospace">'+escapeHtml(uid)+'</span> · Registered '+ipFmtDate(u.created_at)+'</div>'
+        + '</div>';
+    }
+
+    html += '<div class="card" style="border-left:3px solid '+sideColor+';background:'+bg+'">'
+      + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +   '<div style="font-size:.92rem;font-weight:'+weight+';color:'+titleColor+'">'
+      +     (unread?'🔴 ':'')+'⚠ Same IP · <span style="font-family:monospace">'+escapeHtml(a.ip||'—')+'</span>'
+      +   '</div>'
+      +   '<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">'+(a.account_count||accs.length)+' accounts</span>'
+      +   '<span style="margin-left:auto;font-size:.72rem;color:var(--muted)">'+ipFmtDate(a.created_at)+'</span>'
+      + '</div>'
+      + accHtml
+      + (unread
+          ? '<button class="btn btn-ghost btn-sm" onclick="ipAlertMarkRead(\''+a.id+'\')" style="margin-top:10px">✓ Mark read</button>'
+          : '')
+      + '</div>';
+  }
+  list.innerHTML = html;
+}
+
+async function ipAlertMarkRead(id){
+  try{ await db.rpc('admin_ip_alert_mark_read', { p_id: Number(id) }); }catch(_){}
+  loadIpDetect();
+}
+
+async function ipAlertAccount(alertId, userId){
+  // opening an account marks the alert read, then jumps to that user's profile
+  try{ await db.rpc('admin_ip_alert_mark_read', { p_id: Number(alertId) }); }catch(_){}
+  updateIpBadge();
+  if(!allUsers || !allUsers.length){ try{ await loadUsers(); }catch(_){} }
+  if(allUsers && allUsers.find(x=>x.id===userId)){ openUserProfile(userId); }
+  else { showMsg('ipMsg','Could not open that user — try the Users tab.','err'); }
+}
+
+async function ipMarkAllRead(){
+  try{ await db.rpc('admin_ip_alerts_mark_all_read'); }catch(err){ console.error(err && err.message); }
+  loadIpDetect();
+}
+function closeSameIp(){ document.getElementById('sameIpModal').style.display = 'none'; }
 
 // ---- Users-by-country table (built from already-loaded allUsers; no DB calls) ----
 function renderCountryStats(){
