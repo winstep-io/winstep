@@ -657,6 +657,11 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <button class="btn btn-primary btn-sm" id="ipMarkAll" onclick="ipMarkAllRead()">Mark all as read</button>
       </div>
 
+      <div class="card">
+        <input class="field-input" id="ipSearch" placeholder="🔍 Search by IP, username, email, or ID..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="ipSearch()">
+        <div id="ipSearchCount" style="font-size:.72rem;color:var(--muted);margin-top:8px"></div>
+      </div>
+
       <div id="ipAlertsList"><div class="loading">Loading...</div></div>
     </div>
 
@@ -2547,6 +2552,10 @@ async function updateIpBadge(){
   }catch(_){}
 }
 
+let ipAlertsAll = [];
+let ipPage = 1;
+const IP_PAGE_SIZE = 15;
+
 async function loadIpDetect(){
   const list = document.getElementById('ipAlertsList');
   if(list) list.innerHTML = '<div class="loading">Loading...</div>';
@@ -2554,21 +2563,62 @@ async function loadIpDetect(){
   try{
     const { data, error } = await db.rpc('admin_ip_alerts', { p_unread_only: unreadOnly });
     if(error) throw error;
-    renderIpAlerts(Array.isArray(data) ? data : []);
+    ipAlertsAll = Array.isArray(data) ? data : [];
+    ipPage = 1;
+    renderIpAlerts();
   }catch(err){
+    ipAlertsAll = [];
     if(list) list.innerHTML = '<div class="empty">Could not load alerts.</div>';
     console.error('admin_ip_alerts error:', err && err.message);
   }
   updateIpBadge();
 }
 
-function renderIpAlerts(alerts){
+function ipSearch(){ ipPage = 1; renderIpAlerts(); }
+function gotoIpPage(n){
+  ipPage = n;
+  renderIpAlerts();
+  const el = document.getElementById('sec-ipdetect');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// search matches IP, username, email, display_id (#id) or full user id — across read AND unread
+function ipAlertMatches(a, q){
+  if(!q) return true;
+  if((a.ip||'').toLowerCase().includes(q)) return true;
+  const accs = Array.isArray(a.accounts) ? a.accounts : [];
+  for(const u of accs){
+    if((u.username||'').toLowerCase().includes(q)) return true;
+    if((u.email||'').toLowerCase().includes(q)) return true;
+    if((''+(u.display_id||'')).toLowerCase().includes(q)) return true;
+    if((''+(u.user_id||'')).toLowerCase().includes(q)) return true;
+  }
+  return false;
+}
+
+function renderIpAlerts(){
   const list = document.getElementById('ipAlertsList');
   if(!list) return;
-  if(!alerts.length){ list.innerHTML = '<div class="empty">No IP matches detected. 🎉</div>'; return; }
+
+  const q = ((document.getElementById('ipSearch')||{}).value || '').toLowerCase().trim();
+  const filtered = ipAlertsAll.filter(a => ipAlertMatches(a, q));
+
+  const cntEl = document.getElementById('ipSearchCount');
+  if(cntEl) cntEl.textContent = q ? (filtered.length + ' of ' + ipAlertsAll.length + ' shown') : '';
+
+  if(!filtered.length){
+    list.innerHTML = '<div class="empty">'+(q ? 'No alerts match your search.' : 'No IP matches detected. 🎉')+'</div>';
+    return;
+  }
+
+  // pagination — 15 per page
+  const totalPages = Math.max(1, Math.ceil(filtered.length / IP_PAGE_SIZE));
+  if(ipPage > totalPages) ipPage = totalPages;
+  if(ipPage < 1) ipPage = 1;
+  const pageItems = filtered.slice((ipPage-1)*IP_PAGE_SIZE, ipPage*IP_PAGE_SIZE);
 
   let html = '';
-  for(const a of alerts){
+  for(const a of pageItems){
     const unread = !a.is_read;
     const accs = Array.isArray(a.accounts) ? a.accounts : [];
     const sideColor = unread ? '#ff5a67' : 'var(--border2)';
@@ -2605,7 +2655,26 @@ function renderIpAlerts(alerts){
           : '')
       + '</div>';
   }
-  list.innerHTML = html;
+
+  // page buttons (1, 2, 3 …) — only when more than one page
+  let pager = '';
+  if(totalPages > 1){
+    pager = '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px">';
+    pager += '<button onclick="gotoIpPage('+(ipPage-1)+')" '+(ipPage<=1?'disabled':'')
+      + ' style="min-width:36px;height:36px;padding:0 10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-weight:700;cursor:pointer;'+(ipPage<=1?'opacity:.4;cursor:default':'')+'">‹</button>';
+    for(let p=1;p<=totalPages;p++){
+      const active = (p===ipPage);
+      pager += '<button onclick="gotoIpPage('+p+')" '
+        + 'style="width:36px;height:36px;border-radius:8px;border:1px solid '+(active?'var(--teal,#2ec4b6)':'var(--border2)')+';'
+        + 'background:'+(active?'var(--teal,#2ec4b6)':'transparent')+';color:'+(active?'#06201c':'var(--text,#e8f0ee)')+';'
+        + 'font-weight:700;cursor:pointer">'+p+'</button>';
+    }
+    pager += '<button onclick="gotoIpPage('+(ipPage+1)+')" '+(ipPage>=totalPages?'disabled':'')
+      + ' style="min-width:36px;height:36px;padding:0 10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-weight:700;cursor:pointer;'+(ipPage>=totalPages?'opacity:.4;cursor:default':'')+'">›</button>';
+    pager += '</div>';
+  }
+
+  list.innerHTML = html + pager;
 }
 
 async function ipAlertMarkRead(id){
