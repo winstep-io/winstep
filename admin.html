@@ -2482,12 +2482,7 @@ async function openUserProfile(userId){
       _sameIpData = { ip: info.signup_ip || '', accounts: Array.isArray(info.same_ip_accounts) ? info.same_ip_accounts : [] };
       if(sEl){
         if(info.signup_ip){
-          let s = '<span style="font-family:monospace;color:var(--text,#e8f0ee)">'+escapeHtml(info.signup_ip)+'</span>';
-          if(cnt > 0){
-            s += ' <span style="color:#ff5a67;font-weight:700">⚠ Same IP: '+cnt+'</span>'
-               + ' <button class="btn btn-ghost btn-sm" onclick="openSameIp()" style="padding:2px 9px;margin-left:4px">View</button>';
-          }
-          sEl.innerHTML = s;
+          sEl.innerHTML = '<span style="font-family:monospace;color:var(--text,#e8f0ee)">'+escapeHtml(info.signup_ip)+'</span>';
         } else { sEl.textContent = '—'; sEl.style.color = 'var(--muted)'; }
       }
       if(lEl){
