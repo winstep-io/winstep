@@ -2249,7 +2249,10 @@ async function loadUsers(){
   renderUsers();
 }
 
-function renderUsers(){
+let usPage = 1;
+const US_PAGE_SIZE = 15;
+function renderUsers(keepPage){
+  if(!keepPage) usPage = 1;
   const q = (document.getElementById('userSearch').value||'').toLowerCase().trim();
   const ccFilter = (document.getElementById('cookieFilter')||{}).value || 'all';
   const usOnly = !!(document.getElementById('usPersonFilter') && document.getElementById('usPersonFilter').checked);
@@ -2281,8 +2284,14 @@ function renderUsers(){
   const list = document.getElementById('usersList');
   if(filtered.length===0){ list.innerHTML = '<div class="empty">No users found.</div>'; return; }
 
+  // pagination — 15 per page
+  const totalPages = Math.max(1, Math.ceil(filtered.length / US_PAGE_SIZE));
+  if(usPage > totalPages) usPage = totalPages;
+  if(usPage < 1) usPage = 1;
+  const pageItems = filtered.slice((usPage-1)*US_PAGE_SIZE, usPage*US_PAGE_SIZE);
+
   let html = '';
-  for(const u of filtered){
+  for(const u of pageItems){
     const cc = (u.cookie_consent==='accepted') ? '<span style="color:var(--teal,#2ec4b6)">Accept</span>' : (u.cookie_consent==='rejected') ? '<span style="color:#9fb5b0">Reject</span>' : '<span style="color:#7a908b">None</span>';
 
     // US დროშა და admin/banned — თითო ცალკე ველი (მობილურზე ცალკე ხაზზე).
@@ -2311,12 +2320,38 @@ function renderUsers(){
       + '</div>'
       + '</div><div class="li-actions user-actions">'
       + '<button class="btn btn-ghost btn-sm ua-view" onclick="openUserProfile(\''+u.id+'\')">View</button>'
-      + '<button class="btn btn-ghost btn-sm ua-pts" onclick="openAdjustPoints(\''+u.id+'\')">Change pts</button>'
+      + '<button class="btn btn-ghost btn-sm ua-pts" onclick="openAdjustPoints(\''+u.id+'\')">CPT</button>'
       + '<button class="btn btn-danger btn-sm ua-ban" onclick="toggleBan(\''+u.id+'\','+(u.is_banned?'true':'false')+')">'+(u.is_banned?'Unban':'Ban')+'</button>'
       + '<button class="btn btn-ghost btn-sm ua-admin" onclick="toggleAdmin(\''+u.id+'\','+(u.is_admin?'true':'false')+')">'+(u.is_admin?'Remove Admin':'Make Admin')+'</button>'
       + '</div></div>';
   }
-  list.innerHTML = html;
+
+  // page buttons (1, 2, 3 …) — only when more than one page
+  let pager = '';
+  if(totalPages > 1){
+    pager = '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px">';
+    pager += '<button class="us-page-btn" onclick="gotoUserPage('+(usPage-1)+')" '+(usPage<=1?'disabled':'')
+      + ' style="min-width:36px;height:36px;padding:0 10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-weight:700;cursor:pointer;'+(usPage<=1?'opacity:.4;cursor:default':'')+'">‹</button>';
+    for(let p=1;p<=totalPages;p++){
+      const active = (p===usPage);
+      pager += '<button class="us-page-btn" onclick="gotoUserPage('+p+')" '
+        + 'style="width:36px;height:36px;border-radius:8px;border:1px solid '+(active?'var(--teal,#2ec4b6)':'var(--border2)')+';'
+        + 'background:'+(active?'var(--teal,#2ec4b6)':'transparent')+';color:'+(active?'#06201c':'var(--text,#e8f0ee)')+';'
+        + 'font-weight:700;cursor:pointer">'+p+'</button>';
+    }
+    pager += '<button class="us-page-btn" onclick="gotoUserPage('+(usPage+1)+')" '+(usPage>=totalPages?'disabled':'')
+      + ' style="min-width:36px;height:36px;padding:0 10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-weight:700;cursor:pointer;'+(usPage>=totalPages?'opacity:.4;cursor:default':'')+'">›</button>';
+    pager += '</div>';
+  }
+
+  list.innerHTML = html + pager;
+}
+
+function gotoUserPage(n){
+  usPage = n;
+  renderUsers(true);          // keepPage = true → don't reset to page 1
+  const el = document.getElementById('sec-users');
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 // ==================== CHANGE ROUND POINTS (admin) ====================
