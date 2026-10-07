@@ -1618,6 +1618,10 @@ let dayAdCfg = null;   // მიმდინარე დღის ბოქს�
 async function checkAllBoxesCompletion(){
   if(!currentUser) return;
   await db.rpc('ensure_box_progress');
+  // the box-interval clock now STARTS when the player is back on the dashboard,
+  // not when they answered the last quiz. Safety net for the no-bonus path and
+  // any return to the dashboard; the quiz page also starts it on exit.
+  try{ await db.rpc('start_pending_intervals'); }catch(_){}
 }
 
 async function loadBoxes(){
