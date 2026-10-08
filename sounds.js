@@ -16,7 +16,7 @@
 
   var AC = window.AudioContext || window.webkitAudioContext;
   var KEY = 'winstep_sound_on';
-  var MASTER = 0.6; // ეფექტების საერთო ხმა = 60%
+  var MASTER = 0.8; // ეფექტების საერთო ხმა = 60%
 
   if (!AC) {
     window.winstepSound = {
