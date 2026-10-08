@@ -405,6 +405,7 @@ body{animation:pageFadeIn .42s ease-out both}
   body{animation:none}
 }
 </style>
+<script src="/sounds.js" defer></script>
 </head>
 <body>
 
@@ -419,7 +420,7 @@ body{animation:pageFadeIn .42s ease-out both}
     </div>
     <div class="logo-name">win<span>step</span></div>
   </div>
-  <button class="back-btn" onclick="window.location.href='/dashboard.html'">◀ Back to Dashboard</button>
+  <button class="back-btn" onclick="if(window.winstepSound)winstepSound.play('click');window.location.href='/dashboard.html'">◀ Back to Dashboard</button>
 </header>
 
 <div class="wrap">
@@ -738,6 +739,7 @@ function capStandHeight(){
 
 function switchStand(mode){
   if(standMode===mode) return;
+  if(window.winstepSound) winstepSound.play('pop');
   standMode = mode;
   document.getElementById('stTabChamp').classList.toggle('active', mode==='champ');
   document.getElementById('stTabRound').classList.toggle('active', mode==='round');

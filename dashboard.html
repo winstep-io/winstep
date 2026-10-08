@@ -735,7 +735,6 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
     </div>
     <button class="logout-btn" onclick="if(window.winstepSound)winstepSound.play('nav');window.location.href='/results.html'" title="Championship standings">🏆<span class="rb-txt"> Results</span></button>
     <div class="avatar" id="userAvatar" onclick="if(window.winstepSound)winstepSound.play('nav');window.location.href='/profile.html'" style="cursor:pointer" title="View profile">?</div>
-    <button class="logout-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:8px 11px"></button>
     <button class="logout-btn" onclick="logout()">Log Out</button>
   </div>
 </header>
@@ -761,7 +760,7 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
         </div>
         <div style="display:flex;align-items:center;gap:9px">
           <span style="font-size:.74rem;color:var(--soft);font-weight:600;letter-spacing:.03em">How Rounds Work</span>
-          <button class="rb-info-btn" onclick="openRoundInfo()" title="How rounds work">i</button>
+          <button class="rb-info-btn" onclick="if(window.winstepSound)winstepSound.play('nav');openRoundInfo()" title="How rounds work">i</button>
         </div>
         <div class="rb-prog" id="rbProg" aria-hidden="true"></div>
       </div>
