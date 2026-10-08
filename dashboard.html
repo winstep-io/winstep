@@ -2066,8 +2066,6 @@ function bootstrap(){
     return setTimeout(bootstrap, 40);
   }
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  // presence heartbeat — powers admin "online now" (load + every 45s + on refocus)
-  (function(){ function hb(){ try{ db.rpc('heartbeat').then(function(){}).catch(function(){}); }catch(e){} } hb(); setInterval(hb,45000); document.addEventListener('visibilitychange',function(){ if(!document.hidden) hb(); }); })();
   // safety net: never leave the top-meta space reserved if loadRound throws
   setTimeout(function(){
     var tm = document.getElementById('topMeta');

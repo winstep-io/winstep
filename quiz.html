@@ -585,8 +585,6 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-/* presence heartbeat — powers admin "online now" */
-(function(){ function hb(){ try{ db.rpc('heartbeat').then(function(){}).catch(function(){}); }catch(e){} } hb(); setInterval(hb,45000); document.addEventListener('visibilitychange',function(){ if(!document.hidden) hb(); }); })();
 
 let currentUser = null;
 let accessToken = null;

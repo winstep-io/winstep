@@ -370,9 +370,6 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <span class="admin-tag">Admin</span>
   </div>
   <div class="header-actions">
-    <span id="onlinePill" title="Players active in the last 90 seconds" style="display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-weight:700;font-size:.8rem;color:var(--soft,#9fb5b0);background:var(--bg3,#182421);border-radius:999px;padding:7px 13px;white-space:nowrap">
-      <span style="width:8px;height:8px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84"></span><span id="onlineNum">—</span> online
-    </span>
     <a class="h-btn" href="/dashboard.html">← Back to Site</a>
     <button class="h-btn" onclick="logout()">Log Out</button>
   </div>
@@ -1135,16 +1132,6 @@ async function checkAdmin(user){
   loadSettings();
   bgLoadFromStorage();
   updateIpBadge();
-  updateOnline();
-  setInterval(updateOnline, 20000);   // refresh "online now" every 20s
-}
-
-async function updateOnline(){
-  try{
-    const { data } = await db.rpc('admin_online_count');
-    const el = document.getElementById('onlineNum');
-    if(el) el.textContent = (typeof data === 'number') ? data : (data|0);
-  }catch(_){}
 }
 
 // ---- SETTINGS ----
