@@ -992,6 +992,10 @@ async function init(){
 
   currentUser = session.user;
 
+  // capture client IP (first-seen signup_ip + rolling last_ip) — fire-and-forget,
+  // never blocks dashboard load; server-side (touch_ip) does all the work.
+  try{ db.rpc('touch_ip').then(()=>{}).catch(()=>{}); }catch(_){}
+
   // ── პაუზა + ადმინი ──
   // საიტი პაუზაზეა? სტუმარი/მომხმარებელი overlay-ს ხედავს (dashboard დამალული).
   // ადმინისთვის: overlay ვხსნით, dashboard-ს ვაჩვენებთ, რომ იმუშაოს.
@@ -1653,6 +1657,10 @@ let dayAdCfg = null;   // მიმდინარე დღის ბოქს�
 async function checkAllBoxesCompletion(){
   if(!currentUser) return;
   await db.rpc('ensure_box_progress');
+  // the box-interval clock now STARTS when the player is back on the dashboard,
+  // not when they answered the last quiz. Safety net for the no-bonus path and
+  // any return to the dashboard; the quiz page also starts it on exit.
+  try{ await db.rpc('start_pending_intervals'); }catch(_){}
 }
 
 async function loadBoxes(){
@@ -2058,6 +2066,8 @@ function bootstrap(){
     return setTimeout(bootstrap, 40);
   }
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // presence heartbeat — powers admin "online now" (load + every 45s + on refocus)
+  (function(){ function hb(){ try{ db.rpc('heartbeat').then(function(){}).catch(function(){}); }catch(e){} } hb(); setInterval(hb,45000); document.addEventListener('visibilitychange',function(){ if(!document.hidden) hb(); }); })();
   // safety net: never leave the top-meta space reserved if loadRound throws
   setTimeout(function(){
     var tm = document.getElementById('topMeta');
@@ -2078,7 +2088,7 @@ if(document.readyState === 'loading'){
       <button class="modal-close" onclick="closeRoundInfo()">✕</button>
     </div>
     <div class="modal-text">
-      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo). At the end of each round, the <b>top 10</b> players earn championship points:
+      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo, Minefield, 21). At the end of each round, the <b>top 10</b> players earn championship points:
     </div>
     <div class="pts-grid" id="ptsGrid">
       <div class="loading" style="padding:10px">Loading...</div>
