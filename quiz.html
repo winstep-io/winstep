@@ -519,6 +519,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .answers.img-grid .answer.correct{outline:3px solid var(--green);outline-offset:-3px;background:transparent!important}
 .answers.img-grid .answer.wrong{outline:3px solid var(--red);outline-offset:-3px;background:transparent!important}
 </style>
+  <script src="/sounds.js" defer></script>
 </head>
 <body>
 
@@ -535,8 +536,11 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 
 <div class="quiz-wrap ws-in">
   <div class="top-bar">
-    <button class="back-btn" onclick="if(!maybeShowBonusFirst()) abandonQuiz().then(()=>window.location.href='/dashboard.html')">◀ Back to tasks</button>
-    <span class="quiz-tag" id="quizTag">Quiz</span>
+    <button class="back-btn" onclick="if(window.winstepSound)winstepSound.play('nav');if(!maybeShowBonusFirst()) abandonQuiz().then(()=>window.location.href='/dashboard.html')">◀ Back to tasks</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="back-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:9px 12px"></button>
+      <span class="quiz-tag" id="quizTag">Quiz</span>
+    </div>
   </div>
 
   <div class="ad-banner" id="adSlotTop" style="display:none"><div id="adTop" style="width:100%"></div></div>
@@ -571,7 +575,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
   <div class="ad-banner" id="adSlotBottom" style="display:none"><div id="adBottom" style="width:100%"></div></div>
   -->
 
-  <button class="continue-btn" id="continueBtn" onclick="if(!maybeShowBonusFirst()) window.location.href='/dashboard.html'">← Back to Tasks</button>
+  <button class="continue-btn" id="continueBtn" onclick="if(window.winstepSound)winstepSound.play('nav');if(!maybeShowBonusFirst()) window.location.href='/dashboard.html'">← Back to Tasks</button>
 
 <!-- Interstitial (full-screen ad) overlay -->
 </div>
@@ -779,6 +783,8 @@ async function pick(btn){
     else { a.style.transitionDelay = (i*55)+'ms'; a.classList.add('faded'); }
   });
 
+  // ხმა: სწორი → win, არასწორი → unlock (already-ზე ხმა არ ისმის)
+  if(!already && window.winstepSound) winstepSound.play(isCorrect ? 'win' : 'error');
   // interstitial ტრიგერი დაშბორდზე გადავიდა (გზა-დამოუკიდებლობისთვის)
   showResult(already ? 'already' : (isCorrect ? 'correct' : 'wrong'), points);
 

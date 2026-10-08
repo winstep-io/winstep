@@ -440,7 +440,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .mrow.active{background:rgba(46,196,182,.12);box-shadow:inset 0 0 0 1px var(--teal)}
 .mrow.locked{opacity:.4}
 .mfield.over .mrow.locked{opacity:1}
-.mgut{width:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:.74rem;color:var(--muted)}
+.mgut{width:26px;flex-shrink:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:.66rem;color:var(--muted)}
 .mrow.active .mgut{color:var(--teal-hi)} .mrow.passed .mgut{color:var(--green)}
 .mcell{flex:1 1 0;aspect-ratio:1;border-radius:6px;background:#12312c;
   box-shadow:inset 0 0 0 1px rgba(46,196,182,.08);display:flex;align-items:center;justify-content:center;
@@ -474,6 +474,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 #ovT{font-weight:700!important}
 #ov{background:#080c0b!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 </style>
+  <script src="/sounds.js" defer></script>
 </head>
 <body>
 
@@ -488,7 +489,10 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     </div>
     <div class="logo-name">win<span>step</span></div>
   </div>
-  <button class="back-btn" onclick="window.location.href='/dashboard.html'">◀ Back to Tasks</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="back-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:8px 11px"></button>
+    <button class="back-btn" onclick="if(window.winstepSound)winstepSound.play('click');window.location.href='/dashboard.html'">◀ Back to Tasks</button>
+  </div>
 </header>
 
 <div id="wrap">
@@ -571,7 +575,7 @@ async function init(){
   currentSession = session;
   buildField(); updateHud();
   document.getElementById('takeBtn').onclick = takePoints;
-  document.getElementById('endBtn').onclick = () => { window.location.href = '/dashboard.html'; };
+  document.getElementById('endBtn').onclick = () => { if(window.winstepSound)winstepSound.play('click'); window.location.href = '/dashboard.html'; };
 }
 
 /* ---- START: server places mines, opens the session ---- */
@@ -585,7 +589,7 @@ async function startGame(){
     document.getElementById('ovS').innerHTML = 'This minefield attempt is no longer available.<br>It unlocks during the break after a box.';
     const p = document.getElementById('ovP'); p.style.display = 'none';
     const b = document.getElementById('ovB'); b.textContent = 'BACK TO DASHBOARD';
-    b.onclick = () => { window.location.href = '/dashboard.html'; };
+    b.onclick = () => { if(window.winstepSound)winstepSound.play('click'); window.location.href = '/dashboard.html'; };
     document.getElementById('ov').classList.add('show');
     return;
   }
@@ -593,6 +597,7 @@ async function startGame(){
   currentRow = res.row || 0; score = res.score || 0;
   started = true; over = false; gameActive = true; ended = false;
   document.getElementById('ov').classList.remove('show');
+  if(window.winstepSound) winstepSound.play('click');
   document.getElementById('mhint').style.display = 'block';
   buildField(); updateRows(); updateHud();
   setMsg('Tap a tile in the glowing row to take your first step.');
@@ -608,20 +613,22 @@ async function pick(r, c){
   const cell = document.getElementById('m'+r+'_'+c);
 
   if(!res.safe){
+    if(window.winstepSound) winstepSound.play('error');
     if(cell) cell.classList.add('mine');
     score = res.score;            // 0 — a mine loses everything
     updateHud();
-    endGame('Game Over!', '#e8f0ee', res.score, res.mines);
+    endGame('Game Over!', '#e8f0ee', res.score);
     return;
   }
 
   if(cell) cell.classList.add('safe');
+  if(window.winstepSound) winstepSound.play('click');
   score = res.score;
   currentRow = res.row;
   updateHud();
 
   if(res.finished && res.win){
-    endGame('Well done!', '#2ec4b6', res.score, res.mines);
+    endGame('Well done!', '#2ec4b6', res.score);
     return;
   }
   updateRows();
@@ -638,24 +645,12 @@ async function takePoints(){
   try{ const q = await db.rpc('minefield_take'); res = q.data; }catch(e){ res = null; }
   busy = false;
   if(!res || !res.ok) return;
-  endGame('Nice!', '#2ec4b6', res.score, res.mines);
+  endGame('Nice!', '#2ec4b6', res.score);
 }
 
 /* ---- end-of-game UI (points already finalized server-side) ---- */
-function revealMines(mines){
-  if(!mines) return;
-  mines.forEach((cols, r) => {
-    (cols||[]).forEach(c => {
-      const cell = document.getElementById('m'+r+'_'+c);
-      if(cell && !cell.classList.contains('mine') && !cell.classList.contains('safe')){
-        cell.classList.add('reveal-mine');
-      }
-    });
-  });
-}
-function endGame(title, color, pts, mines){
+function endGame(title, color, pts){
   over = true; gameActive = false; ended = true;
-  revealMines(mines);
   document.getElementById('field').classList.add('over');
   updateRows();
   document.getElementById('msg').style.display = 'none';

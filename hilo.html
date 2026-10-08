@@ -434,6 +434,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .btns .btn{font-size:.95rem!important;letter-spacing:0!important;padding:15px!important}
 .btns .btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
 </style>
+  <script src="/sounds.js" defer></script>
 </head>
 <body>
 
@@ -448,7 +449,10 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     </div>
     <div class="logo-name">win<span>step</span></div>
   </div>
-  <a class="h-btn" href="/dashboard.html">← Back to Dashboard</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="h-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:8px 11px"></button>
+    <a class="h-btn" href="/dashboard.html" onclick="if(window.winstepSound)winstepSound.play('click')">← Back to Dashboard</a>
+  </div>
 </header>
 
 <div class="wrap" id="wrap">
@@ -489,7 +493,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     <div class="over-title">Game Over</div>
     <div class="over-score" id="finalScore">0</div>
     <div class="over-sub" id="finalSub">points earned</div>
-    <button class="over-btn" onclick="window.location.href='/dashboard.html'">← Back to Dashboard</button>
+    <button class="over-btn" onclick="if(window.winstepSound)winstepSound.play('click');window.location.href='/dashboard.html'">← Back to Dashboard</button>
   </div>
 </div>
 
@@ -596,6 +600,7 @@ window.addEventListener('pagehide', forfeitGame);
 async function guess(direction){
   if(busy) return;
   busy=true; setButtons(false);
+  if(window.winstepSound) winstepSound.play('doubleFlip');
   stopTurnTimer();
   // გზა B — სერვერი ხსნის შემდეგ კარტას და ამოწმებს
   const { data: res } = await db.rpc('hilo_guess', { p_dir: direction });
@@ -667,6 +672,7 @@ async function init(){
   const { data: res } = await db.rpc('hilo_start');
   if(!res || !res.ok){ blockGame(); return; }
   gameActive = true;         // აქედან გამოსვლა = მიტოვება
+  if(window.winstepSound) winstepSound.play('click');   // Start (Hi-Lo ავტომატურად იწყება)
   PER_STEP = res.per_step;
   current = res.card;
   renderCard(current,false);

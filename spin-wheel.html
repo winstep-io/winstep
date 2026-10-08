@@ -427,6 +427,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .btns .btn{font-size:.95rem!important;letter-spacing:0!important;padding:15px!important}
 .btns .btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
 </style>
+  <script src="/sounds.js" defer></script>
 </head>
 <body>
 
@@ -441,7 +442,10 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     </div>
     <div class="logo-name">win<span>step</span></div>
   </div>
-  <a class="h-btn" href="/dashboard.html">← Back to Dashboard</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="h-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:8px 11px"></button>
+    <a class="h-btn" href="/dashboard.html" onclick="if(window.winstepSound)winstepSound.play('click')">← Back to Dashboard</a>
+  </div>
 </header>
 
 <div class="wrap" id="wrap">
@@ -544,6 +548,7 @@ async function spin(){
   btn.textContent = 'SPINNING…';
   card.classList.remove('show');
   ring.classList.add('spinning');
+  if(window.winstepSound) winstepSound.play('spin');
 
   // გზა B — შედეგს სერვერი ირჩევს და წერს ქულას
   const { data: res } = await db.rpc('spin_play');
@@ -595,7 +600,7 @@ function showResult(value){
   setTimeout(()=>{
     document.getElementById('spinBtn').textContent = '← Back to Dashboard';
     document.getElementById('spinBtn').disabled = false;
-    document.getElementById('spinBtn').onclick = ()=>{ window.location.href='/dashboard.html'; };
+    document.getElementById('spinBtn').onclick = ()=>{ if(window.winstepSound)winstepSound.play('click'); window.location.href='/dashboard.html'; };
   }, 1500);
 }
 

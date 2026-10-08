@@ -472,6 +472,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 #ovT{font-weight:700!important}
 #ov{background:#080c0b!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:16px}
 </style>
+  <script src="/sounds.js" defer></script>
 </head>
 <body>
 
@@ -486,7 +487,10 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     </div>
     <div class="logo-name">win<span>step</span></div>
   </div>
-  <button class="back-btn" onclick="window.location.href='/dashboard.html'">◀ Back to Tasks</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="back-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:8px 11px"></button>
+    <button class="back-btn" onclick="if(window.winstepSound)winstepSound.play('click');window.location.href='/dashboard.html'">◀ Back to Tasks</button>
+  </div>
 </header>
 
 <div id="wrap">
@@ -606,7 +610,7 @@ async function startGame(){
     document.getElementById('ovS').innerHTML = 'This game attempt is no longer available.<br>It unlocks during the break after a box.';
     document.getElementById('ovP').style.display = 'none';
     const b = document.getElementById('ovB'); b.textContent = 'BACK TO DASHBOARD';
-    b.onclick = () => { window.location.href='/dashboard.html'; };
+    b.onclick = () => { if(window.winstepSound)winstepSound.play('click'); window.location.href='/dashboard.html'; };
     document.getElementById('ov').classList.add('show');
     return;
   }
@@ -615,6 +619,7 @@ async function startGame(){
   youCards = res.you || []; oppCards = res.opp || [];
   document.getElementById('youTot').classList.remove('win');
   document.getElementById('ov').classList.remove('show');
+  if(window.winstepSound) winstepSound.play('click');
   updateHud(); renderHands(); renderPool(res.pool_filled);
   document.getElementById('standBtn').style.display = '';
   document.getElementById('nextBtn').style.display = 'none';
@@ -626,6 +631,7 @@ async function startGame(){
 async function playerHit(slot){
   if(!gameActive || handOver || busy) return;
   busy = true; enablePlay(false);
+  if(window.winstepSound) winstepSound.play('pop');
   let res;
   try{ const q = await db.rpc('twentyone_hit', { p_slot: slot }); res = q.data; }catch(e){ res = null; }
   if(!res || !res.ok){ busy = false; enablePlay(true); return; }
@@ -649,6 +655,7 @@ async function playerHit(slot){
 async function playerStand(){
   if(!gameActive || handOver || busy || youCards.length===0) return;
   busy = true; enablePlay(false);
+  if(window.winstepSound) winstepSound.play('stand');
   setMsg('You stand on ' + tLocal(youCards) + '.');
   let res;
   try{ const q = await db.rpc('twentyone_stand'); res = q.data; }catch(e){ res = null; }
@@ -668,9 +675,11 @@ function finishHand(res){
   handOver = true; setTurn(null);
   document.getElementById('standBtn').style.display = 'none';
   if(res.result === 'win'){
+    if(window.winstepSound) winstepSound.play('win');
     document.getElementById('youTot').classList.add('win'); renderHands();
     setMsg('<span class="win">You win this hand!</span>');
   } else if(res.result === 'lose'){
+    if(window.winstepSound) winstepSound.play('error');
     setMsg('<span class="lose">' + (res.you_total>21 ? 'Bust — you lose.' : 'Opponent wins.') + '</span>');
   } else {
     setMsg('Push — equal totals. No points.');
@@ -720,7 +729,7 @@ function showGameOver(){
   document.getElementById('ovS').style.display = 'none';
   const p = document.getElementById('ovP'); p.style.display = 'block'; p.textContent = 'You earned ' + score + ' pts!';
   const btn = document.getElementById('ovB'); btn.textContent = 'BACK TO DASHBOARD';
-  btn.onclick = () => { window.location.href = '/dashboard.html'; };
+  btn.onclick = () => { if(window.winstepSound)winstepSound.play('click'); window.location.href = '/dashboard.html'; };
   document.getElementById('ov').classList.add('show');
 }
 

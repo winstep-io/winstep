@@ -453,6 +453,10 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
   border-radius:20px;padding:44px 32px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .pause-ico{font-size:3rem;margin-bottom:18px}
 .pause-msg{font-size:1.08rem;line-height:1.6;color:var(--soft,#c9d4d1)}
+.pause-msg.pf-normal{font-weight:400}
+.pause-msg.pf-bold{font-weight:800}
+.pause-msg.pf-light{font-weight:300}
+.pause-msg.pf-display{font-family:var(--disp,'Fredoka');font-weight:700;font-size:1.35rem;letter-spacing:.3px}
 
 /* ── championship countdown — per-digit slide transition ──────
    მხოლოდ შეცვლილი ციფრი ცოცდება ზემოდან თავის ადგილზე; unchanged
@@ -684,13 +688,14 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
       }
     })();
   </script>
+  <script src="/sounds.js" defer></script>
 </head>
 <body>
 <div id="preCover"></div>
 <!-- Pause overlay — bootstrap-ის მიხედვით ჩნდება/ქრება, dashboard-ს არ ცვლის -->
 <div id="pauseOverlay">
   <div class="pause-card">
-    <div class="pause-ico">🔧</div>
+    <div class="pause-ico" id="pauseIco"></div>
     <div class="pause-msg" id="pauseMsg"></div>
   </div>
 </div>
@@ -728,8 +733,9 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
       <span class="pts-val pts-round" id="userPoints">0</span>
       <span class="pts-lbl">pts</span>
     </div>
-    <button class="logout-btn" onclick="window.location.href='/results.html'" title="Championship standings">🏆<span class="rb-txt"> Results</span></button>
-    <div class="avatar" id="userAvatar" onclick="window.location.href='/profile.html'" style="cursor:pointer" title="View profile">?</div>
+    <button class="logout-btn" onclick="if(window.winstepSound)winstepSound.play('nav');window.location.href='/results.html'" title="Championship standings">🏆<span class="rb-txt"> Results</span></button>
+    <div class="avatar" id="userAvatar" onclick="if(window.winstepSound)winstepSound.play('nav');window.location.href='/profile.html'" style="cursor:pointer" title="View profile">?</div>
+    <button class="logout-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:8px 11px"></button>
     <button class="logout-btn" onclick="logout()">Log Out</button>
   </div>
 </header>
@@ -906,6 +912,16 @@ function loadBootstrap(){
       const { data, error } = await db.rpc('get_dashboard_bootstrap');
       if(error || !data) throw error || new Error('no data');
       BOOT = data;
+      // პაუზის ხატულა/შრიფტი: თუ bootstrap-ში არ მოდის, ცალკე helper RPC-დან ვიღებთ
+      // (მხოლოდ პაუზის დროს — ზედმეტ მოთხოვნას თავიდან ავიცილებთ).
+      try{
+        const pp = BOOT && BOOT.pause;
+        const paused = pp && (pp.paused===1 || pp.paused===true || pp.paused==='1');
+        if(paused && pp && pp.icon===undefined){
+          const { data: st } = await db.rpc('get_pause_style');
+          if(st){ pp.icon = st.icon; pp.font = st.font; }
+        }
+      }catch(_){}
     }catch(e){
       BOOT = null;   // fallback: ძველი მოთხოვნები იმუშავებს
       console.warn('bootstrap RPC failed, using legacy queries', e);
@@ -932,7 +948,19 @@ function applyPauseOverlay(){
     const p = BOOT.pause;
     const el = document.getElementById('pauseOverlay');
     const msg = document.getElementById('pauseMsg');
-    if(msg) msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
+    const ico = document.getElementById('pauseIco');
+    if(msg){
+      msg.textContent = p.message || "We're experiencing a temporary issue and are working to fix it. We'll be back with you shortly — thank you for your patience!";
+      // შრიფტის სტილი ადმინიდან (normal/bold/light/display)
+      const font = (p.font || 'normal');
+      msg.className = 'pause-msg pf-' + font;
+    }
+    if(ico){
+      // ხატულა ადმინიდან: none → ტექსტი მარტო, wrench → 🔧, clock → ⏰
+      const icon = (p.icon || 'wrench');
+      if(icon === 'none'){ ico.textContent = ''; ico.style.display = 'none'; }
+      else { ico.textContent = (icon === 'clock' ? '⏰' : '🔧'); ico.style.display = ''; }
+    }
     if(el) el.classList.add('on');
     // dashboard დამალული რჩება (data-boot=pending): მუქი ფონი + overlay ჩანს.
     // ადმინის შემოწმებას init() ქვემოთ აკეთებს და საჭიროებისას ხსნის.
@@ -964,10 +992,6 @@ async function init(){
   }
 
   currentUser = session.user;
-
-  // capture client IP (first-seen signup_ip + rolling last_ip) — fire-and-forget,
-  // never blocks dashboard load; server-side (touch_ip) does all the work.
-  try{ db.rpc('touch_ip').then(()=>{}).catch(()=>{}); }catch(_){}
 
   // ── პაუზა + ადმინი ──
   // საიტი პაუზაზეა? სტუმარი/მომხმარებელი overlay-ს ხედავს (dashboard დამალული).
@@ -1280,6 +1304,7 @@ function closeRoundInfo(){
 let myRoundTotal = null;   // ჰედერში დათვლილი რაუნდების ჯამი (ჩემი)
 let lbMode = 'championship';
 function switchLb(mode){
+  if(window.winstepSound) winstepSound.play('pop');
   lbMode = mode;
   document.getElementById('tabChampionship').classList.toggle('active', mode==='championship');
   document.getElementById('tabRace').classList.toggle('active', mode==='race');
@@ -1429,13 +1454,24 @@ function wsPoints(el, val, key){
   const pill = el.closest ? el.closest('.points-pill') : null;
   if(pill){ pill.classList.remove('ws-bump'); void pill.offsetWidth; pill.classList.add('ws-bump'); }
 
-  const from = prev, dur = 620;
+  const from = prev;
+  let dur = 620, linear = false;
+  // ხმა: round-ქულის დარიცხვისას ხურდის ჩაყრა (თანაბარი ტემპი). რიცხვი
+  // ხურდის იმავე ხანგრძლივობაზე, ხაზოვნად ტრიალდება, რომ ზუსტად დაემთხვას.
+  if(key === 'ptsRound' && window.winstepSound){
+    try{
+      const _n = val - from;
+      if(window.winstepSound.coinDuration){ dur = window.winstepSound.coinDuration(_n); linear = true; }
+      winstepSound.play('coin', { n: _n });
+    }catch(_){}
+  }
   let t0 = null;
   el.textContent = from;
   function step(ts){
     if(!t0) t0 = ts;
     const p = Math.min((ts - t0) / dur, 1);
-    el.textContent = Math.round(from + (val - from) * (1 - Math.pow(1 - p, 3)));
+    const e = linear ? p : (1 - Math.pow(1 - p, 3));
+    el.textContent = Math.round(from + (val - from) * e);
     if(p < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -1618,10 +1654,6 @@ let dayAdCfg = null;   // მიმდინარე დღის ბოქს�
 async function checkAllBoxesCompletion(){
   if(!currentUser) return;
   await db.rpc('ensure_box_progress');
-  // the box-interval clock now STARTS when the player is back on the dashboard,
-  // not when they answered the last quiz. Safety net for the no-bonus path and
-  // any return to the dashboard; the quiz page also starts it on exit.
-  try{ await db.rpc('start_pending_intervals'); }catch(_){}
 }
 
 async function loadBoxes(){
@@ -1845,11 +1877,13 @@ function renderInterval(data){
   // ===== LAST BOX OF THE DAY =====
   if(isLastBox){
     if(gameAvailable){
-      const banner = '<div class="interval-banner"><div class="interval-title">⏳ Bonus game closes in</div><div class="interval-count" id="intervalCountdown">—</div>'
-        + '<div class="bridge-notice"><div class="bridge-notice-icon">'+g.icon+'</div>'
+      const banner = '<div class="interval-banner">'
+        + '<div class="bridge-notice" style="margin-top:0">'
+        + '<div class="bridge-notice-icon">'+g.icon+'</div>'
         + '<div class="bridge-notice-info"><div class="bridge-notice-title">'+g.name+' unlocked!</div>'
-        + '<div class="bridge-notice-sub">Play now for bonus points — available during this break only</div></div>'
-        + '<button class="bridge-play-btn" onclick="'+g.fn+'">Play</button></div></div>';
+        + '<div class="bridge-notice-sub">Bonus game — closes in <b id="intervalCountdown">—</b></div></div>'
+        + '<button class="bridge-play-btn" onclick="'+g.fn+'">Play</button>'
+        + '</div></div>';
       place(banner);
       startIntervalCountdown(new Date(data.prog.interval_ends_at));
     } else {
@@ -1911,6 +1945,7 @@ function playBridge(){
 }
 
 function startTask(taskId, type, n){
+  if(window.winstepSound) winstepSound.play('click');
   if(requireAuth()) return; // preview mode → prompt sign up
   if(type==='quiz'){
     // n = ჩვენების ნომერი ამ მომხმარებლის რიგში (მხოლოდ წარწერისთვის)
@@ -2044,7 +2079,7 @@ if(document.readyState === 'loading'){
       <button class="modal-close" onclick="closeRoundInfo()">✕</button>
     </div>
     <div class="modal-text">
-      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo, Minefield, 21). At the end of each round, the <b>top 10</b> players earn championship points:
+      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo). At the end of each round, the <b>top 10</b> players earn championship points:
     </div>
     <div class="pts-grid" id="ptsGrid">
       <div class="loading" style="padding:10px">Loading...</div>
