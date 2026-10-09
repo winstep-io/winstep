@@ -537,10 +537,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 <div class="quiz-wrap ws-in">
   <div class="top-bar">
     <button class="back-btn" onclick="if(window.winstepSound)winstepSound.play('click');if(!maybeShowBonusFirst()) abandonQuiz().then(()=>window.location.href='/dashboard.html')">◀ Back to tasks</button>
-    <div style="display:flex;align-items:center;gap:8px">
-      <button class="back-btn" data-ws-sound-toggle aria-label="Toggle sound" style="padding:9px 12px"></button>
-      <span class="quiz-tag" id="quizTag">Quiz</span>
-    </div>
+    <span class="quiz-tag" id="quizTag">Quiz</span>
   </div>
 
   <div class="ad-banner" id="adSlotTop" style="display:none"><div id="adTop" style="width:100%"></div></div>
