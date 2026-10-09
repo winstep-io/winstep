@@ -739,7 +739,7 @@ function capStandHeight(){
 
 function switchStand(mode){
   if(standMode===mode) return;
-  if(window.winstepSound) winstepSound.play('click');
+  if(window.winstepSound) winstepSound.play('nav');
   standMode = mode;
   document.getElementById('stTabChamp').classList.toggle('active', mode==='champ');
   document.getElementById('stTabRound').classList.toggle('active', mode==='round');
