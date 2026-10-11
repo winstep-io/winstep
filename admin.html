@@ -2475,13 +2475,15 @@ async function openUserProfile(userId){
   const rows = [
     ['Email', escapeHtml(u.email||'—')],
     ['Player ID', '#'+escapeHtml(u.display_id||'—')],
-    ['Country', country],
     ['🇺🇸 U.S. person', usPersonSet.has(u.id) ? '<span style="color:var(--teal,#2ec4b6);font-weight:700">Yes</span>' : 'No'],
     ['Registered', reg],
     ['Cookie consent', cc],
+    ['Country IP', country],
     ['🛡️ Signup IP', '<span id="upSignupIp" style="color:var(--muted)">…</span>'],
     ['🛡️ Last IP', '<span id="upLastIp" style="color:var(--muted)">…</span>'],
     ['🏆 Championship points', (u.championship_points||0)],
+    ['🏁 Current round activity', '<span id="upRoundActivity" style="color:var(--muted)">…</span>'],
+    ['🎯 Current correct answers', '<span id="upRoundCorrect" style="color:var(--muted)">…</span>'],
     ['🏁 Current round points', (u.total_points||0)],
     ['🏁 Total round points', '<span id="upTotalRound" style="color:var(--muted)">…</span>'],
     ['🎯 Total activity', '<span id="upTotalActivity" style="color:var(--muted)">…</span>'],
@@ -2516,6 +2518,24 @@ async function openUserProfile(userId){
   }catch(err){
     const trEl = document.getElementById('upTotalRound'); if(trEl) trEl.textContent = '—';
     const taEl = document.getElementById('upTotalActivity'); if(taEl) taEl.textContent = '—';
+  }
+
+  // current-round quiz stats (admin-only, counted from user_activity since the active round's start)
+  try{
+    const { data: rs } = await db.rpc('admin_get_user_round_stats', { p_user_id: userId });
+    const r = Array.isArray(rs) ? rs[0] : rs;
+    const aEl = document.getElementById('upRoundActivity');
+    const cEl = document.getElementById('upRoundCorrect');
+    if(r){
+      if(aEl){ aEl.textContent = (r.round_quiz_activity||0); aEl.style.color = 'var(--text,#e8f0ee)'; }
+      if(cEl){ cEl.textContent = (r.round_quiz_correct||0); cEl.style.color = 'var(--text,#e8f0ee)'; }
+    } else {
+      if(aEl){ aEl.textContent = '0'; aEl.style.color = 'var(--text,#e8f0ee)'; }
+      if(cEl){ cEl.textContent = '0'; cEl.style.color = 'var(--text,#e8f0ee)'; }
+    }
+  }catch(err){
+    const aEl = document.getElementById('upRoundActivity'); if(aEl) aEl.textContent = '—';
+    const cEl = document.getElementById('upRoundCorrect'); if(cEl) cEl.textContent = '—';
   }
 
   // IP info (signup/last) + same-IP multi-account detection
