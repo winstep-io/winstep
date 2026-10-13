@@ -385,6 +385,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div class="nav-item" onclick="nav('prizes',this)"><span>🎁</span><span>Prizes</span></div>
     <div class="nav-item" onclick="nav('users',this)"><span>👥</span><span>Users</span></div>
     <div class="nav-item" onclick="nav('ipdetect',this)"><span>🛡️</span><span>IP Detection</span><span id="ipUnreadNav" style="display:none;margin-left:auto;color:#ff5a67;font-weight:800;font-size:.82rem"></span></div>
+    <div class="nav-item" onclick="nav('botdetect',this)"><span>🤖</span><span>Bot Detection</span></div>
     <div class="nav-item" onclick="nav('settings',this)"><span>⚙️</span><span>Points Settings</span></div>
     <div class="nav-item" onclick="nav('ads',this)"><span>📺</span><span>Ad Manager</span></div>
     <div class="nav-item" onclick="nav('emailforms',this)"><span>📧</span><span>E-Mail Forms</span></div>
@@ -404,7 +405,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">➕ Create New Box</div>
         <div class="field">
           <label class="field-label">Date</label>
-          <input class="field-input" type="date" id="boxDate">
+          <input class="field-input" type="date" lang="en" id="boxDate">
           <div style="font-size:.66rem;color:var(--muted);margin-top:4px">Boxes open one-by-one as users complete them. Name & order are automatic.</div>
         </div>
         <div id="boxPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">📅 —</div>
@@ -415,8 +416,8 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">📥 Bulk Create from Excel</div>
         <div style="font-size:.7rem;color:var(--muted);margin-bottom:12px">Excel-ის სვეტები: <b>question, answer_a, answer_b, answer_c, answer_d, correct</b> (correct = A/B/C/D). ავტომატურად შექმნის ბოქსებს + ქუიზებს, ხელით შექმნილის იდენტურად. კონფიგი (დრო, ბონუსის ზღვარი) — მიმდინარე Points Settings-იდან.</div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Start date</label><input class="field-input" type="date" id="bgStart"></div>
-          <div class="field"><label class="field-label">End date (incl.)</label><input class="field-input" type="date" id="bgEnd"></div>
+          <div class="field"><label class="field-label">Start date</label><input class="field-input" type="date" lang="en" id="bgStart"></div>
+          <div class="field"><label class="field-label">End date (incl.)</label><input class="field-input" type="date" lang="en" id="bgEnd"></div>
         </div>
         <div class="field-row">
           <div class="field"><label class="field-label">Every N days</label><input class="field-input" type="number" id="bgInterval" value="1" min="1"></div>
@@ -465,7 +466,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="field-row" style="align-items:flex-end">
           <div class="field" style="flex:1">
             <label class="field-label">Filter by date</label>
-            <input class="field-input" type="date" id="historyDate" onchange="loadBoxes()">
+            <input class="field-input" type="date" lang="en" id="historyDate" onchange="loadBoxes()">
           </div>
           <button class="btn btn-ghost btn-sm" onclick="clearHistoryDate()" style="margin-bottom:2px">Show all</button>
         </div>
@@ -527,7 +528,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">➕ Create New Championship</div>
         <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">Create the next championship with its own settings. It starts on the date you choose, after the current one finishes.</div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Start Date</label><input class="field-input" type="date" id="champStart"></div>
+          <div class="field"><label class="field-label">Start Date</label><input class="field-input" type="date" lang="en" id="champStart"></div>
           <div class="field"><label class="field-label">Rounds</label><input class="field-input" type="number" id="champRounds" value="10"></div>
           <div class="field"><label class="field-label">Round Length (days)</label><input class="field-input" type="number" id="champDuration" value="3"></div>
         </div>
@@ -681,6 +682,43 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       </div>
 
       <div id="ipAlertsList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- ============ BOT DETECTION ============ -->
+    <div class="section" id="sec-botdetect">
+      <div class="page-title">Bot Detection</div>
+      <div class="page-sub">Flags players whose correct-answer rate in a round is suspiciously high — a signal of AI / bot assistance. This is a review queue, not an auto-ban: a skilled player can score high legitimately. Verify before acting, and withhold the prize until the winner passes verification.</div>
+
+      <div class="msg" id="botMsg"></div>
+
+      <!-- threshold + live current-round flags -->
+      <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border2)">
+        <div style="font-size:1.8rem">🤖</div>
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600">Flag threshold — correct %</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <input class="field-input" type="number" id="botThreshold" min="1" max="100" step="1" value="90" style="width:90px" oninput="rememberBotThreshold()">
+            <span style="color:var(--muted);font-size:.8rem">% or higher gets flagged</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadBotDetect()">Apply</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadBotDetect()">↻ Refresh</button>
+      </div>
+
+      <div style="font-size:.9rem;font-weight:700;color:var(--text);margin:18px 0 8px">⚑ Current round — flagged players</div>
+      <div id="botFlagsList"><div class="loading">Loading...</div></div>
+
+      <!-- championship history + Excel export -->
+      <div style="font-size:.9rem;font-weight:700;color:var(--text);margin:26px 0 8px">📅 Championship history</div>
+      <div class="card">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Enter a championship ID to see whether it had suspicious cases, and download the full per-round breakdown as Excel.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <input class="field-input" id="botChampInput" placeholder="e.g. 00183" autocomplete="off" style="flex:1;min-width:140px">
+          <button class="btn btn-primary btn-sm" onclick="loadBotChampionship()">🔍 Search</button>
+          <button class="btn btn-ghost btn-sm" id="botExcelBtn" onclick="downloadBotExcel()" style="display:none">⬇ Excel File</button>
+        </div>
+      </div>
+      <div id="botChampResult"></div>
     </div>
 
     <!-- ============ POINTS SETTINGS ============ -->
@@ -1206,6 +1244,7 @@ function nav(section, el){
   if(section==='prizes') loadPrizes();
   if(section==='users') loadUsers();
   if(section==='ipdetect') loadIpDetect();
+  if(section==='botdetect') loadBotDetect();
   if(section==='ads'){ loadAds(); loadInterstitial(); }
   if(section==='emailforms'){ wfRender(); cfRender(); }
   if(section==='gallery') loadGallery();
@@ -2484,6 +2523,8 @@ async function openUserProfile(userId){
     ['🏆 Championship points', (u.championship_points||0)],
     ['🎯 Current round activity', '<span id="upRoundActivity" style="color:var(--muted)">…</span>'],
     ['✅ Current correct answers', '<span id="upRoundCorrect" style="color:var(--muted)">…</span>'],
+    ['📊 Correct answer % per round', '<span id="upRoundPct" style="color:var(--muted)">…</span>'],
+    ['⏱️ AVG answer time', '<span id="upRoundAvg" style="color:var(--muted)">…</span>'],
     ['🏁 Current round points', (u.total_points||0)],
     ['🏁 Total round points', '<span id="upTotalRound" style="color:var(--muted)">…</span>'],
     ['🎯 Total activity', '<span id="upTotalActivity" style="color:var(--muted)">…</span>'],
@@ -2526,16 +2567,21 @@ async function openUserProfile(userId){
     const r = Array.isArray(rs) ? rs[0] : rs;
     const aEl = document.getElementById('upRoundActivity');
     const cEl = document.getElementById('upRoundCorrect');
-    if(r){
-      if(aEl){ aEl.textContent = (r.round_quiz_activity||0); aEl.style.color = 'var(--text,#e8f0ee)'; }
-      if(cEl){ cEl.textContent = (r.round_quiz_correct||0); cEl.style.color = 'var(--text,#e8f0ee)'; }
-    } else {
-      if(aEl){ aEl.textContent = '0'; aEl.style.color = 'var(--text,#e8f0ee)'; }
-      if(cEl){ cEl.textContent = '0'; cEl.style.color = 'var(--text,#e8f0ee)'; }
+    const pEl = document.getElementById('upRoundPct');
+    const tEl = document.getElementById('upRoundAvg');
+    const act = r ? (r.round_quiz_activity||0) : 0;
+    const cor = r ? (r.round_quiz_correct||0) : 0;
+    const pct = (r && r.round_correct_pct!=null) ? Number(r.round_correct_pct) : (act>0 ? Math.round(1000*cor/act)/10 : null);
+    const avgMs = (r && r.round_avg_answer_ms!=null) ? Number(r.round_avg_answer_ms) : null;
+    if(aEl){ aEl.textContent = act; aEl.style.color = 'var(--text,#e8f0ee)'; }
+    if(cEl){ cEl.textContent = cor; cEl.style.color = 'var(--text,#e8f0ee)'; }
+    if(pEl){
+      if(pct==null){ pEl.textContent = '—'; }
+      else { pEl.innerHTML = '<span style="color:'+(pct>=90?'#ff5a67':'var(--text,#e8f0ee)')+';font-weight:'+(pct>=90?'700':'400')+'">'+pct.toFixed(1)+'%</span>'; }
     }
+    if(tEl){ tEl.textContent = (avgMs==null) ? '—' : (avgMs/1000).toFixed(1)+'s'; tEl.style.color = 'var(--text,#e8f0ee)'; }
   }catch(err){
-    const aEl = document.getElementById('upRoundActivity'); if(aEl) aEl.textContent = '—';
-    const cEl = document.getElementById('upRoundCorrect'); if(cEl) cEl.textContent = '—';
+    ['upRoundActivity','upRoundCorrect','upRoundPct','upRoundAvg'].forEach(id=>{ const e=document.getElementById(id); if(e) e.textContent='—'; });
   }
 
   // IP info (signup/last) + same-IP multi-account detection
@@ -2758,6 +2804,184 @@ async function ipMarkAllRead(){
   loadIpDetect();
 }
 function closeSameIp(){ document.getElementById('sameIpModal').style.display = 'none'; }
+
+// ==================== BOT DETECTION ====================
+let _botChampData = null;   // { label, start, end, threshold, byUser: [...] }
+
+function botThresholdVal(){
+  let v = parseFloat(document.getElementById('botThreshold').value);
+  if(!isFinite(v)) v = 90;
+  return Math.min(100, Math.max(1, v));
+}
+function rememberBotThreshold(){
+  try{ localStorage.setItem('winstep_bot_threshold', String(botThresholdVal())); }catch(_){}
+}
+function _fmtAvgMs(ms){ return (ms==null || ms==='') ? '—' : (Number(ms)/1000).toFixed(1)+'s'; }
+
+async function loadBotDetect(){
+  // restore remembered threshold
+  try{ const t = localStorage.getItem('winstep_bot_threshold'); if(t && document.getElementById('botThreshold')) document.getElementById('botThreshold').value = t; }catch(_){}
+  const thr = botThresholdVal();
+  const list = document.getElementById('botFlagsList');
+  list.innerHTML = '<div class="loading">Loading...</div>';
+  try{
+    const { data, error } = await db.rpc('admin_bot_flags', { p_threshold: thr });
+    if(error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+    if(rows.length===0){ list.innerHTML = '<div class="empty">No players at or above '+thr+'% this round. ✓</div>'; return; }
+    let html = '';
+    for(const r of rows){
+      const pct = (r.correct_pct!=null) ? Number(r.correct_pct).toFixed(1) : '—';
+      html += '<div class="list-item">'
+        + '<div class="li-info">'
+        +   '<div class="li-title">'+escapeHtml(r.username||'(no name)')
+        +     ' <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6)">#'+escapeHtml(r.display_id||'—')+'</span></div>'
+        +   '<div class="li-sub"><span style="color:#ff5a67;font-weight:700">'+pct+'% correct</span>'
+        +     ' · '+(r.correct||0)+'/'+(r.activity||0)+' answers'
+        +     ' · ⏱️ '+_fmtAvgMs(r.avg_answer_ms)+' avg</div>'
+        + '</div>'
+        + '<div class="li-actions"><button class="btn btn-ghost btn-sm" onclick="openUserProfile(\''+r.user_id+'\')">View</button></div>'
+        + '</div>';
+    }
+    list.innerHTML = html;
+  }catch(err){
+    list.innerHTML = '<div class="empty" style="color:#ff6b78">'+escapeHtml((err&&err.message)||'Could not load flags.')+'</div>';
+  }
+}
+
+async function _botResolveChamp(input){
+  const digits = String(input||'').replace(/\D/g,'');
+  if(!digits) return null;
+  const entered = parseInt(digits,10);
+  const { data: champs } = await db.from('championships').select('id, number, start_date, end_date');
+  if(!champs) return null;
+  for(const c of champs){
+    const label = String((parseInt(c.number,10)||0) + 173).padStart(5,'0');
+    if((parseInt(c.number,10)||0) + 173 === entered || parseInt(c.number,10) === entered || label === digits.padStart(5,'0')){
+      return { id:c.id, label, start:c.start_date, end:c.end_date };
+    }
+  }
+  return null;
+}
+
+async function loadBotChampionship(){
+  const res = document.getElementById('botChampResult');
+  const btn = document.getElementById('botExcelBtn');
+  btn.style.display = 'none'; _botChampData = null;
+  res.innerHTML = '<div class="loading">Loading...</div>';
+  const thr = botThresholdVal();
+  try{
+    const champ = await _botResolveChamp(document.getElementById('botChampInput').value);
+    if(!champ){ res.innerHTML = '<div class="empty">No championship found with that ID.</div>'; return; }
+
+    const { data, error } = await db.rpc('admin_bot_championship', { p_champ_id: champ.id });
+    if(error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+
+    // group per user
+    const byId = {};
+    for(const r of rows){
+      const u = byId[r.user_id] || (byId[r.user_id] = { user_id:r.user_id, username:r.username, display_id:r.display_id, rounds:[], flagged:false });
+      const pct = (r.correct_pct!=null) ? Number(r.correct_pct) : null;
+      if(pct!=null && pct >= thr) u.flagged = true;
+      u.rounds.push({ n:r.round_number, start:r.round_start, end:r.round_end, activity:r.activity||0, correct:r.correct||0, pct:pct, avg_ms:r.avg_answer_ms });
+    }
+    const users = Object.values(byId).map(u=>{
+      const totA = u.rounds.reduce((s,x)=>s+x.activity,0);
+      const totC = u.rounds.reduce((s,x)=>s+x.correct,0);
+      // weighted avg over rounds that have timing
+      let wSum=0, wN=0;
+      u.rounds.forEach(x=>{ if(x.avg_ms!=null){ wSum += Number(x.avg_ms)*x.activity; wN += x.activity; } });
+      u.totActivity = totA; u.totCorrect = totC;
+      u.overallPct = totA>0 ? Math.round(1000*totC/totA)/10 : null;
+      u.overallAvgMs = wN>0 ? Math.round(wSum/wN) : null;
+      return u;
+    });
+    const flagged = users.filter(u=>u.flagged).sort((a,b)=>(b.overallPct||0)-(a.overallPct||0));
+
+    _botChampData = { champ, threshold:thr, users, flagged };
+
+    let html = '<div class="card" style="margin-top:10px">';
+    html += '<div style="font-weight:700;color:var(--text)">Championship '+champ.label+'</div>';
+    html += '<div style="font-size:.78rem;color:var(--muted);margin:2px 0 10px">Period: '+(champ.start||'—')+' → '+(champ.end||'—')+' · threshold ≥ '+thr+'%</div>';
+    if(flagged.length===0){
+      html += '<div class="empty" style="color:var(--green)">No suspicious cases in this championship at ≥ '+thr+'%. ✓</div>';
+    } else {
+      html += '<div style="color:#ff5a67;font-weight:700;margin-bottom:10px">⚑ '+flagged.length+' suspicious player'+(flagged.length>1?'s':'')+'</div>';
+      for(const u of flagged){
+        html += '<div style="border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:8px">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">';
+        html += '<div><span style="font-weight:700">'+escapeHtml(u.username||'(no name)')+'</span> <span style="font-family:monospace;font-size:.72rem;color:var(--teal,#2ec4b6)">#'+escapeHtml(u.display_id||'—')+'</span></div>';
+        html += '<div style="font-size:.78rem"><span style="color:#ff5a67;font-weight:700">'+(u.overallPct!=null?u.overallPct.toFixed(1):'—')+'%</span> overall · '+u.totCorrect+'/'+u.totActivity+' · ⏱️ '+_fmtAvgMs(u.overallAvgMs)+'</div>';
+        html += '</div>';
+        html += '<div style="font-size:.72rem;color:var(--muted);margin-top:6px">';
+        u.rounds.forEach(x=>{
+          const flag = (x.pct!=null && x.pct>=thr);
+          html += '<span style="display:inline-block;margin:2px 10px 2px 0;'+(flag?'color:#ff5a67;font-weight:700':'')+'">R'+x.n+': '+(x.pct!=null?x.pct.toFixed(1):'—')+'% ('+x.correct+'/'+x.activity+', '+_fmtAvgMs(x.avg_ms)+')</span>';
+        });
+        html += '</div></div>';
+      }
+    }
+    html += '</div>';
+    res.innerHTML = html;
+    if(flagged.length>0) btn.style.display = '';
+  }catch(err){
+    res.innerHTML = '<div class="empty" style="color:#ff6b78">'+escapeHtml((err&&err.message)||'Could not load.')+'</div>';
+  }
+}
+
+async function downloadBotExcel(){
+  if(!_botChampData || !_botChampData.flagged || _botChampData.flagged.length===0){ showMsg('botMsg','Nothing to export — search a championship with flagged players first.','err'); return; }
+  try{
+    showMsg('botMsg','Building Excel…','ok');
+    await bgLoadSheetJS();
+    const { champ, threshold, flagged } = _botChampData;
+    const stamp = new Date().toISOString().replace('T',' ').slice(0,16)+' UTC';
+    const aoa = [];
+    aoa.push(['Bot Detection — Championship '+champ.label]);
+    aoa.push(['Period', (champ.start||'—')+'  →  '+(champ.end||'—')]);
+    aoa.push(['Flag threshold', '≥ '+threshold+'% correct']);
+    aoa.push(['Generated', stamp]);
+    aoa.push([]);
+    aoa.push(['User ID','Player','Championship','Period start','Period end','Round','Activity','Correct','Correct %','Avg answer time (s)']);
+    for(const u of flagged){
+      for(const x of u.rounds){
+        aoa.push([
+          u.display_id ? ('#'+u.display_id) : '',
+          u.username || '',
+          champ.label,
+          champ.start || '',
+          champ.end || '',
+          'R'+x.n,
+          x.activity,
+          x.correct,
+          (x.pct!=null ? x.pct : ''),
+          (x.avg_ms!=null ? Math.round(Number(x.avg_ms))/1000 : '')
+        ]);
+      }
+      // per-user total across rounds
+      aoa.push([
+        u.display_id ? ('#'+u.display_id) : '',
+        u.username || '',
+        champ.label, champ.start||'', champ.end||'',
+        'TOTAL',
+        u.totActivity,
+        u.totCorrect,
+        (u.overallPct!=null ? u.overallPct : ''),
+        (u.overallAvgMs!=null ? Math.round(Number(u.overallAvgMs))/1000 : '')
+      ]);
+      aoa.push([]);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:10},{wch:22},{wch:13},{wch:12},{wch:12},{wch:8},{wch:9},{wch:9},{wch:10},{wch:18}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bot Detection');
+    XLSX.writeFile(wb, 'BotDetection-Championship-'+champ.label+'.xlsx');
+    showMsg('botMsg','Excel downloaded. ✅','ok');
+  }catch(e){
+    showMsg('botMsg',(e&&e.message)||'Could not build Excel.','err');
+  }
+}
 
 // ---- Users-by-country table (built from already-loaded allUsers; no DB calls) ----
 function renderCountryStats(){
