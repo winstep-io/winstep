@@ -2491,8 +2491,9 @@ async function toggleBan(userId, isCurrentlyBanned){
 
 // ---- read-only player profile preview (built from already-loaded admin_get_users data) ----
 async function openUserProfile(userId){
-  const u = (allUsers||[]).find(x=>x.id===userId);
-  if(!u){ showMsg('userMsg','User not found. Try reloading the list.','err'); return; }
+  let u = (allUsers||[]).find(x=>x.id===userId);
+  if(!u){ try{ await loadUsers(); }catch(_){} u = (allUsers||[]).find(x=>x.id===userId); }
+  if(!u){ alert('User not found. Open the Users section once, then try again.'); return; }
 
   const badges = [];
   if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
