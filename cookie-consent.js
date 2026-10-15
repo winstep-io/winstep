@@ -160,7 +160,7 @@
       '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
       'gap:16px;flex-wrap:wrap;justify-content:center">' +
         '<div style="flex:1;min-width:220px;font-size:.9rem;line-height:1.5">' +
-          '🍪 We use cookies to keep winstep free and to show ads. ' +
+          '🍪 We use cookies to keep winstep free and support the site. ' +
           '<a href="/privacy.html" target="_blank" rel="noopener" ' +
           'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
         '</div>' +
@@ -177,11 +177,50 @@
     document.body.appendChild(b);
     // "Got it" = accept (US opt-out allows personalized by default, one tap)
     document.getElementById('ws-cookie-gotit').onclick = function () { choose('accepted'); };
-    // "Your Privacy Choices" = opt out -> non-personalized ads
+    // "Your Privacy Choices" = open the full Accept All / Reject All choices
     document.getElementById('ws-cookie-optout').onclick = function (e) {
       if (e && e.preventDefault) e.preventDefault();
-      choose('rejected');
+      removeBanner();
+      buildChoices();
     };
+  }
+
+  // Full choices card (Reject All / Reject All) — opened from "Your Privacy Choices".
+  // Neutral wording so it fits both the US opt-out path and a re-opened EU choice.
+  function buildChoices() {
+    if (document.getElementById('ws-cookie-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'ws-cookie-banner';
+    b.setAttribute('role', 'dialog');
+    b.setAttribute('aria-label', 'Privacy choices');
+    b.style.cssText =
+      'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+      'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
+      'box-shadow:0 -8px 30px rgba(0,0,0,.45);padding:16px 20px;' +
+      "font-family:Rajdhani,'Segoe UI',sans-serif;color:#c9d4d1";
+    b.innerHTML =
+      '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
+      'gap:18px;flex-wrap:wrap;justify-content:center">' +
+        '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
+          '🍪 Choose how winstep uses cookies. Accept for a personalized experience, ' +
+          'or reject non-essential cookies — the site stays free either way. ' +
+          '<a href="/privacy.html" target="_blank" rel="noopener" ' +
+          'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:center">' +
+          '<button id="ws-cookie-reject" type="button" ' +
+          'style="padding:11px 22px;background:transparent;border:1.5px solid rgba(159,181,176,.55);' +
+          "color:#c9d4d1;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer\">" +
+          'Reject All</button>' +
+          '<button id="ws-cookie-accept" type="button" ' +
+          'style="padding:11px 26px;background:#2ec4b6;border:1.5px solid #2ec4b6;' +
+          "color:#0a1413;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer\">" +
+          'Accept All</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(b);
+    document.getElementById('ws-cookie-accept').onclick = function () { choose('accepted'); };
+    document.getElementById('ws-cookie-reject').onclick = function () { choose('rejected'); };
   }
 
   function showBanner(region) {
