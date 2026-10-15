@@ -518,7 +518,7 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
     <button id="endBtn">BACK TO DASHBOARD</button>
   </div>
 
-  <div class="mhint" id="mhint">Row 1 hides 1 mine, row 2 hides 2 … row 10 hides 10. A safe step scores +N (the row number). One wrong step = 0. Clear all 10 rows for a bonus.</div>
+  <div class="mhint" id="mhint">Row 1 hides 1 mine, row 2 hides 2 … row 10 hides 10. A safe step scores the points shown on its row. One wrong step = 0. Clear all 10 rows for a bonus.</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -529,6 +529,8 @@ const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let ROWS = 10, COLS = 11, BONUS = 20;
+let STEP_PTS = null;   // per-stage points from the server (admin-configurable)
+function stepPts(r){ return (STEP_PTS && STEP_PTS[r] != null) ? STEP_PTS[r] : (r + 1); }
 let currentRow = 0, score = 0, over = false, started = false, busy = false;
 let currentSession = null, gameActive = false, ended = false;
 
@@ -537,7 +539,7 @@ function buildField(){
   const f = document.getElementById('field'); f.innerHTML = '';
   for(let r = ROWS - 1; r >= 0; r--){
     const row = document.createElement('div'); row.className = 'mrow'; row.id = 'row'+r;
-    const g = document.createElement('div'); g.className = 'mgut'; g.innerHTML = '+'+(r+1)+'<span class="u">pts</span>'; row.appendChild(g);
+    const g = document.createElement('div'); g.className = 'mgut'; g.innerHTML = '+'+stepPts(r)+'<span class="u">pts</span>'; row.appendChild(g);
     for(let c = 0; c < COLS; c++){
       const cell = document.createElement('div'); cell.className = 'mcell'; cell.id = 'm'+r+'_'+c;
       cell.onclick = () => pick(r, c); row.appendChild(cell);
@@ -592,6 +594,7 @@ async function startGame(){
     return;
   }
   ROWS = res.rows || 10; COLS = res.cols || 11; BONUS = res.bonus || 20;
+  STEP_PTS = Array.isArray(res.step_points) ? res.step_points : null;
   currentRow = res.row || 0; score = res.score || 0;
   started = true; over = false; gameActive = true; ended = false;
   document.getElementById('ov').classList.remove('show');
@@ -631,7 +634,7 @@ async function pick(r, c){
   }
   updateRows();
   showTake();
-  setMsg('<span class="win">Safe!</span> +' + (r+1) + ' (' + score + ' total). Take your points, or tap the next row.');
+  setMsg('<span class="win">Safe!</span> +' + stepPts(r) + ' (' + score + ' total). Take your points, or tap the next row.');
   busy = false;
 }
 

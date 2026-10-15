@@ -404,7 +404,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">➕ Create New Box</div>
         <div class="field">
           <label class="field-label">Date</label>
-          <input class="field-input" type="date" id="boxDate">
+          <input class="field-input" type="date" lang="en" id="boxDate">
           <div style="font-size:.66rem;color:var(--muted);margin-top:4px">Boxes open one-by-one as users complete them. Name & order are automatic.</div>
         </div>
         <div id="boxPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">📅 —</div>
@@ -415,8 +415,8 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">📥 Bulk Create from Excel</div>
         <div style="font-size:.7rem;color:var(--muted);margin-bottom:12px">Excel-ის სვეტები: <b>question, answer_a, answer_b, answer_c, answer_d, correct</b> (correct = A/B/C/D). ავტომატურად შექმნის ბოქსებს + ქუიზებს, ხელით შექმნილის იდენტურად. კონფიგი (დრო, ბონუსის ზღვარი) — მიმდინარე Points Settings-იდან.</div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Start date</label><input class="field-input" type="date" id="bgStart"></div>
-          <div class="field"><label class="field-label">End date (incl.)</label><input class="field-input" type="date" id="bgEnd"></div>
+          <div class="field"><label class="field-label">Start date</label><input class="field-input" type="date" lang="en" id="bgStart"></div>
+          <div class="field"><label class="field-label">End date (incl.)</label><input class="field-input" type="date" lang="en" id="bgEnd"></div>
         </div>
         <div class="field-row">
           <div class="field"><label class="field-label">Every N days</label><input class="field-input" type="number" id="bgInterval" value="1" min="1"></div>
@@ -465,7 +465,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="field-row" style="align-items:flex-end">
           <div class="field" style="flex:1">
             <label class="field-label">Filter by date</label>
-            <input class="field-input" type="date" id="historyDate" onchange="loadBoxes()">
+            <input class="field-input" type="date" lang="en" id="historyDate" onchange="loadBoxes()">
           </div>
           <button class="btn btn-ghost btn-sm" onclick="clearHistoryDate()" style="margin-bottom:2px">Show all</button>
         </div>
@@ -527,7 +527,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">➕ Create New Championship</div>
         <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">Create the next championship with its own settings. It starts on the date you choose, after the current one finishes.</div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Start Date</label><input class="field-input" type="date" id="champStart"></div>
+          <div class="field"><label class="field-label">Start Date</label><input class="field-input" type="date" lang="en" id="champStart"></div>
           <div class="field"><label class="field-label">Rounds</label><input class="field-input" type="number" id="champRounds" value="10"></div>
           <div class="field"><label class="field-label">Round Length (days)</label><input class="field-input" type="number" id="champDuration" value="3"></div>
         </div>
@@ -727,10 +727,23 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
 
       <div class="card">
         <div class="card-title">💣 Minefield Game</div>
-        <div class="field-row">
+        <div class="field-label" style="margin-bottom:8px">Stage points — added for each safe step</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px 8px">
+          <div class="field"><label class="field-label">Stage 1</label><input class="field-input" type="number" id="set_minefield_step_1"></div>
+          <div class="field"><label class="field-label">Stage 2</label><input class="field-input" type="number" id="set_minefield_step_2"></div>
+          <div class="field"><label class="field-label">Stage 3</label><input class="field-input" type="number" id="set_minefield_step_3"></div>
+          <div class="field"><label class="field-label">Stage 4</label><input class="field-input" type="number" id="set_minefield_step_4"></div>
+          <div class="field"><label class="field-label">Stage 5</label><input class="field-input" type="number" id="set_minefield_step_5"></div>
+          <div class="field"><label class="field-label">Stage 6</label><input class="field-input" type="number" id="set_minefield_step_6"></div>
+          <div class="field"><label class="field-label">Stage 7</label><input class="field-input" type="number" id="set_minefield_step_7"></div>
+          <div class="field"><label class="field-label">Stage 8</label><input class="field-input" type="number" id="set_minefield_step_8"></div>
+          <div class="field"><label class="field-label">Stage 9</label><input class="field-input" type="number" id="set_minefield_step_9"></div>
+          <div class="field"><label class="field-label">Stage 10</label><input class="field-input" type="number" id="set_minefield_step_10"></div>
+        </div>
+        <div class="field-row" style="margin-top:12px">
           <div class="field"><label class="field-label">Finish Bonus</label><input class="field-input" type="number" id="set_minefield_bonus"></div>
         </div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Each safe step scores the row number (+1 … +10) automatically. Finish Bonus is added for clearing all 10 rows.</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Set how many points each stage (row) gives for a safe step — Stage 1 is the bottom row, Stage 10 the top. Finish Bonus is added for clearing all 10 rows. Defaults: 1…10.</div>
       </div>
 
       <div class="card">
@@ -1135,7 +1148,7 @@ async function checkAdmin(user){
 }
 
 // ---- SETTINGS ----
-const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step','minefield_bonus','blackjack_win_points'];
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step','minefield_bonus','blackjack_win_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
 async function loadSettings(){
   const { data: rows } = await db.from('settings').select('*');
   if(!rows) return;
@@ -2452,8 +2465,9 @@ async function toggleBan(userId, isCurrentlyBanned){
 
 // ---- read-only player profile preview (built from already-loaded admin_get_users data) ----
 async function openUserProfile(userId){
-  const u = (allUsers||[]).find(x=>x.id===userId);
-  if(!u){ showMsg('userMsg','User not found. Try reloading the list.','err'); return; }
+  let u = (allUsers||[]).find(x=>x.id===userId);
+  if(!u){ try{ await loadUsers(); }catch(_){} u = (allUsers||[]).find(x=>x.id===userId); }
+  if(!u){ alert('User not found. Open the Users section once, then try again.'); return; }
 
   const badges = [];
   if(u.is_admin) badges.push('<span class="badge" style="background:rgba(245,200,66,.15);color:var(--gold)">admin</span>');
