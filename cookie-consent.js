@@ -1,18 +1,34 @@
 /* ============================================================
-   winstep.io — Cookie consent banner (EU / GDPR)
-   - Accept All / Reject All (both clearly visible — compliant)
-   - Variant B: Reject -> non-personalized (contextual) ads, not zero
-   - Google Consent Mode v2: when GA / AdSense are added later, they
-     automatically respect this choice (no extra wiring needed).
+   winstep.io — Cookie consent banner (GEO-AWARE)
+   - EU / UK / EEA / CH  -> full opt-in CMP: Accept All / Reject All
+     (UNCHANGED from the previous version — the compliant banner).
+   - Everywhere else (US, etc.) -> light opt-out bar: "Got it" +
+     "Your Privacy Choices" (opt out to non-personalized ads).
+   - Region comes from /api/geo (Vercel edge header). If detection
+     fails or is unknown, we SAFELY fall back to the EU banner.
+   - Google Consent Mode v2 default = denied for everyone (unchanged),
+     so GA / AdSense respect the choice automatically.
    - Choice stored per browser (localStorage). "Cookie Settings" link
      re-opens the banner via window.winstepConsent.open().
+   - TEST without a VPN:  ?geo=us  or  ?geo=eu  forces a region.
+
    Place <script src="/cookie-consent.js"></script> in <head> of every
-   page, ABOVE the Google Analytics / AdSense tag (when you add them).
+   page, ABOVE the Google Analytics / AdSense tag.
+   Requires the edge function at /api/geo.js (returns {"country":"US"}).
    ============================================================ */
 (function () {
   'use strict';
 
   var KEY = 'winstep_cookie_consent'; // 'accepted' | 'rejected'
+
+  // Countries that get the strict opt-in banner: EU-27 + EEA + UK + Switzerland.
+  var STRICT = {
+    AT:1,BE:1,BG:1,HR:1,CY:1,CZ:1,DK:1,EE:1,FI:1,FR:1,DE:1,GR:1,HU:1,IE:1,IT:1,
+    LV:1,LT:1,LU:1,MT:1,NL:1,PL:1,PT:1,RO:1,SK:1,SI:1,ES:1,SE:1,   // EU-27
+    IS:1,LI:1,NO:1,                                                // EEA
+    GB:1,                                                          // UK
+    CH:1                                                           // Switzerland
+  };
 
   // ---- Google Consent Mode v2 plumbing (ready for GA / AdSense) ----
   window.dataLayer = window.dataLayer || [];
@@ -23,7 +39,7 @@
   try { stored = localStorage.getItem(KEY); } catch (e) {}
 
   // Default = everything denied (must run before GA/AdSense load).
-  // With ad_storage denied, AdSense auto-serves NON-personalized ads (variant B).
+  // With ad_storage denied, AdSense auto-serves NON-personalized ads.
   window.gtag('consent', 'default', {
     analytics_storage: 'denied',
     ad_storage: 'denied',
@@ -51,8 +67,48 @@
     window.winstepAds = { personalized: false }; // safe default until they choose
   }
 
-  // ---- Banner UI ----
-  function buildBanner() {
+  // ---- region detection ----
+  var _region = null; // 'eu' | 'us'  (cached after first detect)
+
+  function regionFromCountry(cc) {
+    return (cc && STRICT[cc]) ? 'eu' : 'us';
+  }
+
+  function detectRegion(cb) {
+    if (_region) { cb(_region); return; }
+
+    // test override: ?geo=us / ?geo=eu
+    try {
+      var q = (new URLSearchParams(window.location.search)).get('geo');
+      if (q) { _region = (q.toLowerCase() === 'eu') ? 'eu' : 'us'; cb(_region); return; }
+    } catch (e) {}
+
+    // ask our own edge function; on ANY problem fall back to EU (strict/safe)
+    var done = false;
+    var finish = function (r) { if (done) return; done = true; _region = r; cb(r); };
+    try {
+      var t = setTimeout(function () { finish('eu'); }, 1500); // network stall -> safe default
+      fetch('/api/geo', { cache: 'no-store' })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (d) { clearTimeout(t); finish(regionFromCountry(d && d.country)); })
+        .catch(function () { clearTimeout(t); finish('eu'); });
+    } catch (e) { finish('eu'); }
+  }
+
+  // ---- shared helpers ----
+  function removeBanner() {
+    var el = document.getElementById('ws-cookie-banner');
+    if (el) el.remove();
+  }
+  function choose(state) {
+    try { localStorage.setItem(KEY, state); } catch (e) {}
+    applyConsent(state);
+    removeBanner();
+    try { window.dispatchEvent(new CustomEvent('winstep:consent', { detail: { state: state } })); } catch (e) {}
+  }
+
+  // ---- EU / UK banner (UNCHANGED — full opt-in, Accept All / Reject All) ----
+  function buildEUBanner() {
     if (document.getElementById('ws-cookie-banner')) return;
     var b = document.createElement('div');
     b.id = 'ws-cookie-banner';
@@ -67,8 +123,8 @@
       '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
       'gap:18px;flex-wrap:wrap;justify-content:center">' +
         '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
-          '\uD83C\uDF6A Winstep is completely free for everyone, and ads are our only source of income. ' +
-          'Accepting cookies helps us keep it that way \u2014 but the choice is yours. Thank you for understanding! ' +
+          '🍪 Winstep is completely free for everyone, and ads are our only source of income. ' +
+          'Accepting cookies helps us keep it that way — but the choice is yours. Thank you for understanding! ' +
           '<a href="/privacy.html" target="_blank" rel="noopener" ' +
           'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
         '</div>' +
@@ -88,27 +144,60 @@
     document.getElementById('ws-cookie-reject').onclick = function () { choose('rejected'); };
   }
 
-  function removeBanner() {
-    var el = document.getElementById('ws-cookie-banner');
-    if (el) el.remove();
+  // ---- US (and rest-of-world) light bar (opt-out model) ----
+  function buildUSBanner() {
+    if (document.getElementById('ws-cookie-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'ws-cookie-banner';
+    b.setAttribute('role', 'dialog');
+    b.setAttribute('aria-label', 'Cookie notice');
+    b.style.cssText =
+      'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+      'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
+      'box-shadow:0 -8px 30px rgba(0,0,0,.45);padding:12px 20px;' +
+      "font-family:Rajdhani,'Segoe UI',sans-serif;color:#c9d4d1";
+    b.innerHTML =
+      '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
+      'gap:16px;flex-wrap:wrap;justify-content:center">' +
+        '<div style="flex:1;min-width:220px;font-size:.9rem;line-height:1.5">' +
+          '🍪 We use cookies to keep winstep free and to show ads. ' +
+          '<a href="/privacy.html" target="_blank" rel="noopener" ' +
+          'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
+        '</div>' +
+        '<div style="display:flex;gap:14px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:center">' +
+          '<a id="ws-cookie-optout" href="#" ' +
+          'style="color:#9fb5b0;text-decoration:underline;font-size:.86rem;cursor:pointer">' +
+          'Your Privacy Choices</a>' +
+          '<button id="ws-cookie-gotit" type="button" ' +
+          'style="padding:10px 24px;background:#2ec4b6;border:1.5px solid #2ec4b6;' +
+          "color:#0a1413;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer\">" +
+          'Got it</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(b);
+    // "Got it" = accept (US opt-out allows personalized by default, one tap)
+    document.getElementById('ws-cookie-gotit').onclick = function () { choose('accepted'); };
+    // "Your Privacy Choices" = opt out -> non-personalized ads
+    document.getElementById('ws-cookie-optout').onclick = function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+      choose('rejected');
+    };
   }
 
-  function choose(state) {
-    try { localStorage.setItem(KEY, state); } catch (e) {}
-    applyConsent(state);
-    removeBanner();
-    // let other on-page scripts know the cookie question is now resolved
-    try { window.dispatchEvent(new CustomEvent('winstep:consent', { detail: { state: state } })); } catch (e) {}
+  function showBanner(region) {
+    if (region === 'us') buildUSBanner(); else buildEUBanner();
   }
 
   function showBannerIfNeeded() {
-    if (stored !== 'accepted' && stored !== 'rejected') buildBanner();
+    if (stored === 'accepted' || stored === 'rejected') return; // already chose
+    detectRegion(showBanner);
   }
 
   // ---- Public API (for the "Cookie Settings" footer link) ----
   window.winstepConsent = {
     get: function () { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
-    open: function () { buildBanner(); }  // re-open to change choice anytime
+    // re-open the region-appropriate banner to change the choice anytime
+    open: function () { removeBanner(); detectRegion(showBanner); }
   };
 
   if (document.readyState === 'loading') {
