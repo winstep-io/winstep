@@ -2485,9 +2485,7 @@ async function openUserProfile(userId){
     + ' <span style="cursor:pointer;float:right" onclick="closeUserProfile()">✕</span>';
 
   const cc = (u.cookie_consent==='accepted') ? 'Accept' : (u.cookie_consent==='rejected') ? 'Reject' : 'None';
-  const country = (u.ip_country==='US')
-    ? '<span style="color:var(--red);font-weight:700">🇺🇸 United States</span>'
-    : (u.ip_country ? escapeHtml(countryName(u.ip_country)) : '—');
+  const country = u.ip_country ? escapeHtml(countryName(u.ip_country)) : '—';
   const reg = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
 
   const rows = [
@@ -2497,6 +2495,7 @@ async function openUserProfile(userId){
     ['Registered', reg],
     ['Cookie consent', cc],
     ['Country IP', country],
+    ['City IP', '<span id="upCityIp" style="color:var(--muted)">…</span>'],
     ['🛡️ Signup IP', '<span id="upSignupIp" style="color:var(--muted)">…</span>'],
     ['🛡️ Last IP', '<span id="upLastIp" style="color:var(--muted)">…</span>'],
     ['🏆 Championship points', (u.championship_points||0)],
@@ -2579,9 +2578,32 @@ async function openUserProfile(userId){
       if(sEl) sEl.textContent = '—';
       if(lEl) lEl.textContent = '—';
     }
+
+    // City IP — resolved (approximate) from the stored IP via the same
+    // geo provider used at signup. Best-effort; never blocks the modal.
+    const cityEl = document.getElementById('upCityIp');
+    if(cityEl){
+      const ipForCity = (info && (info.last_ip || info.signup_ip)) || '';
+      if(ipForCity){
+        try{
+          const gr = await fetch('https://ipapi.co/'+encodeURIComponent(ipForCity)+'/json/');
+          const gj = await gr.json();
+          if(gj && !gj.error && gj.city){
+            const parts = [gj.city, gj.region_code || gj.region].filter(Boolean);
+            cityEl.textContent = parts.join(', ');
+            cityEl.style.color = 'var(--text,#e8f0ee)';
+          } else {
+            cityEl.textContent = '—'; cityEl.style.color = 'var(--muted)';
+          }
+        }catch(_){ cityEl.textContent = '—'; cityEl.style.color = 'var(--muted)'; }
+      } else {
+        cityEl.textContent = '—'; cityEl.style.color = 'var(--muted)';
+      }
+    }
   }catch(err){
     const sEl = document.getElementById('upSignupIp'); if(sEl) sEl.textContent = '—';
     const lEl = document.getElementById('upLastIp'); if(lEl) lEl.textContent = '—';
+    const cityEl = document.getElementById('upCityIp'); if(cityEl) cityEl.textContent = '—';
   }
 }
 function closeUserProfile(){ document.getElementById('userProfileModal').style.display = 'none'; }
