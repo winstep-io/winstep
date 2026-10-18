@@ -923,9 +923,13 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
               <input class="field-input" id="cf-champ" type="text" value="00176">
             </div>
             <div class="field">
-              <label class="field-label">Activation Code</label>
-              <input class="field-input" id="cf-code" type="text" value="AXXX-XXXXXX-XXXX" style="font-family:monospace;letter-spacing:1px">
+              <label class="field-label">Player ID</label>
+              <input class="field-input" id="cf-playerid" type="text" value="3621982">
             </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Activation Link (gift card URL)</label>
+            <input class="field-input" id="cf-code" type="text" value="https://www.amazon.com/gc/redeem?claimCode=XXXXXXXXXXXX" style="word-break:break-all">
           </div>
           <button class="btn btn-primary" onclick="cfCopy()">Copy HTML</button>
           <span id="cf-copied" style="color:var(--teal);font-size:.82rem;margin-left:8px"></span>
@@ -3559,8 +3563,11 @@ function cfBuild(){
   var name   = document.getElementById('cf-name').value.trim() || 'Winner';
   var amount = document.getElementById('cf-amount').value.trim() || '0';
   var champ  = document.getElementById('cf-champ').value.trim() || '00000';
-  var code   = document.getElementById('cf-code').value.trim() || 'XXXX-XXXX';
-  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Your Amazon Gift Card code \u2014 Winstep</title></head>'
+  var pid    = document.getElementById('cf-playerid').value.trim() || '0000000';
+  var link   = document.getElementById('cf-code').value.trim() || 'https://www.amazon.com/gc/redeem';
+  var href   = link.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var shown  = link.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Your Amazon Gift Card link \u2014 Winstep</title></head>'
   + '<body style="margin:0;padding:0;background-color:#f2f5f4;font-family:Arial,Helvetica,sans-serif;">'
   + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f5f4;padding:28px 12px;"><tr><td align="center">'
   + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8e6;">'
@@ -3570,18 +3577,25 @@ function cfBuild(){
   + '<div style="display:inline-block;background-color:rgba(46,196,182,0.14);border:1px solid rgba(46,196,182,0.45);color:#2ec4b6;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;padding:7px 16px;border-radius:20px;">Championship ID: ' + champ + '</div>'
   + '</td></tr>'
   + '<tr><td style="padding:32px 32px 26px;color:#1a2422;">'
-  + '<h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;color:#0d1412;">Your gift card code is ready, ' + name + '! \uD83C\uDF89</h1>'
-  + '<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#3a4744;">As promised, here is the activation code for your <strong style="color:#0d1412;">$' + amount + ' Amazon Gift Card</strong> from <strong style="color:#0d1412;">Championship ID: ' + champ + '</strong>. Congratulations once again on your win!</p>'
+  + '<h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;color:#0d1412;">Your gift card link is ready, ' + name + '! \uD83C\uDF89</h1>'
+  + '<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#3a4744;">As promised, here is the activation link for your <strong style="color:#0d1412;">$' + amount + ' Amazon Gift Card</strong> from <strong style="color:#0d1412;">Championship ID: ' + champ + '</strong> (Player ID: <strong style="color:#0d1412;">#' + pid + '</strong>). Congratulations once again on your win!</p>'
   + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;"><tr>'
   + '<td style="background-color:#0d1412;border:1px solid #2ec4b6;border-radius:12px;padding:22px 24px;text-align:center;">'
-  + '<div style="font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#2ec4b6;margin:0 0 10px;">Your Activation Code</div>'
-  + '<div style="font-family:\'Courier New\',Courier,monospace;font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:2px;line-height:1.3;word-break:break-all;">' + code + '</div>'
+  + '<div style="font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#2ec4b6;margin:0 0 14px;">Your Activation Link</div>'
+  + '<a href="' + href + '" style="display:inline-block;background-color:#2ec4b6;color:#04140e;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:10px;margin:0 0 14px;">Open your gift card \u2192</a>'
+  + '<div style="font-size:11px;color:#8aa39d;margin:0 0 6px;">or copy this link:</div>'
+  + '<a href="' + href + '" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8fe3d8;line-height:1.5;word-break:break-all;text-decoration:underline;">' + shown + '</a>'
   + '</td></tr></table>'
-  + '<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3a4744;">To redeem your code, please visit the official Amazon website and follow the instructions for redeeming an Amazon Gift Card. The balance will be added directly to your Amazon account.</p>'
+  + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr>'
+  + '<td style="background-color:#fdeaea;border:1px solid #e6a9a9;border-radius:12px;padding:16px 18px;">'
+  + '<div style="font-size:12px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;color:#b4443f;margin:0 0 8px;">\u26A0\uFE0F Before you open the link</div>'
+  + '<p style="margin:0;font-size:13px;line-height:1.6;color:#8a3a36;">Make sure you are signed in to the <strong>correct Amazon account</strong> in your browser first. If a different account is active when you open the link, the balance will be added to that account automatically \u2014 and it cannot be undone or transferred back.</p>'
+  + '</td></tr></table>'
+  + '<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3a4744;">Once you open the link, the balance is added directly to your Amazon account. For help, you can visit the official Amazon website and follow the instructions for redeeming an Amazon Gift Card.</p>'
   + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 4px;"><tr>'
   + '<td style="background-color:#fdf6e3;border:1px solid #e8d48a;border-radius:12px;padding:16px 18px;">'
-  + '<div style="font-size:12px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;color:#a8842a;margin:0 0 8px;">\u26A0\uFE0F Important \u2014 keep this code private</div>'
-  + '<p style="margin:0;font-size:13px;line-height:1.6;color:#6a5a2a;">Please note that this code is confidential. If you share it, there is a risk that someone else could redeem it. Use it now, or make sure you are the only person who knows it. Winstep is not responsible for any consequences arising from misuse of the code or from sharing it with third parties.</p>'
+  + '<div style="font-size:12px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;color:#a8842a;margin:0 0 8px;">\uD83D\uDD12 Keep this link private</div>'
+  + '<p style="margin:0;font-size:13px;line-height:1.6;color:#6a5a2a;">This link is confidential \u2014 anyone who opens it can claim the balance. Use it yourself and do not share it with anyone. Winstep is not responsible for any consequences arising from sharing the link with third parties.</p>'
   + '</td></tr></table>'
   + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 4px;"><tr>'
   + '<td style="border-left:3px solid #2ec4b6;padding:2px 0 2px 14px;">'
@@ -3604,7 +3618,7 @@ function cfCopy(){
 ['wf-name','wf-amount','wf-champ','wf-place'].forEach(function(id){
   var el=document.getElementById(id); if(el){ el.addEventListener('input',wfRender); el.addEventListener('change',wfRender); }
 });
-['cf-name','cf-amount','cf-champ','cf-code'].forEach(function(id){
+['cf-name','cf-amount','cf-champ','cf-playerid','cf-code'].forEach(function(id){
   var el=document.getElementById(id); if(el){ el.addEventListener('input',cfRender); }
 });
 
