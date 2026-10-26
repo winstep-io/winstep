@@ -68,31 +68,60 @@
   }
 
   // ---- region detection ----
-  var _region = null; // 'eu' | 'us'  (cached after first detect)
+  // 'eu' | 'us'. Seeded from a per-browser cache so repeat visits render the
+  // correct banner INSTANTLY (no flash), then re-verified from /api/geo below.
+  var REGION_KEY = 'winstep_region';
+  var _region = null;
+  try { var _rc = localStorage.getItem(REGION_KEY); if (_rc === 'eu' || _rc === 'us') _region = _rc; } catch (e) {}
+  function cacheRegion(r) { try { localStorage.setItem(REGION_KEY, r); } catch (e) {} }
 
   function regionFromCountry(cc) {
     return (cc && STRICT[cc]) ? 'eu' : 'us';
   }
 
-  function detectRegion(cb) {
-    if (_region) { cb(_region); return; }
-
-    // test override: ?geo=us / ?geo=eu
+  // Ask our own edge function for the authoritative region.
+  //  - onAuth(region): the real answer from /api/geo (or EU if it errors).
+  //  - onTimeout(region): a SAFE provisional ('eu'), used only if the edge
+  //    function is slow to respond (e.g. a COLD START on the first visit).
+  //    The real onAuth still fires afterwards and the caller corrects the
+  //    banner — so a slow first response can no longer get stuck on EU.
+  // The ?geo=us / ?geo=eu test override short-circuits to an authoritative answer.
+  function fetchRegion(onTimeout, onAuth) {
     try {
       var q = (new URLSearchParams(window.location.search)).get('geo');
-      if (q) { _region = (q.toLowerCase() === 'eu') ? 'eu' : 'us'; cb(_region); return; }
+      if (q) { onAuth((q.toLowerCase() === 'eu') ? 'eu' : 'us'); return; }
     } catch (e) {}
 
-    // ask our own edge function; on ANY problem fall back to EU (strict/safe)
-    var done = false;
-    var finish = function (r) { if (done) return; done = true; _region = r; cb(r); };
+    var settled = false;
+    var t = setTimeout(function () { if (!settled) onTimeout('eu'); }, 3000);
     try {
-      var t = setTimeout(function () { finish('eu'); }, 1500); // network stall -> safe default
       fetch('/api/geo', { cache: 'no-store' })
         .then(function (res) { return res.ok ? res.json() : null; })
-        .then(function (d) { clearTimeout(t); finish(regionFromCountry(d && d.country)); })
-        .catch(function () { clearTimeout(t); finish('eu'); });
-    } catch (e) { finish('eu'); }
+        .then(function (d) { settled = true; clearTimeout(t); onAuth(regionFromCountry(d && d.country)); })
+        .catch(function () { settled = true; clearTimeout(t); onAuth('eu'); });
+    } catch (e) { settled = true; clearTimeout(t); onAuth('eu'); }
+  }
+
+  // Show the region-appropriate banner now (instantly from cache when we have
+  // it) and correct it once /api/geo answers — so the very first visit can't
+  // get stuck on the wrong (EU) banner after a slow edge response.
+  function presentBanner() {
+    if (_region) showBanner(_region); // instant + correct on repeat visits
+    fetchRegion(
+      function (r) { // cold-start fallback, only if nothing is on screen yet
+        if (!document.getElementById('ws-cookie-banner')) showBanner(r);
+      },
+      function (r) { // authoritative answer: cache it and fix the banner if needed
+        cacheRegion(r); _region = r;
+        var ex = document.getElementById('ws-cookie-banner');
+        if (!ex) { showBanner(r); return; }
+        // only replace the auto-shown base banner (never a choices card the
+        // user opened), and only when the region actually changed.
+        if (ex.getAttribute('data-ws-auto') === '1' && ex.getAttribute('data-ws-region') !== r) {
+          removeBanner(); showBanner(r);
+        }
+      }
+    );
   }
 
   // ---- shared helpers ----
@@ -114,6 +143,8 @@
     b.id = 'ws-cookie-banner';
     b.setAttribute('role', 'dialog');
     b.setAttribute('aria-label', 'Cookie consent');
+    b.setAttribute('data-ws-auto', '1');
+    b.setAttribute('data-ws-region', 'eu');
     b.style.cssText =
       'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
       'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
@@ -151,6 +182,8 @@
     b.id = 'ws-cookie-banner';
     b.setAttribute('role', 'dialog');
     b.setAttribute('aria-label', 'Cookie notice');
+    b.setAttribute('data-ws-auto', '1');
+    b.setAttribute('data-ws-region', 'us');
     b.style.cssText =
       'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
       'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
@@ -229,14 +262,14 @@
 
   function showBannerIfNeeded() {
     if (stored === 'accepted' || stored === 'rejected') return; // already chose
-    detectRegion(showBanner);
+    presentBanner();
   }
 
   // ---- Public API (for the "Cookie Settings" footer link) ----
   window.winstepConsent = {
     get: function () { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
     // re-open the region-appropriate banner to change the choice anytime
-    open: function () { removeBanner(); detectRegion(showBanner); }
+    open: function () { removeBanner(); presentBanner(); }
   };
 
   if (document.readyState === 'loading') {
