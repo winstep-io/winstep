@@ -434,13 +434,13 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .mstat b{font-family:var(--disp);color:var(--gold);font-size:1rem;margin-left:2px}
 .mstat.mstage b{color:var(--teal-hi)}
 
-#cw{position:relative;padding:12px!important;background:var(--bg2)!important;width:100%!important}
+#cw{position:relative;padding:8px!important;background:var(--bg2)!important;width:100%!important}
 .mfield{display:flex;flex-direction:column;gap:4px}
-.mrow{display:flex;align-items:center;gap:3px;padding:2px 2px;border-radius:9px;transition:background .15s}
+.mrow{display:flex;align-items:center;gap:2px;padding:2px 2px;border-radius:9px;transition:background .15s}
 .mrow.active{background:rgba(46,196,182,.12);box-shadow:inset 0 0 0 1px var(--teal)}
 .mrow.locked{opacity:.4}
 .mfield.over .mrow.locked{opacity:1}
-.mgut{width:28px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.02;font-family:var(--disp);font-weight:700;font-size:.66rem;color:var(--muted)}
+.mgut{width:15px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.02;font-family:var(--disp);font-weight:700;font-size:.58rem;color:var(--muted)}
 .mgut .u{font-size:.5rem;font-weight:600;opacity:.7;letter-spacing:.02em}
 .mrow.active .mgut{color:var(--teal-hi)} .mrow.passed .mgut{color:var(--green)}
 .mcell{flex:1 1 0;aspect-ratio:1;border-radius:6px;background:#12312c;
@@ -539,7 +539,7 @@ function buildField(){
   const f = document.getElementById('field'); f.innerHTML = '';
   for(let r = ROWS - 1; r >= 0; r--){
     const row = document.createElement('div'); row.className = 'mrow'; row.id = 'row'+r;
-    const g = document.createElement('div'); g.className = 'mgut'; g.innerHTML = '+'+stepPts(r)+'<span class="u">pts</span>'; row.appendChild(g);
+    const g = document.createElement('div'); g.className = 'mgut'; g.textContent = '+'+stepPts(r); row.appendChild(g);
     for(let c = 0; c < COLS; c++){
       const cell = document.createElement('div'); cell.className = 'mcell'; cell.id = 'm'+r+'_'+c;
       cell.onclick = () => pick(r, c); row.appendChild(cell);
