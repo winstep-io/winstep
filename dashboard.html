@@ -1089,7 +1089,7 @@ async function loadRound(){
   // championship badge in header
   if(champ){
     const badge = document.getElementById('champBadge');
-    badge.textContent = champ.is_test ? '🏆 Test Championship' : ('🏆 Championship ' + champIdLabel(champ.number));
+    badge.textContent = (champ.is_test || champ.number == null) ? '🏆 Test Championship' : ('🏆 Championship ' + champIdLabel(champ.number));
     badge.style.display = 'inline-block';
   }
   releaseTopMeta();
