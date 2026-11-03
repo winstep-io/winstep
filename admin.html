@@ -1911,7 +1911,7 @@ async function loadChampionship(){
       const ce = new Date(cs.getTime() + (totalDays - 1) * 86400000);
       champEnd = ce.toISOString().split('T')[0];
     }
-    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+champIdLabel(active.number)+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+champEnd+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
+    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 '+champTitle(active)+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+champEnd+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
   } else {
     curBox.innerHTML = '<div class="empty">No active championship. Create one below.</div>';
   }

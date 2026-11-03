@@ -1056,7 +1056,7 @@ async function loadRound(){
       .order('created_at',{ascending:false}).limit(1).maybeSingle();
     round = r.data;
     if(round && round.championship_id){
-      const c = await db.from('championships').select('number').eq('id', round.championship_id).maybeSingle();
+      const c = await db.from('championships').select('number, is_test').eq('id', round.championship_id).maybeSingle();
       champ = c.data;
     }
   }
@@ -1089,7 +1089,7 @@ async function loadRound(){
   // championship badge in header
   if(champ){
     const badge = document.getElementById('champBadge');
-    badge.textContent = '🏆 Championship ' + champIdLabel(champ.number);
+    badge.textContent = champ.is_test ? '🏆 Test Championship' : ('🏆 Championship ' + champIdLabel(champ.number));
     badge.style.display = 'inline-block';
   }
   releaseTopMeta();
