@@ -1973,12 +1973,43 @@ async function endChampionship(){
   loadChampionship();
 }
 
+// ---- championship date helpers (overlap / past-date guard) ----
+function todayUTC(){ return new Date().toISOString().split('T')[0]; }
+// inclusive end date = start + rounds*duration - 1 (UTC days)
+function champEndDate(startStr, rounds, duration){
+  const ms = new Date(startStr + 'T00:00:00Z').getTime() + ((rounds * duration) - 1) * 86400000;
+  return new Date(ms).toISOString().split('T')[0];
+}
+// first active/upcoming championship whose [start..end] overlaps the given
+// range, excluding excludeId. ISO date strings compare correctly as text.
+async function findChampOverlap(startStr, rounds, duration, excludeId){
+  const newEnd = champEndDate(startStr, rounds, duration);
+  const { data: others } = await db.from('championships')
+    .select('id, number, is_test, start_date, total_rounds, round_duration_days, status')
+    .in('status', ['active','upcoming']);
+  for(const c of (others||[])){
+    if(excludeId && c.id === excludeId) continue;
+    if(!c.start_date || !c.total_rounds || !c.round_duration_days) continue;
+    const cEnd = champEndDate(c.start_date, c.total_rounds, c.round_duration_days);
+    if(startStr <= cEnd && c.start_date <= newEnd){ return { champ: c, cEnd }; }
+  }
+  return null;
+}
+
 async function createChampionship(){
   const start = document.getElementById('champStart').value;
   const rounds = parseInt(document.getElementById('champRounds').value);
   const duration = parseInt(document.getElementById('champDuration').value);
   if(!start || isNaN(rounds) || isNaN(duration)){ showMsg('champMsg','Please fill start date, rounds, and round length.','err'); return; }
   if(rounds < 1 || duration < 1){ showMsg('champMsg','Rounds and length must be at least 1.','err'); return; }
+
+  // ── no past start, no overlap with an active/upcoming championship ──
+  if(start < todayUTC()){ showMsg('champMsg','Start date can’t be in the past.','err'); return; }
+  const _ovC = await findChampOverlap(start, rounds, duration, null);
+  if(_ovC){
+    showMsg('champMsg','These dates ('+start+' → '+champEndDate(start,rounds,duration)+') overlap with '+champTitle(_ovC.champ)+' ('+_ovC.champ.start_date+' → '+_ovC.cEnd+'). Pick a start date after it ends.','err');
+    return;
+  }
 
   // save the points table first
   const { data: pts } = await db.from('round_points_table').select('place');
@@ -2036,20 +2067,60 @@ async function createChampionship(){
 async function editChampionship(champId){
   const { data: c } = await db.from('championships').select('*').eq('id', champId).single();
   if(!c) return;
-  const newRounds = prompt('Rounds for '+champTitle(c)+':', c.total_rounds);
-  if(newRounds===null) return;
-  const newDur = prompt('Round length (days):', c.round_duration_days);
-  if(newDur===null) return;
+  // only an upcoming championship can be edited — editing a running/finished one
+  // would desync its rounds and let the daily cron fast-forward it.
+  if(c.status !== 'upcoming'){
+    showMsg('champMsg','Only upcoming championships can be edited ('+champTitle(c)+' is '+c.status+'). Create a new one instead.','err');
+    return;
+  }
+  const newRoundsRaw = prompt('Rounds for '+champTitle(c)+':', c.total_rounds);
+  if(newRoundsRaw===null) return;
+  const newDurRaw = prompt('Round length (days):', c.round_duration_days);
+  if(newDurRaw===null) return;
   const newStart = prompt('Start date (YYYY-MM-DD):', c.start_date);
   if(newStart===null) return;
+
+  const newRounds = parseInt(newRoundsRaw) || c.total_rounds;
+  const newDur    = parseInt(newDurRaw)    || c.round_duration_days;
+  const startVal  = newStart || c.start_date;
+
+  if(newRounds < 1 || newDur < 1){ showMsg('champMsg','Rounds and length must be at least 1.','err'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(startVal)){ showMsg('champMsg','Start date must be YYYY-MM-DD.','err'); return; }
+  if(startVal < todayUTC()){ showMsg('champMsg','Start date can’t be in the past.','err'); return; }
+
+  const ov = await findChampOverlap(startVal, newRounds, newDur, champId);
+  if(ov){
+    showMsg('champMsg','These dates ('+startVal+' → '+champEndDate(startVal,newRounds,newDur)+') overlap with '+champTitle(ov.champ)+' ('+ov.champ.start_date+' → '+ov.cEnd+'). Pick a start date after it ends.','err');
+    return;
+  }
+
   const { error } = await db.from('championships').update({
-    total_rounds: parseInt(newRounds)||c.total_rounds,
-    round_duration_days: parseInt(newDur)||c.round_duration_days,
-    start_date: newStart||c.start_date
+    total_rounds: newRounds, round_duration_days: newDur, start_date: startVal
   }).eq('id', champId);
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-  showMsg('champMsg',champTitle(c)+' updated. ✅','ok');
+
+  // ✅ rebuild the rounds from the NEW dates — the old rows keep their old dates,
+  //    and stale (past) round dates make the daily cron skip/finish the
+  //    championship the moment it activates. An upcoming champ's rounds are all 'upcoming'.
+  await db.from('rounds').delete().eq('championship_id', champId);
+  const rows = [];
+  const startMs = new Date(startVal + 'T00:00:00Z').getTime();
+  for(let i = 0; i < newRounds; i++){
+    const rs = new Date(startMs + (i * newDur) * 86400000);
+    const re = new Date(startMs + ((i + 1) * newDur - 1) * 86400000);
+    rows.push({
+      round_number: i + 1, total_rounds: newRounds,
+      start_date: rs.toISOString().split('T')[0],
+      end_date:   re.toISOString().split('T')[0],
+      status: 'upcoming', championship_id: champId
+    });
+  }
+  const { error: rErr } = await db.from('rounds').insert(rows);
+  if(rErr){ showMsg('champMsg','Updated, but rounds rebuild failed: '+rErr.message,'err'); loadChampionship(); return; }
+
+  showMsg('champMsg',champTitle(c)+' updated & rounds rebuilt. ✅','ok');
   loadChampionship();
+  if(typeof loadRounds === 'function') loadRounds();
 }
 
 async function deleteChampionship(champId, num){
