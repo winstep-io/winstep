@@ -2247,7 +2247,7 @@ async function loadPrizes(){
   // ---- ჩემპიონატების ამომრჩევი ----
   const sel = document.getElementById('prizeChampSelect');
   const { data: champs } = await db.from('championships')
-    .select('id, number, status, start_date, total_rounds, round_duration_days')
+    .select('id, number, status, start_date, total_rounds, round_duration_days, is_test')
     .in('status', ['active','upcoming'])
     .order('number', { ascending: true });
 
@@ -2314,8 +2314,7 @@ async function loadPrizes(){
     const from = pr.place_from || pr.place;
     const to = pr.place_to || pr.place;
     const label = (from===to) ? (ordinal(from)+' Place') : ('Places '+from+'–'+to+' (each)');
-    const medal = from===1?'🥇':from===2?'🥈':from===3?'🥉':'🏅';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+medal+' '+label+'</div><div class="li-sub">'+escapeHtml(fmtAmount(pr.amount))+'</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deletePrize(\''+pr.id+'\')">Delete</button></div></div>';
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+label+'</div><div class="li-sub">'+escapeHtml(fmtAmount(pr.amount))+'</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deletePrize(\''+pr.id+'\')">Delete</button></div></div>';
   }
   list.innerHTML = html;
 }
@@ -2339,8 +2338,8 @@ function updatePrizePreview(){
   const prev = document.getElementById('prizePreview');
   if(isNaN(from) || isNaN(to) || !amt){ prev.textContent = '—'; return; }
   const fa = fmtAmount(amt);
-  if(from===to){ prev.textContent = '🏅 '+ordinal(from)+' Place → '+fa; }
-  else { prev.textContent = '🏅 Places '+from+'–'+to+' → '+fa+' each ('+(to-from+1)+' winners)'; }
+  if(from===to){ prev.textContent = ordinal(from)+' Place → '+fa; }
+  else { prev.textContent = 'Places '+from+'–'+to+' → '+fa+' each ('+(to-from+1)+' winners)'; }
 }
 
 async function addPrize(){
