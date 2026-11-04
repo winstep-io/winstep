@@ -237,6 +237,14 @@ header{display:flex;align-items:center;justify-content:space-between;
   color:var(--soft);font-size:.86rem;font-weight:600;text-align:center;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .unlock-hint b{color:var(--gold);font-family:var(--disp);font-weight:700}
+.unlock-hint .uh-line{line-height:1.3}
+/* ახალი ქულათა სისტემა — საფეხურების რიგი ბოქსის ქვედა ხაზზე */
+.uh-ladder{display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center;
+  margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.14)}
+.uh-tier{display:inline-flex;align-items:center;gap:5px;font-size:.82rem;font-weight:600;
+  background:rgba(46,196,122,.1);border:1px solid rgba(46,196,122,.3);
+  color:var(--soft);border-radius:999px;padding:3px 10px}
+.uh-tier b{color:var(--gold);font-family:var(--disp);font-weight:700}
 
 /* ── interval + countdown ───────────────────────────────── */
 .interval-banner{background:var(--bg2);border:0;border-radius:22px;padding:20px;
@@ -1540,6 +1548,7 @@ function ordinal(n){ const s=['th','st','nd','rd']; const v=n%100; return n+(s[(
 
 // ---- load boxes + tasks ----
 let pointSettings = { box_interval_minutes: 15, bridge_unlock_correct: 2 };
+let newPoints = { enabled: false, tiers: [] };   // ახალი საფეხურებრივი ქულათა სისტემა (მიმდინარე ჩემპიონატის)
 let dayAdCfg = null;   // მიმდინარე დღის ბოქსების ad_config snapshot (per-day რეკლამის ფლაგები)
 
 // გზა B — box-ის დასრულება/თამაშის განბლოკვა სერვერზე მოწმდება (anti-cheat).
@@ -1564,6 +1573,15 @@ async function loadBoxes(){
   } else {                                              // fallback
     const { data: setRows } = await db.from('settings').select('*').in('key',['box_interval_minutes','bridge_unlock_correct']);
     if(setRows){ for(const r of setRows){ pointSettings[r.key] = r.value; } }
+  }
+
+  // ახალი ქულათა სისტემა (მიმდინარე ჩემპიონატის ჩამრთველი + საფეხურები) — bootstrap-იდან
+  if(BOOT && BOOT.new_points){
+    const np = BOOT.new_points;
+    newPoints.enabled = (np.enabled===1 || np.enabled===true || np.enabled==='1');
+    newPoints.tiers = Array.isArray(np.tiers) ? np.tiers.slice() : [];
+  } else {
+    newPoints.enabled = false; newPoints.tiers = [];
   }
 
   // ---- boxes + tasks + my activity + my progress: ერთი RPC ----
@@ -1724,7 +1742,9 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
     // გამოჩნდებოდა (Quiz 5, Quiz 3, Quiz 6…) და პერმუტაცია საჯარო გახდებოდა.
     let label = task.title;
     if(task.type === 'quiz'){ qNum++; label = 'Quiz ' + qNum; }
-    html += '<div class="task-row'+(isDone?' done':'')+'"><div class="task-icon '+iconCls+'">'+icon+'</div><div class="task-info"><div class="task-name">'+escapeHtml(label)+'</div><div class="task-desc">'+desc+'</div></div><div class="task-right"><span class="task-pts">+'+task.points+'</span>';
+    // ახალ სისტემაში თითო ქუიზზე ქულა აღარ ერიცხება — ამიტომ "+N" ნიშანს არ ვაჩვენებთ
+    const ptsBadge = newPoints.enabled ? '' : '<span class="task-pts">+'+task.points+'</span>';
+    html += '<div class="task-row'+(isDone?' done':'')+'"><div class="task-icon '+iconCls+'">'+icon+'</div><div class="task-info"><div class="task-name">'+escapeHtml(label)+'</div><div class="task-desc">'+desc+'</div></div><div class="task-right">'+ptsBadge;
     if(isDone){ html += '<button class="task-btn done-btn">✓ Done</button>'; }
     else if(state==='active'){ html += '<button class="task-btn" onclick="startTask(\''+task.id+'\',\''+task.type+'\','+(task.type==='quiz'?qNum:0)+')">'+btnLabel+'</button>'; }
     else { html += '<button class="task-btn done-btn" style="opacity:.5">—</button>'; }
@@ -1733,7 +1753,16 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
   // მინიშნება მხოლოდ აქტიურ ბოქსში — დასრულებულში აზრი აღარ აქვს
   if(state === 'active'){
     const need = (box.unlock_correct != null ? box.unlock_correct : pointSettings.bridge_unlock_correct);
-    html += '<div class="unlock-hint">🎮 <b>'+need+'</b> correct answer'+(need===1?'':'s')+' unlock'+(need===1?'s':'')+' the bonus game</div>';
+    let hint = '<div class="unlock-hint"><div class="uh-line">🎮 <b>'+need+'</b> correct answer'+(need===1?'':'s')+' unlock'+(need===1?'s':'')+' the bonus game</div>';
+    // ახალი ქულათა სისტემა ჩართულია → ქვედა ხაზზე ვაჩვენებთ საფეხურებს (✅ სწორი → ქულა)
+    if(newPoints.enabled && newPoints.tiers && newPoints.tiers.length){
+      const ladder = newPoints.tiers
+        .map(t => '<span class="uh-tier">✅ '+t.correct_count+' → <b>'+t.points+'</b> pts</span>')
+        .join('');
+      hint += '<div class="uh-ladder">'+ladder+'</div>';
+    }
+    hint += '</div>';
+    html += hint;
   }
   html += '</div></div>';
   return html;

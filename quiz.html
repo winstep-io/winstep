@@ -616,6 +616,7 @@ async function preloadQuizMedia(){
   }
 }
 let answered = false;
+let qNewPoints = false;     // ახალი ქულათა სისტემა ჩართულია → +ქულა არ ჩანს პასუხის ფანჯარაში
 let bonusPending = false;   // პასუხმა ბონუსი გახსნა, მაგრამ modal ჯერ არ გამოჩენილა
 let bonusTimer = null;      // showBonusUnlock-ის დაყოვნებული timer
 let quizStarted = false;
@@ -767,6 +768,7 @@ async function pick(btn){
   const correctLetter = res.correct_answer;
   const isCorrect = (res.is_correct === true);
   const points = res.points || 0;
+  qNewPoints = (res.new_points === true);
   // already: პასუხი უკვე ჩაწერილია (მაგ. ქსელმა პირველი პასუხი დაკარგა და
   // მომხმარებელმა ხელახლა დააჭირა). სერვერი ვერდიქტს აღარ აბრუნებს, ამიტომ
   // „Not quite" ჩვენება მცდარი იქნებოდა — პასუხი შეიძლება სწორიც ყოფილიყო.
@@ -838,6 +840,7 @@ function bonusConfetti(){
 async function timeOut(){
   answered = true;
   const { data: res } = await db.rpc('submit_quiz_answer', { p_task_id: taskId, p_chosen: null });
+  qNewPoints = !!(res && res.new_points === true);
   const correctLetter = res ? res.correct_answer : null;
   document.querySelectorAll('.answer').forEach(a=>{
     a.classList.add('disabled');
@@ -887,6 +890,9 @@ function showResult(type, points){
     sub.textContent='No answer — counts as skipped.';
     pts.className='result-pts wrong';pts.textContent='0';
   }
+  // ახალ ქულათა სისტემაში ქულა აღარ ჩანს — ის ბოქსის დახურვისას დაერიცხება დაშბორდზე
+  if(qNewPoints){ pts.textContent=''; pts.style.display='none'; }
+  else { pts.style.display=''; }
   msg.classList.add('show');
   document.getElementById('continueBtn').classList.add('show');
   // interstitial ტრიგერი დაშბორდზე გადავიდა (გზა-დამოუკიდებლობისთვის)
