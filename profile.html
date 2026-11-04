@@ -598,9 +598,24 @@ async function loadRoundStanding(){
   );
   const livePlace = players.findIndex(p=>p.id===currentUser.id) + 1;
 
+  // ყველა დასრულებული რაუნდი ამ ჩემპიონატში — მათ შორის ის, სადაც მომხმარებელს
+  // არ უთამაშია (user_round_stats-ში row მხოლოდ მონაწილეებისთვის იქმნება).
+  const { data: pastRounds } = await db.from('rounds')
+    .select('round_number')
+    .eq('championship_id', round.championship_id)
+    .lt('round_number', round.round_number)
+    .order('round_number',{ascending:true});
+  const statByRound = {};
+  (hist||[]).forEach(r=>{ statByRound[r.round_number] = r; });
+
   let rows = '';
-  for(const r of (hist||[])){
-    rows += '<tr><td class="rs-round">Round '+r.round_number+'</td><td>'+(r.activity||0)+'</td><td>'+(r.correct_answers||0)+'</td><td class="rs-pts">'+(r.round_points||0)+'</td><td class="rs-place">'+ordinal(r.place)+' Place</td></tr>';
+  for(const pr of (pastRounds||[])){
+    const r = statByRound[pr.round_number];
+    const act = r ? (r.activity||0) : 0;
+    const cor = r ? (r.correct_answers||0) : 0;
+    const pts = r ? (r.round_points||0) : 0;
+    const place = r ? (ordinal(r.place)+' Place') : '—';
+    rows += '<tr><td class="rs-round">Round '+pr.round_number+'</td><td>'+act+'</td><td>'+cor+'</td><td class="rs-pts">'+pts+'</td><td class="rs-place">'+place+'</td></tr>';
   }
   rows += '<tr class="rs-live"><td class="rs-round">Round '+round.round_number+'<span class="rs-live-badge">Live</span></td><td>'+liveAct+'</td><td>'+liveCor+'</td><td class="rs-pts">'+livePts+'</td><td class="rs-place">'+(livePlace>0 ? ordinal(livePlace)+' Place' : '—')+'</td></tr>';
 
