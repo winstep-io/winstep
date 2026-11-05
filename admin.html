@@ -1991,7 +1991,10 @@ async function loadChampionship(){
   if(!champs || champs.length===0){ list.innerHTML = '<div class="empty">No championships yet.</div>'; }
   else {
     let html = '';
-    for(const c of champs){
+    // სორტირება თარიღით (და არა სტატუსით) — ახლები ზევით; upcoming ავტომატურად მიმდინარეს ზემოთ ხვდება
+    const champsSorted = [...champs].sort((a,b)=>
+      (b.start_date||'').localeCompare(a.start_date||'') || ((b.number||0)-(a.number||0)));
+    for(const c of champsSorted){
       const statusColor = c.status==='active'?'var(--green)':c.status==='finished'?'var(--muted)':'var(--gold)';
       let actions = '';
       if(c.status==='upcoming'){
