@@ -381,7 +381,6 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     <div class="nav-item active" onclick="nav('boxes',this)"><span>📦</span><span>Boxes & Tasks</span></div>
     <div class="nav-item" onclick="nav('championship',this)"><span>🏆</span><span>Championship</span></div>
     <div class="nav-item" onclick="nav('payouts',this)"><span>💰</span><span>Championship Results</span></div>
-    <div class="nav-item" onclick="nav('rounds',this)"><span>🏁</span><span>Rounds</span></div>
     <div class="nav-item" onclick="nav('prizes',this)"><span>🎁</span><span>Prizes</span></div>
     <div class="nav-item" onclick="nav('users',this)"><span>👥</span><span>Users</span></div>
     <div class="nav-item" onclick="nav('ipdetect',this)"><span>🛡️</span><span>IP Detection</span><span id="ipUnreadNav" style="display:none;margin-left:auto;color:#ff5a67;font-weight:800;font-size:.82rem"></span></div>
@@ -567,21 +566,7 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       <div id="payoutsBox"></div>
     </div>
 
-    <!-- ============ ROUNDS ============ -->
-    <div class="section" id="sec-rounds">
-      <div class="page-title">Rounds</div>
-      <div class="page-sub">Manage rounds within the current championship.</div>
-
-      <div class="msg" id="roundMsg"></div>
-
-      <div class="card">
-        <div class="card-title">🏁 Current Round</div>
-        <div id="currentRoundBox"><div class="loading">Loading...</div></div>
-      </div>
-
-      <div class="card-title" style="margin-top:8px">📋 All Rounds</div>
-      <div id="roundsList"><div class="loading">Loading...</div></div>
-    </div>
+    <!-- ROUNDS section removed from the admin UI (round advancement still runs server-side via cron). -->
 
     <!-- ============ PRIZES ============ -->
     <div class="section" id="sec-prizes">
@@ -610,8 +595,10 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <button class="btn btn-primary" onclick="addPrize()">Add Prize</button>
       </div>
 
-      <div class="card-title" style="margin-top:8px">🏆 Current Prizes</div>
-      <div id="prizesList"><div class="loading">Loading...</div></div>
+      <div class="card">
+        <div class="card-title">🏆 Current Prizes</div>
+        <div id="prizesList"><div class="loading">Loading...</div></div>
+      </div>
 
       <!-- ============ EXTRA ROUND PRIZE (activates Box Rush) ============ -->
       <div class="card" id="extraPrizeCard" style="border:1px solid rgba(61,220,132,.4);margin-top:18px">
@@ -1304,7 +1291,6 @@ function nav(section, el){
   closeSidebar();
   if(section==='championship') loadChampionship();
   if(section==='payouts') loadPayoutChampList();
-  if(section==='rounds') loadRounds();
   if(section==='prizes') loadPrizes();
   if(section==='settings'){ loadNewPoints(); loadExtraActivity(); }
   if(section==='users') loadUsers();
@@ -2268,6 +2254,8 @@ async function deleteChampionship(champId, num){
 
 // ==================== ROUNDS ====================
 async function loadRounds(){
+  // Rounds section was removed from the UI — nothing to render.
+  if(!document.getElementById('currentRoundBox')) return;
   // active championship
   const { data: champ } = await db.from('championships').select('*').eq('status','active').order('number',{ascending:false}).limit(1).maybeSingle();
 
@@ -3315,6 +3303,7 @@ function renderCountryStats(){
 
 function showMsg(id, text, type){
   const m = document.getElementById(id);
+  if(!m) return;   // message element may have been removed (e.g. Rounds section)
   m.textContent = text; m.className = 'msg show ' + type;
   setTimeout(()=>{ m.className='msg'; }, 3000);
 }
