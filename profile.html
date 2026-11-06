@@ -56,6 +56,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .rs-table .rs-round{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--teal)}
 .rs-table .rs-pts{font-family:'Fredoka',sans-serif;font-weight:700;color:#c9d4d1}
 .rs-table .rs-place{font-weight:600;color:var(--gold)}
+.rs-table .er-dash{color:var(--gold);font-weight:700}
 .rs-table tr.rs-live td{background:var(--teal4)}
 .rs-live-badge{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);border:1px solid var(--border2);border-radius:6px;padding:2px 6px;margin-left:6px}
 .stat-lbl{font-size:.7rem;color:var(--soft);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
@@ -614,10 +615,10 @@ async function loadRoundStanding(){
     const act = r ? (r.activity||0) : 0;
     const cor = r ? (r.correct_answers||0) : 0;
     const pts = r ? (r.round_points||0) : 0;
-    const place = r ? (ordinal(r.place)+' Place') : '—';
+    const place = r ? ordinal(r.place) : '—';
     rows += '<tr><td class="rs-round">Round '+pr.round_number+'</td><td>'+act+'</td><td>'+cor+'</td><td class="rs-pts">'+pts+'</td><td class="rs-place">'+place+'</td></tr>';
   }
-  rows += '<tr class="rs-live"><td class="rs-round">Round '+round.round_number+'<span class="rs-live-badge">Live</span></td><td>'+liveAct+'</td><td>'+liveCor+'</td><td class="rs-pts">'+livePts+'</td><td class="rs-place">'+(livePlace>0 ? ordinal(livePlace)+' Place' : '—')+'</td></tr>';
+  rows += '<tr class="rs-live"><td class="rs-round">Round '+round.round_number+'<span class="rs-live-badge">Live</span></td><td>'+liveAct+'</td><td>'+liveCor+'</td><td class="rs-pts">'+livePts+'</td><td class="rs-place">'+(livePlace>0 ? ordinal(livePlace) : '—')+'</td></tr>';
 
   card.innerHTML = '<table class="rs-table"><thead><tr><th>Round</th><th>Activity</th><th>Correct</th><th>Points</th><th>Place</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
@@ -661,7 +662,18 @@ async function loadPastChampionships(){
     statBy[s.championship_id].correct  += (s.correct_answers||0);
   });
 
-  const em = '—';   // მონაწილეობის გარეშე
+  // Extra Round — ჩემი ადგილი თითო ჩემპიონატში (თუ ჩატარდა და ვითამაშე)
+  const extraBy = {};
+  try{
+    const { data: extra } = await db.from('extra_round_results')
+      .select('championship_id, place')
+      .eq('user_id', currentUser.id)
+      .in('championship_id', champIds);
+    (extra||[]).forEach(e=>{ if(e.place) extraBy[e.championship_id] = e.place; });
+  }catch(_){}
+
+  const em = '—';                               // მონაწილეობის გარეშე (ჩვეულებრივი)
+  const yd = '<span class="er-dash">—</span>';  // ყვითელი ტირე — ექსტრა რაუნდი არ ჩატარდა/არ მიუღია მონაწილეობა
   let rows = '';
   for(const c of champs){
     const po = payoutBy[c.id];
@@ -674,18 +686,20 @@ async function loadPastChampionships(){
       activity = st ? st.activity : 0;
       correct  = st ? st.correct  : 0;
       points   = po ? po.championship_points : 0;
-      place    = po ? (ordinal(po.place)+' Place') : em;
+      place    = po ? ordinal(po.place) : em;
     }
+    const erPlace = extraBy[c.id] ? ordinal(extraBy[c.id]) : yd;
     rows += '<tr>'
       + '<td class="rs-round">Championship '+champIdLabel(c.number)+'</td>'
       + '<td>'+activity+'</td>'
       + '<td>'+correct+'</td>'
       + '<td class="rs-pts">'+points+'</td>'
       + '<td class="rs-place">'+place+'</td>'
+      + '<td class="rs-place rs-erplace">'+erPlace+'</td>'
       + '</tr>';
   }
 
-  card.innerHTML = '<table class="rs-table"><thead><tr><th>Championship</th><th>🎯</th><th>✅</th><th>PTS</th><th>Place</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  card.innerHTML = '<table class="rs-table"><thead><tr><th>Championship</th><th>🎯</th><th>✅</th><th>PTS</th><th>Place</th><th>E/R Place</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 function timeAgo(ts){

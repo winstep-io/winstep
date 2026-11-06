@@ -587,6 +587,75 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
     })();
   </script>
   <script src="/sounds.js" defer></script>
+<style>
+/* ============ EXTRA ROUND + BOX RUSH ============ */
+/* striped extra bar on the NORMAL dashboard round progress */
+.rb-prog i.extra{background:repeating-linear-gradient(45deg,var(--gold) 0 4px,#a8831c 4px 8px)!important;
+  box-shadow:inset 0 0 0 1px rgba(245,200,66,.5)!important}
+
+/* Extra Round Prizes section inside the green prize card (lime, ~20% smaller) */
+.er-divider{position:relative;z-index:1;height:1px;background:rgba(255,255,255,.13);margin:15px 0 12px}
+.er-prize-head{position:relative;z-index:1;display:flex;align-items:center;gap:6px;font-family:var(--disp);
+  font-weight:600;font-size:.86rem;color:#bdeeb0;margin-bottom:6px}
+.er-need{position:relative;z-index:1;font-family:var(--body);font-weight:700;font-size:.74rem;color:#8fe0a6;margin-bottom:8px}
+.pi-row.er{padding:9px 0}
+.pi-row.er .pi-place{font-size:.72rem;color:#bdeeb0!important}
+.pi-row.er .pi-amt{font-size:1.04rem;color:#3ddc84!important}
+.er-how{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin-top:13px;
+  font-family:var(--body);font-weight:700;font-size:.78rem;color:var(--soft);cursor:pointer}
+.er-how:hover{color:var(--teal)}
+.erp-i{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+  border:1px solid var(--border2);background:var(--bg3);color:var(--soft);font-family:var(--disp);font-size:.7rem;font-weight:700;cursor:pointer}
+
+/* ---- extra-round takeover mode (keeps the header, single column) ---- */
+body.extra-mode .sidebar-col,
+body.extra-mode #roundBanner,
+body.extra-mode #champBadge,
+body.extra-mode .sec-title,
+body.extra-mode #boxesContainer,
+body.extra-mode #betweenChamps,
+body.extra-mode .welcome,
+body.extra-mode .welcome-sub,
+body.extra-mode .ad-slot{display:none!important}
+body.extra-mode .layout{grid-template-columns:1fr!important;max-width:720px;margin:0 auto}
+body.extra-mode .main-col{width:100%}
+
+/* extra round view */
+#extraRoundView .er-hint{background:rgba(255,194,71,.09);border-radius:16px;padding:12px 14px;margin-bottom:12px;
+  color:var(--soft);font-size:.86rem;font-weight:600;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+#extraRoundView .er-hint b{color:var(--gold);font-family:var(--disp);font-weight:700}
+#extraRoundView .er-hint .er-sub{display:block;color:var(--muted);font-size:.78rem;margin-top:4px}
+.mhud{display:flex;justify-content:space-around;align-items:center;gap:8px;background:var(--bg2);
+  border-radius:16px;padding:11px 14px;box-shadow:var(--lift);margin-bottom:12px}
+.mstat{display:flex;align-items:center;gap:6px;font-family:var(--body);font-weight:800;font-size:.86rem;color:var(--soft)}
+.mstat b{font-family:var(--disp);color:var(--gold);font-size:1.12rem}
+.mstat.picks b{color:var(--teal)}
+.br-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%}
+.br-cell{position:relative;cursor:pointer}
+.br-cell canvas{display:block;width:100%;height:auto}
+.br-cell.spent{cursor:default}
+.er-msg{background:var(--bg2);border-radius:20px;padding:40px 26px;text-align:center;box-shadow:var(--lift)}
+.er-msg-ic{font-size:2.6rem;line-height:1;margin-bottom:12px}
+.er-msg-t{font-family:var(--disp);font-weight:700;font-size:1.4rem;color:var(--text);margin-bottom:10px}
+.er-msg-s{font-size:.95rem;color:var(--soft);line-height:1.6;max-width:420px;margin:0 auto}
+.er-link{background:none;border:0;color:var(--gold);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;padding:0}
+
+/* popups */
+.er-ov{position:fixed;inset:0;background:rgba(6,11,10,.78);backdrop-filter:blur(5px);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:22px}
+.er-ov.show{display:flex}
+.er-ov-card{background:#0f1917;border:1px solid var(--border2);border-radius:20px;max-width:420px;width:100%;
+  padding:24px 22px;box-shadow:0 24px 60px rgba(0,0,0,.6);max-height:86vh;overflow:auto}
+.er-ov-card h3{font-family:var(--disp);font-weight:700;color:var(--gold);font-size:1.2rem;margin-bottom:12px}
+.er-ov-card h4{font-family:var(--disp);font-weight:700;color:var(--teal);font-size:.9rem;margin:14px 0 4px}
+.er-ov-card p{font-size:.86rem;color:var(--text2,#c9d4d1);line-height:1.6;margin-bottom:6px}
+.er-ov-card li{font-size:.86rem;color:var(--text2,#c9d4d1);line-height:1.6;margin-left:18px}
+.er-ov-btn{width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:var(--teal);
+  color:var(--on-accent);font-family:var(--disp);font-weight:600;font-size:.95rem;cursor:pointer}
+.go-score{font-family:var(--disp);font-weight:700;font-size:2.6rem;color:var(--gold);text-align:center;margin:6px 0 2px}
+.go-t{font-family:var(--disp);font-weight:700;font-size:1.6rem;color:var(--teal);text-align:center}
+.go-s{font-size:.88rem;color:var(--soft);text-align:center;margin-top:6px}
+</style>
 </head>
 <body>
 <div id="preCover"></div>
@@ -674,6 +743,8 @@ html[data-boot="pending"] #preCover{display:block;position:fixed;inset:0;
       <div id="betweenTitle" style="font-family:Fredoka,sans-serif;font-size:2rem;font-weight:700;color:var(--gold,#f5c842);line-height:1.2;font-variant-numeric:tabular-nums;font-feature-settings:'tnum'">—</div>
       <div id="betweenSub" style="font-size:.95rem;color:var(--soft,#9fb5b0);max-width:360px;margin:18px auto 0;line-height:1.5">The next season is coming. Check back soon to compete!</div>
     </div>
+
+    <div id="extraRoundView" style="display:none"></div>
 
     <div class="sec-title">Today's Boxes</div>
     <div id="boxesContainer">
@@ -793,6 +864,7 @@ function showTermsGate(){
 // ============================================================
 let BOOT = null;          // RPC-ის შედეგი (ან null, თუ ჩავარდა)
 let bootPromise = null;   // რომ ერთხელ გაეშვას, პარალელური გამოძახებებისთვის
+let extraRound = { enabled:false, live:false, activity_required:0, prizes:[], standings:[], my_eligible:false, ends_at:null };
 
 // უსაფრთხოების ბადე: თუ boot 6წმ-ზე მეტს გაჭიანურდა, cover-ს ვხსნით,
 // რომ გვერდი სამუდამოდ ცარიელი არ დარჩეს (overlay თავისით გამოჩნდება თუ საჭიროა).
@@ -809,6 +881,20 @@ function loadBootstrap(){
       const { data, error } = await db.rpc('get_dashboard_bootstrap');
       if(error || !data) throw error || new Error('no data');
       BOOT = data;
+      // ---- extra round state ----
+      if(BOOT && BOOT.extra_round){
+        const ex = BOOT.extra_round;
+        extraRound.enabled = (ex.enabled===1 || ex.enabled===true || ex.enabled==='1');
+        extraRound.live    = (ex.live===1 || ex.live===true || ex.live==='1');
+        extraRound.activity_required = Number(ex.activity_required||0);
+        extraRound.prizes = Array.isArray(ex.prizes) ? ex.prizes : [];
+        extraRound.standings = Array.isArray(ex.standings) ? ex.standings : [];
+        extraRound.my_eligible = (ex.my_eligible===1 || ex.my_eligible===true || ex.my_eligible==='1');
+        extraRound.ends_at = ex.ends_at || null;
+      } else {
+        extraRound = { enabled:false, live:false, activity_required:0, prizes:[], standings:[], my_eligible:false, ends_at:null };
+      }
+      try{ document.body.classList.toggle('extra-mode', !!extraRound.live); }catch(_){}
       // პაუზის ხატულა/შრიფტი: თუ bootstrap-ში არ მოდის, ცალკე helper RPC-დან ვიღებთ
       // (მხოლოდ პაუზის დროს — ზედმეტ მოთხოვნას თავიდან ავიცილებთ).
       try{
@@ -1076,8 +1162,10 @@ async function loadRound(){
     return;
   }
   currentRound = round;
-  document.getElementById('rbNum').textContent = 'Round ' + round.round_number + ' / ' + round.total_rounds;
-  // პროგრესის უჯრები — რაოდენობა total_rounds-ზეა მიბმული
+  // ექსტრა რაუნდი = +1 რაუნდი ჩვენებაში (მხოლოდ თუ გააქტიურებულია)
+  const _exBonus = extraRound.enabled ? 1 : 0;
+  document.getElementById('rbNum').textContent = 'Round ' + round.round_number + ' / ' + ((parseInt(round.total_rounds,10)||0) + _exBonus);
+  // პროგრესის უჯრები — რაოდენობა total_rounds-ზეა მიბმული (+ დაზოლილი ექსტრა ბარი)
   const _prog = document.getElementById('rbProg');
   if(_prog){
     const _tot = parseInt(round.total_rounds, 10) || 0;
@@ -1086,6 +1174,7 @@ async function loadRound(){
     for(let i = 1; i <= _tot; i++){
       _ph += '<i class="' + (i < _cur ? 'done' : (i === _cur ? 'now' : '')) + '"></i>';
     }
+    if(extraRound.enabled){ _ph += '<i class="extra" title="Extra Round"></i>'; }
     _prog.innerHTML = _ph;
   }
   const fmt = (d)=>{ const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}); };
@@ -1532,8 +1621,178 @@ async function loadPrizes(){
     const amt = fmtAmount(pr.amount);
     html += '<div class="pi-row"><span class="pi-place">'+label+'</span><span class="pi-amt">'+amt+'</span></div>';
   }
+
+  // ---- Extra Round Prizes section (same card, lime) — only when configured & not live ----
+  if(extraRound.enabled && !extraRound.live && extraRound.prizes && extraRound.prizes.length){
+    html += '<div class="er-divider"></div>';
+    html += '<div class="er-prize-head">Extra Round Prizes 🎁</div>';
+    if(extraRound.activity_required > 0){
+      html += '<div class="er-need">🎯 '+extraRound.activity_required+' activity needed to play</div>';
+    }
+    for(const pr of extraRound.prizes){
+      const ef = pr.place_from || pr.place, et = pr.place_to || pr.place;
+      const elabel = (ef===et) ? ordinal(ef) : (ordinal(ef)+' – '+ordinal(et));
+      html += '<div class="pi-row er"><span class="pi-place">'+elabel+'</span><span class="pi-amt">'+fmtAmount(pr.amount)+'</span></div>';
+    }
+    html += '<div class="er-how" onclick="openExtraInfo()">How Extra Round Works <span class="erp-i">i</span></div>';
+  }
+
   document.getElementById('prizeRows').innerHTML = html;
   if(!inGap) document.getElementById('prizeCard').style.display = 'block';
+}
+
+// ==================== EXTRA ROUND (dashboard takeover) ====================
+function openExtraInfo(){ const o=document.getElementById('erInfoOv'); if(o)o.classList.add('show'); if(window.winstepSound){try{winstepSound.play('nav');}catch(e){}} }
+function closeExtraInfo(){ const o=document.getElementById('erInfoOv'); if(o)o.classList.remove('show'); }
+function closeExtraGo(){ const o=document.getElementById('erGoOv'); if(o)o.classList.remove('show'); }
+
+function erStandingsHtml(){
+  const rows = extraRound.standings || [];
+  if(!rows.length) return '<div class="empty" style="padding:16px">No players in the Extra Round.</div>';
+  let h='';
+  rows.forEach((p,idx)=>{
+    const initial = (p.username||'?').charAt(0).toUpperCase();
+    const av = (window.avatarSVG ? (avatarSVG(p.avatar_id, 34)||'') : '');
+    const avatar = av ? '<div class="lb-avatar">'+av+'</div>' : '<div class="lb-avatar lb-avatar-initial">'+initial+'</div>';
+    h += '<div class="lb-row'+(p.me?' me':'')+'"><span class="lb-rank">'+(idx+1)+'</span>'+avatar
+      + '<div class="lb-info"><div class="lb-name">'+escapeHtml(p.username||'—')+'</div>'
+      + '<div class="lb-stats">⭐ '+(p.round_points||0)+' · 🎯 '+(p.activity||0)+' · ✅ '+(p.correct||0)+'</div></div>'
+      + '<span class="lb-pts">'+(p.score||0)+'<span class="lb-lbl">PTS</span></span></div>';
+  });
+  return h;
+}
+function erPrizesHtml(){
+  if(!extraRound.prizes || !extraRound.prizes.length) return '';
+  let h = '<div class="pi-card" style="margin-top:14px"><div class="er-prize-head">Extra Round Prizes 🎁</div>';
+  for(const pr of extraRound.prizes){
+    const ef=pr.place_from||pr.place, et=pr.place_to||pr.place;
+    const label=(ef===et)?ordinal(ef):(ordinal(ef)+' – '+ordinal(et));
+    h += '<div class="pi-row er"><span class="pi-place">'+label+'</span><span class="pi-amt">'+fmtAmount(pr.amount)+'</span></div>';
+  }
+  h += '<div class="er-how" onclick="openExtraInfo()">How Extra Round Works <span class="erp-i">i</span></div></div>';
+  return h;
+}
+function renderExtraRound(){
+  const view = document.getElementById('extraRoundView');
+  if(!view) return;
+  document.body.classList.add('extra-mode');
+  view.style.display = 'block';
+  const timer = '<div class="day-countdown">🌙 Day ends in <b id="dayCountdown">—</b> (resets 00:00 UTC)</div>';
+
+  if(!extraRound.my_eligible){
+    view.innerHTML = timer
+      + '<div class="er-msg"><div class="er-msg-ic">⏳</div>'
+      + '<div class="er-msg-t">An Extra Round is underway</div>'
+      + '<div class="er-msg-s">A 24-hour bonus round (Box Rush) is running for players who qualified. '
+      + '<button class="er-link" onclick="openExtraInfo()">See participation conditions</button></div></div>';
+    return;
+  }
+  view.innerHTML = timer
+    + '<div class="sec-title" style="display:flex;align-items:center;gap:10px">Extra Round · Box Rush <span class="erp-i" onclick="openExtraInfo()" title="How the Extra Round works">i</span></div>'
+    + '<div class="er-hint">🎁 <b>Extra Round</b> · Smash any <b>10</b> crates — highest total wins.<span class="er-sub">Tap any 10 crates to smash them.</span></div>'
+    + '<div class="mhud"><div class="mstat picks"><span>📦</span><span>Picks <b id="brPicks">0</b>/10</span></div><div class="mstat"><span>🏁</span><span><b id="brScore">0</b> pts</span></div></div>'
+    + '<div class="br-grid" id="brGrid"></div>'
+    + '<div class="sec-title" style="margin-top:26px">Extra Round Standings</div>'
+    + '<div class="card" id="brLb">'+erStandingsHtml()+'</div>'
+    + erPrizesHtml();
+  initBoxRush();
+}
+
+// ---- Box Rush game (server-authoritative) ----
+let _brCrates = [];
+async function initBoxRush(){
+  const grid = document.getElementById('brGrid');
+  if(!grid) return;
+  let st;
+  try{ const r = await db.rpc('box_rush_state'); st = r.data; }catch(e){}
+  if(!st || !st.ok){ grid.innerHTML = '<div class="empty" style="padding:16px">Could not load Box Rush'+(st&&st.reason?(' — '+st.reason):'')+'.</div>'; return; }
+  const picksArr = Array.isArray(st.picks) ? st.picks : [];
+  const revealed = st.revealed || {};
+  const count = st.count || 30;
+  grid.innerHTML = ''; _brCrates = [];
+  for(let i=0;i<count;i++){
+    const cell = document.createElement('div'); cell.className='br-cell';
+    const cv = document.createElement('canvas'); cell.appendChild(cv); grid.appendChild(cell);
+    const crate = makeBrCrate(cv);
+    const isPicked = picksArr.indexOf(i) !== -1;
+    if(isPicked){ cell.classList.add('spent'); crate.revealValue(revealed[i], false); }
+    else if(st.status==='done' && st.deck){ cell.classList.add('spent'); crate.revealValue(st.deck[i], true); }
+    else { cell.onclick = ()=>brPick(i, cell, crate); }
+    _brCrates.push({cell, crate});
+  }
+  const pe=document.getElementById('brPicks'), se=document.getElementById('brScore');
+  if(pe) pe.textContent = picksArr.length;
+  if(se) se.textContent = st.score || 0;
+}
+async function brPick(i, cell, crate){
+  if(cell.classList.contains('spent')) return;
+  cell.classList.add('spent');
+  let res;
+  try{ const r = await db.rpc('box_rush_pick', { p_index: i }); res = r.data; }catch(e){}
+  if(!res || !res.ok){ if(!(res && (res.reason==='limit'||res.reason==='already_picked'))) cell.classList.remove('spent'); return; }
+  crate.smashReveal(res.value);
+  if(window.winstepSound){ try{ winstepSound.play('pop'); }catch(e){} }
+  const pe=document.getElementById('brPicks'), se=document.getElementById('brScore');
+  if(pe) pe.textContent = res.picks;
+  if(se) se.textContent = res.score;
+  if(res.finished) brFinish(res);
+}
+function brFinish(res){
+  const deck = res.deck || [];
+  _brCrates.forEach((c,idx)=>{
+    c.cell.onclick = null;
+    if(!c.crate.opened){ c.cell.classList.add('spent'); setTimeout(()=>c.crate.revealValue(deck[idx], true), 120 + idx*16); }
+  });
+  if(window.winstepSound){ try{ winstepSound.play('win'); }catch(e){} }
+  setTimeout(()=>{
+    const gs=document.getElementById('erGoScore'); if(gs) gs.textContent=(res.score||0)+' pts';
+    const o=document.getElementById('erGoOv'); if(o) o.classList.add('show');
+  }, 10000);
+}
+// crate renderer — value supplied at reveal time (server-side)
+function makeBrCrate(canvas){
+  const ctx=canvas.getContext('2d'); const DPR=Math.min(window.devicePixelRatio||1,2), SIZE=118, GOLD='#f5c842';
+  canvas.width=SIZE*DPR; canvas.height=SIZE*DPR; ctx.scale(DPR,DPR);
+  const palette={front:'#b5803a',top:'#d29a50',right:'#8d6026',stroke:'#5f3f1a',splinter:'#8d6026'};
+  const CFG={spd:[1.1,2.6],up:[1.0,2.2],grav:0.17,splinters:8,dust:6,splSpd:[1.2,3.2],life:1250};
+  const rr=(a,b)=>a+Math.random()*(b-a);
+  const cx=SIZE*0.46,cy=SIZE*0.52,s=SIZE*0.46,D=SIZE*0.20,half=s/2;
+  const F=[[cx-half,cy-half],[cx+half,cy-half],[cx+half,cy+half],[cx-half,cy+half]];
+  const T=[F[0],F[1],[F[1][0]+D,F[1][1]-D],[F[0][0]+D,F[0][1]-D]];
+  const R=[F[1],[F[1][0]+D,F[1][1]-D],[F[2][0]+D,F[2][1]-D],F[2]];
+  const centre=[cx+D/2,cy-D/2+s*0.02];
+  let value=null, state='intact', shards=[],bits=[],dust=[],t0=0,numScale=0,opened=false;
+  const cen=p=>{let x=0,y=0;for(const q of p){x+=q[0];y+=q[1];}return[x/p.length,y/p.length];};
+  function addShard(pts,fill){const c=cen(pts),dx=c[0]-centre[0],dy=c[1]-centre[1],d=Math.hypot(dx,dy)||1,spd=rr(CFG.spd[0],CFG.spd[1]);
+    shards.push({pts:pts.map(p=>[p[0]-c[0],p[1]-c[1]]),x:c[0],y:c[1],fill,vx:(dx/d)*spd+(Math.random()-0.5)*1.2,vy:(dy/d)*spd-rr(CFG.up[0],CFG.up[1]),a:0,va:(Math.random()-0.5)*0.45});}
+  function build(){shards=[];bits=[];dust=[];const yA=F[0][1]+(F[3][1]-F[0][1])/3,yB=F[0][1]+(F[3][1]-F[0][1])*2/3;
+    addShard([F[0],F[1],[F[1][0],yA],[F[0][0],yA]],palette.front);addShard([[F[0][0],yA],[F[1][0],yA],[F[1][0],yB],[F[0][0],yB]],palette.front);
+    addShard([[F[0][0],yB],[F[1][0],yB],F[2],F[3]],palette.front);addShard(T,palette.top);addShard(R,palette.right);
+    for(let i=0;i<CFG.splinters;i++){const ang=Math.random()*Math.PI*2,spd=rr(CFG.splSpd[0],CFG.splSpd[1]);
+      bits.push({x:centre[0]+(Math.random()-0.5)*s*0.6,y:centre[1]+(Math.random()-0.5)*s*0.6,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-rr(0.6,1.6),len:3+Math.random()*6,a:Math.random()*Math.PI,va:(Math.random()-0.5)*0.5,col:Math.random()<0.5?palette.top:palette.splinter});}
+    for(let i=0;i<CFG.dust;i++)dust.push({x:centre[0]+(Math.random()-0.5)*s*0.5,y:centre[1]+(Math.random()-0.5)*s*0.5,r:4+Math.random()*6,vr:0.5+Math.random()*0.8,vx:(Math.random()-0.5)*1.2,vy:-(0.4+Math.random()*0.8)});}
+  function poly(pts,fill,stroke){ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);ctx.closePath();
+    if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.lineJoin='round';ctx.lineWidth=1;ctx.strokeStyle=stroke;ctx.stroke();}}
+  function shadow(){ctx.save();ctx.globalAlpha=.35;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(centre[0],cy+half+4,half*0.95,5,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+  function drawCrate(){ctx.clearRect(0,0,SIZE,SIZE);shadow();poly(T,palette.top,palette.stroke);poly(R,palette.right,palette.stroke);poly(F,palette.front,palette.stroke);
+    ctx.strokeStyle='rgba(0,0,0,.28)';ctx.lineWidth=2;for(const fr of[0.34,0.67]){const y=F[0][1]+(F[3][1]-F[0][1])*fr;
+      ctx.beginPath();ctx.moveTo(F[0][0],y);ctx.lineTo(F[1][0],y);ctx.stroke();ctx.beginPath();ctx.moveTo(F[1][0],y);ctx.lineTo(F[1][0]+D,y-D);ctx.stroke();}
+    ctx.fillStyle='#3a2710';ctx.font='700 '+(s*0.62)+"px Fredoka, sans-serif";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('?',(F[0][0]+F[1][0])/2,(F[0][1]+F[2][1])/2);}
+  function drawNumber(alpha){ctx.save();ctx.globalAlpha=alpha==null?1:alpha;ctx.translate(centre[0],centre[1]);ctx.scale(numScale,numScale);
+    ctx.fillStyle=GOLD;ctx.font='700 '+(s*0.82)+"px Fredoka, sans-serif";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(value),0,0);ctx.restore();}
+  function frame(ts){if(state!=='smashing'&&state!=='done')return;if(!t0)t0=ts;const dt=Math.min((ts-(frame._last||ts))/16.67,2);frame._last=ts;const el=ts-t0,LIFE=CFG.life;
+    ctx.clearRect(0,0,SIZE,SIZE);for(const d of dust){d.x+=d.vx*dt;d.y+=d.vy*dt;d.r+=d.vr*dt;}
+    ctx.save();for(const d of dust){const a=Math.max(0,.28*(1-el/700));if(a<=0)continue;ctx.globalAlpha=a;ctx.fillStyle='#d2b48c';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();}ctx.restore();
+    for(const sh of shards){sh.vy+=CFG.grav*dt;sh.x+=sh.vx*dt;sh.y+=sh.vy*dt;sh.a+=sh.va*dt;const a=Math.max(0,1-Math.max(0,el-LIFE*0.32)/(LIFE*0.55));if(a<=0)continue;
+      ctx.save();ctx.globalAlpha=a;ctx.translate(sh.x,sh.y);ctx.rotate(sh.a);poly(sh.pts,sh.fill,palette.stroke);ctx.restore();}
+    for(const bt of bits){bt.vy+=CFG.grav*dt;bt.x+=bt.vx*dt;bt.y+=bt.vy*dt;bt.a+=bt.va*dt;const a=Math.max(0,1-el/(LIFE*0.58));if(a<=0)continue;
+      ctx.save();ctx.globalAlpha=a;ctx.translate(bt.x,bt.y);ctx.rotate(bt.a);ctx.strokeStyle=bt.col;ctx.lineWidth=2.4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-bt.len/2,0);ctx.lineTo(bt.len/2,0);ctx.stroke();ctx.restore();}
+    if(el>120){const p=Math.min(1,(el-120)/260);numScale=p<1?(0.4+1.0*p*(2-p)):(1.0+0.12*Math.max(0,1-(el-380)/180));drawNumber();}
+    if(el<LIFE)requestAnimationFrame(frame);else{state='done';numScale=1;ctx.clearRect(0,0,SIZE,SIZE);drawNumber();}}
+  function smashReveal(v){ if(state!=='intact')return; value=v; opened=true; state='smashing';t0=0;frame._last=0;numScale=0;build();requestAnimationFrame(frame); }
+  function revealValue(v,dim){ value=v; opened=true; state='done';numScale=1;ctx.clearRect(0,0,SIZE,SIZE);drawNumber(dim?0.5:1); }
+  drawCrate();
+  return { smashReveal, revealValue, get opened(){return opened;} };
 }
 
 function fmtAmount(a){
@@ -1582,6 +1841,13 @@ async function loadBoxes(){
     newPoints.tiers = Array.isArray(np.tiers) ? np.tiers.slice() : [];
   } else {
     newPoints.enabled = false; newPoints.tiers = [];
+  }
+
+  // ---- ექსტრა რაუნდი ცოცხალია → დაშბორდს ის ფარავს (ბოქსები აღარ იხატება) ----
+  if(extraRound.live){
+    renderExtraRound();
+    startDayCountdown();
+    return;
   }
 
   // ---- boxes + tasks + my activity + my progress: ერთი RPC ----
@@ -2013,6 +2279,34 @@ if(document.readyState === 'loading'){
     <div class="modal-foot">
       Championship points add up across all rounds. The player at the top of the <b>Championship</b> leaderboard when the season ends wins the grand prize! 🏆
     </div>
+  </div>
+</div>
+
+<!-- Extra Round: how it works -->
+<div class="er-ov" id="erInfoOv" onclick="if(event.target===this)closeExtraInfo()">
+  <div class="er-ov-card">
+    <h3>Extra Round — how it works</h3>
+    <h4>What it is</h4>
+    <p>When the championship ends, there's one more round: a 24-hour <b>Extra Round</b>. Instead of quizzes, everyone who qualifies plays a single bonus game — <b>Box Rush</b> — for a separate set of prizes.</p>
+    <h4>Who can play</h4>
+    <p>You're in if, in the championship that just ended, you:</p>
+    <ul><li>did <b>not</b> finish in a prize-winning place, and</li>
+    <li>reached at least the required activity (🎯) for this championship.</li></ul>
+    <p>If you won a main prize, you're already a winner — the Extra Round is for everyone else who stayed active.</p>
+    <h4>How Box Rush works</h4>
+    <p>You'll see 30 crates, each hiding a secret value from <b>1 to 30</b>. Smash any <b>10</b> — their values add up to your score. Everyone starts at 0; the highest total wins. You get <b>one attempt</b>, so pick carefully.</p>
+    <h4>Winners &amp; ties</h4>
+    <p>The top scorers win the Extra Round prizes. If two players tie, the higher place goes to whoever has more <b>Total Round Points (⭐)</b>, then more <b>activity (🎯)</b>, then more <b>correct answers (✅)</b>.</p>
+    <button class="er-ov-btn" onclick="closeExtraInfo()">Got it</button>
+  </div>
+</div>
+<div class="er-ov" id="erGoOv">
+  <div class="er-ov-card" style="text-align:center">
+    <div class="go-t">Game Over!</div>
+    <div class="go-s">You smashed 10 crates.</div>
+    <div class="go-score" id="erGoScore">0 pts</div>
+    <div class="go-s">Your score is in — check the Extra Round Standings to see your place.</div>
+    <button class="er-ov-btn" onclick="closeExtraGo()">Back to standings</button>
   </div>
 </div>
 
