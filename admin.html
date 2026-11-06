@@ -612,6 +612,21 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
 
       <div class="card-title" style="margin-top:8px">🏆 Current Prizes</div>
       <div id="prizesList"><div class="loading">Loading...</div></div>
+
+      <!-- ============ EXTRA ROUND PRIZE (activates Box Rush) ============ -->
+      <div class="card" id="extraPrizeCard" style="border:1px solid rgba(61,220,132,.4);margin-top:18px">
+        <div class="card-title" style="color:#3ddc84">🎁 Extra Round Prize <span id="exLockTag" style="font-size:.66rem;color:var(--gold);font-weight:600"></span></div>
+        <div style="font-size:.74rem;color:var(--muted);margin-bottom:12px;line-height:1.55">Adding an extra prize <b>activates a 24-hour Extra Round</b> (Box Rush) after this championship ends. Only <b>upcoming</b> championships can be changed. Remove every extra prize to switch the Extra Round off.</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">From (place)</label><input class="field-input" type="number" id="exPrizeFrom" min="1" placeholder="1"></div>
+          <div class="field"><label class="field-label">To (place)</label><input class="field-input" type="number" id="exPrizeTo" min="1" placeholder="1"></div>
+          <div class="field"><label class="field-label">Amount</label><input class="field-input" id="exPrizeAmount" placeholder="$50"></div>
+        </div>
+        <div id="exPrizePreview" style="font-size:.78rem;color:#3ddc84;background:rgba(61,220,132,.1);border:1px solid rgba(61,220,132,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px">—</div>
+        <button class="btn btn-primary" id="exAddBtn" onclick="addExtraPrize()" style="background:#3ddc84;border-color:#3ddc84;color:#04100e">Add Extra Prize</button>
+        <div class="card-title" style="margin-top:16px;font-size:.9rem">🎁 Current Extra Prizes</div>
+        <div id="extraPrizesList"><div class="empty">None — Extra Round is off.</div></div>
+      </div>
     </div>
 
     <!-- ============ USERS ============ -->
@@ -690,38 +705,73 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
 
       <div class="msg" id="settingsMsg"></div>
 
-      <!-- ============ NEW POINTS SYSTEM (tiered, anti-cheat) ============ -->
+      <!-- ============ NEW POINTS SYSTEM (tiered, per-championship) ============ -->
       <div class="card" style="border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal4)">
         <div class="card-title">🆕 New Points System</div>
         <div style="font-size:.74rem;color:var(--muted);margin-bottom:12px;line-height:1.55">
-          When <b>ON</b>, per-quiz points are switched off. Instead, after a box closes the player gets a
-          <b>single tiered award</b> based on how many answers were correct <b>in that box</b>.
+          When <b>ON</b>, per-quiz points are switched off for that championship. Instead, after a box closes the
+          player gets a <b>single tiered award</b> based on how many answers were correct <b>in that box</b>.
           Points do <b>not</b> stack — with tiers <code>3 → 5</code> and <code>5 → 7</code>, five correct gives
-          <b>7</b> (not 12). The player gets the highest tier whose "correct" value they reached; below the
-          lowest tier = 0. When <b>OFF</b>, the classic per-quiz scoring below is used.
+          <b>7</b> (not 12). Below the lowest tier = 0. Each championship has its own setting, and it can only be
+          changed for an <b>upcoming</b> championship — never while it is running.
         </div>
+
+        <div class="field" style="margin-bottom:12px">
+          <label class="field-label">Championship</label>
+          <select id="npChampSelect" onchange="onNpChampChange()" class="field-input" style="cursor:pointer">
+            <option>Loading…</option>
+          </select>
+        </div>
+
+        <div id="npLockNote" style="display:none;font-size:.76rem;color:var(--gold);background:var(--gold2);border:1px solid rgba(245,200,66,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px">
+          🔒 This championship is running or finished — its points system is locked. You can only change an upcoming championship.
+        </div>
+
         <div class="ad-toggle-row">
           <div class="ad-toggle" id="np_enabled" onclick="toggleNewPoints(this)"><div class="ad-toggle-knob"></div></div>
           <span class="ad-toggle-label" id="np_enabled_lbl">Off — classic scoring</span>
         </div>
 
-        <div style="border-top:1px solid var(--border);margin:16px 0"></div>
+        <div id="npTierArea">
+          <div style="border-top:1px solid var(--border);margin:16px 0"></div>
 
-        <div class="card-title" style="font-size:.92rem">➕ Add Tier</div>
-        <div style="font-size:.74rem;color:var(--muted);margin-bottom:12px">
-          How many correct answers award how many points. Add as many tiers as you need (e.g. 3 → 5, 5 → 7, 7 → 10).
-          Re-adding an existing "Correct answers" value just updates its points.
+          <div class="card-title" style="font-size:.92rem">➕ Add Tier</div>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:12px">
+            How many correct answers award how many points. Add as many tiers as you need (e.g. 3 → 5, 5 → 7, 7 → 10).
+            Re-adding an existing "Correct answers" value just updates its points.
+          </div>
+          <div class="field-row">
+            <div class="field"><label class="field-label">Correct answers</label><input class="field-input" type="number" id="npCorrect" min="1" placeholder="3" oninput="updateTierPreview()"></div>
+            <div class="field"><label class="field-label">Points awarded</label><input class="field-input" type="number" id="npPoints" min="0" placeholder="5" oninput="updateTierPreview()"></div>
+          </div>
+          <div id="npPreview" style="font-size:.8rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">—</div>
+          <button class="btn btn-primary" id="npAddBtn" onclick="addTier()">Add Tier</button>
+
+          <div class="card-title" style="margin-top:18px;font-size:.92rem">🪜 Current Tiers</div>
+          <div id="tiersList"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="msg" id="npMsg"></div>
+      </div>
+
+      <!-- ============ EXTRA GAME ACTIVITY (per-championship) ============ -->
+      <div class="card" style="border-color:#3ddc84;box-shadow:inset 0 0 0 1px rgba(61,220,132,.12)">
+        <div class="card-title" style="color:#3ddc84">🎯 Extra Game Activity</div>
+        <div style="font-size:.74rem;color:var(--muted);margin-bottom:12px;line-height:1.55">
+          Minimum <b>activity (🎯)</b> a player must reach during the championship to qualify for the <b>Extra Round</b> (Box Rush).
+          <b>Default is 0</b> — at 0 the game is open to everyone who didn't win a main prize. Changeable only for an <b>upcoming</b> championship.
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label class="field-label">Championship</label>
+          <select id="egaChampSelect" onchange="onEgaChampChange()" class="field-input" style="cursor:pointer"><option>Loading…</option></select>
+        </div>
+        <div id="egaLockNote" style="display:none;font-size:.76rem;color:var(--gold);background:var(--gold2);border:1px solid rgba(245,200,66,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px">
+          🔒 This championship is running or finished — locked. You can only change an upcoming championship.
         </div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Correct answers</label><input class="field-input" type="number" id="npCorrect" min="1" placeholder="3" oninput="updateTierPreview()"></div>
-          <div class="field"><label class="field-label">Points awarded</label><input class="field-input" type="number" id="npPoints" min="0" placeholder="5" oninput="updateTierPreview()"></div>
+          <div class="field"><label class="field-label">Activity needed to play (🎯)</label><input class="field-input" type="number" id="egaValue" min="0" placeholder="0"></div>
+          <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn-primary" id="egaSaveBtn" onclick="saveExtraActivity()" style="background:#3ddc84;border-color:#3ddc84;color:#04100e">Save</button></div>
         </div>
-        <div id="npPreview" style="font-size:.8rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">—</div>
-        <button class="btn btn-primary" onclick="addTier()">Add Tier</button>
-
-        <div class="card-title" style="margin-top:18px;font-size:.92rem">🪜 Current Tiers</div>
-        <div id="tiersList"><div class="loading">Loading...</div></div>
-        <div class="msg" id="npMsg"></div>
+        <div class="msg" id="egaMsg"></div>
       </div>
 
       <div class="card">
@@ -1256,6 +1306,7 @@ function nav(section, el){
   if(section==='payouts') loadPayoutChampList();
   if(section==='rounds') loadRounds();
   if(section==='prizes') loadPrizes();
+  if(section==='settings'){ loadNewPoints(); loadExtraActivity(); }
   if(section==='users') loadUsers();
   if(section==='ipdetect') loadIpDetect();
   if(section==='ads'){ loadAds(); loadInterstitial(); }
@@ -1746,7 +1797,7 @@ async function loadPayouts(){
 
   for(const p of visibleRows){
     const prof = pById[p.user_id] || {};
-    const medal = p.place===1?'🥇':p.place===2?'🥈':p.place===3?'🥉':('#'+p.place);
+    const medal = '#'+p.place;   // მედლების ნაცვლად ყველგან რიცხვი (#1, #2, #3…)
     const prize = p.prize_amount ? fmtAmount(p.prize_amount) : '<span style="color:var(--muted)">—</span>';
     // only show paid controls for players who actually have a prize
     let statusCell;
@@ -1771,6 +1822,50 @@ async function loadPayouts(){
   }
   html += '</table></div></div>';
   box.innerHTML = html;
+  renderExtraResultsTable(champId, box);
+}
+
+// ---- Extra Round (Box Rush) results table, appended below the main results ----
+async function renderExtraResultsTable(champId, box){
+  let rows;
+  try{ const { data } = await db.rpc('admin_get_extra_results', { p_champ: champId }); rows = data; }catch(e){ return; }
+  if(!rows || !rows.length) return;
+  let h = '<div class="card" style="margin-top:16px;border:1px solid rgba(61,220,132,.4)">'
+    + '<div class="card-title" style="color:#3ddc84">🎁 Extra Round Results · Box Rush</div>'
+    + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem">'
+    + '<tr style="text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase"><th style="padding:8px 6px">#</th><th style="padding:8px 6px">Player</th><th style="padding:8px 6px">User ID</th><th style="padding:8px 6px">Email</th><th style="padding:8px 6px">IP</th><th style="padding:8px 6px">Score</th><th style="padding:8px 6px">⭐</th><th style="padding:8px 6px">🎯</th><th style="padding:8px 6px">✅</th><th style="padding:8px 6px">Prize</th><th style="padding:8px 6px">Status</th></tr>';
+  for(const p of rows){
+    const prize = p.prize_amount ? fmtAmount(p.prize_amount) : '<span style="color:var(--muted)">—</span>';
+    let statusCell;
+    if(!p.prize_amount) statusCell = '<span style="color:var(--muted)">no prize</span>';
+    else if(p.paid) statusCell = '<span style="color:var(--green)">✓ Paid</span> <button class="btn btn-ghost btn-sm" onclick="markExtraPaid(\''+p.uid+'\',\''+champId+'\',false)" style="margin-left:6px">Undo</button>';
+    else statusCell = '<button class="btn btn-primary btn-sm" onclick="markExtraPaid(\''+p.uid+'\',\''+champId+'\',true)">Mark Paid</button>';
+    const rowBg = p.prize_amount ? (p.paid?'background:rgba(46,196,122,.05)':'background:rgba(61,220,132,.05)') : '';
+    h += '<tr style="border-top:1px solid var(--border);'+rowBg+'">'
+      + '<td style="padding:9px 6px;font-weight:700">#'+(p.place==null?'—':p.place)+'</td>'
+      + '<td style="padding:9px 6px">'+escapeHtml(p.username||'—')+'</td>'
+      + '<td style="padding:9px 6px;font-family:monospace;font-size:.76rem;color:var(--teal);font-weight:600">#'+escapeHtml(p.user_id||'—')+'</td>'
+      + '<td style="padding:9px 6px;font-family:monospace;font-size:.76rem">'+escapeHtml(p.email||'—')+'</td>'
+      + '<td style="padding:9px 6px">'+(p.ip_country==='US'?'<span style="color:var(--red);font-weight:700">🇺🇸 US</span>':escapeHtml(p.ip_country||'—'))+'</td>'
+      + '<td style="padding:9px 6px;color:#3ddc84;font-weight:700">'+(p.score||0)+'</td>'
+      + '<td style="padding:9px 6px">'+(p.round_points||0)+'</td>'
+      + '<td style="padding:9px 6px">'+(p.activity||0)+'</td>'
+      + '<td style="padding:9px 6px">'+(p.correct||0)+'</td>'
+      + '<td style="padding:9px 6px;color:var(--gold);font-weight:600">'+prize+'</td>'
+      + '<td style="padding:9px 6px">'+statusCell+'</td>'
+      + '</tr>';
+  }
+  h += '</table></div></div>';
+  const wrap = document.createElement('div'); wrap.innerHTML = h;
+  box.appendChild(wrap);
+}
+async function markExtraPaid(uid, champId, paid){
+  const { error } = await db.from('extra_round_results')
+    .update({ paid: paid, paid_at: paid ? new Date().toISOString() : null })
+    .eq('championship_id', champId).eq('user_id', uid);
+  if(error){ showMsg('payoutMsg', error.message, 'err'); return; }
+  showMsg('payoutMsg', paid?'Extra Round prize marked paid. ✅':'Marked unpaid.','ok');
+  loadPayouts();
 }
 
 async function markPaid(payoutId, paid){
@@ -1946,7 +2041,7 @@ async function loadChampionship(){
       const ce = new Date(cs.getTime() + (totalDays - 1) * 86400000);
       champEnd = ce.toISOString().split('T')[0];
     }
-    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 Championship '+champIdLabel(active.number)+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+champEnd+' · '+roundCount+'/'+active.total_rounds+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
+    curBox.innerHTML = '<div class="list-item"><div class="li-info"><div class="li-title">🏆 '+champTitle(active)+npsTag(active)+extraTag(active)+'</div><div class="li-sub">'+(active.start_date||'—')+' → '+plusExtraDay(champEnd, active)+' · '+roundCount+'/'+roundsDisp(active)+' rounds · '+active.round_duration_days+' days each · <span style="color:var(--green)">● active</span></div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="endChampionship()">End Championship & Award Points</button></div></div>';
   } else {
     curBox.innerHTML = '<div class="empty">No active championship. Create one below.</div>';
   }
@@ -1976,7 +2071,10 @@ async function loadChampionship(){
   if(!champs || champs.length===0){ list.innerHTML = '<div class="empty">No championships yet.</div>'; }
   else {
     let html = '';
-    for(const c of champs){
+    // სორტირება თარიღით (და არა სტატუსით) — ახლები ზევით; upcoming ავტომატურად მიმდინარეს ზემოთ ხვდება
+    const champsSorted = [...champs].sort((a,b)=>
+      (b.start_date||'').localeCompare(a.start_date||'') || ((b.number||0)-(a.number||0)));
+    for(const c of champsSorted){
       const statusColor = c.status==='active'?'var(--green)':c.status==='finished'?'var(--muted)':'var(--gold)';
       let actions = '';
       if(c.status==='upcoming'){
@@ -1992,9 +2090,9 @@ async function loadChampionship(){
         const cs0 = new Date(c.start_date + 'T00:00:00Z');
         const totalDays0 = c.total_rounds * c.round_duration_days;
         const ce0 = new Date(cs0.getTime() + (totalDays0 - 1) * 86400000);
-        endTxt = ' → ' + ce0.toISOString().split('T')[0];
+        endTxt = ' → ' + plusExtraDay(ce0.toISOString().split('T')[0], c);
       }
-      html += '<div class="list-item"><div class="li-info"><div class="li-title">🏆 '+champTitle(c)+'</div><div class="li-sub">'+(c.start_date||'—')+endTxt+' · '+c.total_rounds+' rounds · '+c.round_duration_days+' days · <span style="color:'+statusColor+'">'+c.status+'</span>'+adminTag+'</div></div>'+actions+'</div>';
+      html += '<div class="list-item"><div class="li-info"><div class="li-title">🏆 '+champTitle(c)+npsTag(c)+extraTag(c)+'</div><div class="li-sub">'+(c.start_date||'—')+endTxt+' · '+roundsDisp(c)+' rounds · '+c.round_duration_days+' days · <span style="color:'+statusColor+'">'+c.status+'</span>'+adminTag+'</div></div>'+actions+'</div>';
     }
     list.innerHTML = html;
   }
@@ -2008,12 +2106,43 @@ async function endChampionship(){
   loadChampionship();
 }
 
+// ---- championship date helpers (overlap / past-date guard) ----
+function todayUTC(){ return new Date().toISOString().split('T')[0]; }
+// inclusive end date = start + rounds*duration - 1 (UTC days)
+function champEndDate(startStr, rounds, duration){
+  const ms = new Date(startStr + 'T00:00:00Z').getTime() + ((rounds * duration) - 1) * 86400000;
+  return new Date(ms).toISOString().split('T')[0];
+}
+// first active/upcoming championship whose [start..end] overlaps the given
+// range, excluding excludeId. ISO date strings compare correctly as text.
+async function findChampOverlap(startStr, rounds, duration, excludeId){
+  const newEnd = champEndDate(startStr, rounds, duration);
+  const { data: others } = await db.from('championships')
+    .select('id, number, is_test, start_date, total_rounds, round_duration_days, status')
+    .in('status', ['active','upcoming']);
+  for(const c of (others||[])){
+    if(excludeId && c.id === excludeId) continue;
+    if(!c.start_date || !c.total_rounds || !c.round_duration_days) continue;
+    const cEnd = champEndDate(c.start_date, c.total_rounds, c.round_duration_days);
+    if(startStr <= cEnd && c.start_date <= newEnd){ return { champ: c, cEnd }; }
+  }
+  return null;
+}
+
 async function createChampionship(){
   const start = document.getElementById('champStart').value;
   const rounds = parseInt(document.getElementById('champRounds').value);
   const duration = parseInt(document.getElementById('champDuration').value);
   if(!start || isNaN(rounds) || isNaN(duration)){ showMsg('champMsg','Please fill start date, rounds, and round length.','err'); return; }
   if(rounds < 1 || duration < 1){ showMsg('champMsg','Rounds and length must be at least 1.','err'); return; }
+
+  // ── no past start, no overlap with an active/upcoming championship ──
+  if(start < todayUTC()){ showMsg('champMsg','Start date can’t be in the past.','err'); return; }
+  const _ovC = await findChampOverlap(start, rounds, duration, null);
+  if(_ovC){
+    showMsg('champMsg','These dates ('+start+' → '+champEndDate(start,rounds,duration)+') overlap with '+champTitle(_ovC.champ)+' ('+_ovC.champ.start_date+' → '+_ovC.cEnd+'). Pick a start date after it ends.','err');
+    return;
+  }
 
   // save the points table first
   const { data: pts } = await db.from('round_points_table').select('place');
@@ -2071,20 +2200,60 @@ async function createChampionship(){
 async function editChampionship(champId){
   const { data: c } = await db.from('championships').select('*').eq('id', champId).single();
   if(!c) return;
-  const newRounds = prompt('Rounds for '+champTitle(c)+':', c.total_rounds);
-  if(newRounds===null) return;
-  const newDur = prompt('Round length (days):', c.round_duration_days);
-  if(newDur===null) return;
+  // only an upcoming championship can be edited — editing a running/finished one
+  // would desync its rounds and let the daily cron fast-forward it.
+  if(c.status !== 'upcoming'){
+    showMsg('champMsg','Only upcoming championships can be edited ('+champTitle(c)+' is '+c.status+'). Create a new one instead.','err');
+    return;
+  }
+  const newRoundsRaw = prompt('Rounds for '+champTitle(c)+':', c.total_rounds);
+  if(newRoundsRaw===null) return;
+  const newDurRaw = prompt('Round length (days):', c.round_duration_days);
+  if(newDurRaw===null) return;
   const newStart = prompt('Start date (YYYY-MM-DD):', c.start_date);
   if(newStart===null) return;
+
+  const newRounds = parseInt(newRoundsRaw) || c.total_rounds;
+  const newDur    = parseInt(newDurRaw)    || c.round_duration_days;
+  const startVal  = newStart || c.start_date;
+
+  if(newRounds < 1 || newDur < 1){ showMsg('champMsg','Rounds and length must be at least 1.','err'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(startVal)){ showMsg('champMsg','Start date must be YYYY-MM-DD.','err'); return; }
+  if(startVal < todayUTC()){ showMsg('champMsg','Start date can’t be in the past.','err'); return; }
+
+  const ov = await findChampOverlap(startVal, newRounds, newDur, champId);
+  if(ov){
+    showMsg('champMsg','These dates ('+startVal+' → '+champEndDate(startVal,newRounds,newDur)+') overlap with '+champTitle(ov.champ)+' ('+ov.champ.start_date+' → '+ov.cEnd+'). Pick a start date after it ends.','err');
+    return;
+  }
+
   const { error } = await db.from('championships').update({
-    total_rounds: parseInt(newRounds)||c.total_rounds,
-    round_duration_days: parseInt(newDur)||c.round_duration_days,
-    start_date: newStart||c.start_date
+    total_rounds: newRounds, round_duration_days: newDur, start_date: startVal
   }).eq('id', champId);
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
-  showMsg('champMsg',champTitle(c)+' updated. ✅','ok');
+
+  // ✅ rebuild the rounds from the NEW dates — the old rows keep their old dates,
+  //    and stale (past) round dates make the daily cron skip/finish the
+  //    championship the moment it activates. An upcoming champ's rounds are all 'upcoming'.
+  await db.from('rounds').delete().eq('championship_id', champId);
+  const rows = [];
+  const startMs = new Date(startVal + 'T00:00:00Z').getTime();
+  for(let i = 0; i < newRounds; i++){
+    const rs = new Date(startMs + (i * newDur) * 86400000);
+    const re = new Date(startMs + ((i + 1) * newDur - 1) * 86400000);
+    rows.push({
+      round_number: i + 1, total_rounds: newRounds,
+      start_date: rs.toISOString().split('T')[0],
+      end_date:   re.toISOString().split('T')[0],
+      status: 'upcoming', championship_id: champId
+    });
+  }
+  const { error: rErr } = await db.from('rounds').insert(rows);
+  if(rErr){ showMsg('champMsg','Updated, but rounds rebuild failed: '+rErr.message,'err'); loadChampionship(); return; }
+
+  showMsg('champMsg',champTitle(c)+' updated & rounds rebuilt. ✅','ok');
   loadChampionship();
+  if(typeof loadRounds === 'function') loadRounds();
 }
 
 async function deleteChampionship(champId, num){
@@ -2211,7 +2380,7 @@ async function loadPrizes(){
   // ---- ჩემპიონატების ამომრჩევი ----
   const sel = document.getElementById('prizeChampSelect');
   const { data: champs } = await db.from('championships')
-    .select('id, number, status, start_date, total_rounds, round_duration_days')
+    .select('id, number, status, start_date, total_rounds, round_duration_days, is_test')
     .in('status', ['active','upcoming'])
     .order('number', { ascending: true });
 
@@ -2267,21 +2436,95 @@ async function loadPrizes(){
   });
   updatePrizePreview();
 
-  // list prizes
-  const list = document.getElementById('prizesList');
-  if(!activeGiveawayId){ list.innerHTML = '<div class="empty">No giveaway.</div>'; return; }
-  const { data: prizes } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', activeGiveawayId).order('place_from');
-  if(!prizes || prizes.length===0){ list.innerHTML = '<div class="empty">No prizes yet for this championship. Add one above.</div>'; return; }
+  // ---- extra-prize card editability (upcoming only) + extra preview bind ----
+  const champObj = champs.find(c=>c.id===prizeChampId);
+  prizeChampUpcoming = !!(champObj && champObj.status==='upcoming');
+  setExtraEditable(prizeChampUpcoming);
+  ['exPrizeFrom','exPrizeTo','exPrizeAmount'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && !el._bound){ el.addEventListener('input', updateExtraPreview); el._bound = true; }
+  });
+  updateExtraPreview();
 
-  let html = '';
-  for(const pr of prizes){
-    const from = pr.place_from || pr.place;
-    const to = pr.place_to || pr.place;
-    const label = (from===to) ? (ordinal(from)+' Place') : ('Places '+from+'–'+to+' (each)');
-    const medal = from===1?'🥇':from===2?'🥈':from===3?'🥉':'🏅';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">'+medal+' '+label+'</div><div class="li-sub">'+escapeHtml(fmtAmount(pr.amount))+'</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deletePrize(\''+pr.id+'\')">Delete</button></div></div>';
+  // list prizes (main + extra split)
+  const list = document.getElementById('prizesList');
+  if(!activeGiveawayId){ list.innerHTML = '<div class="empty">No giveaway.</div>'; renderExtraPrizesList([]); return; }
+  const { data: prizes } = await db.from('giveaway_prizes').select('*').eq('giveaway_id', activeGiveawayId).order('place_from');
+
+  const mainPrizes  = (prizes||[]).filter(p=>!p.is_extra);
+  const extraPrizes = (prizes||[]).filter(p=> p.is_extra);
+
+  if(mainPrizes.length===0){
+    list.innerHTML = '<div class="empty">No prizes yet for this championship. Add one above.</div>';
+  } else {
+    let html = '';
+    for(const pr of mainPrizes){
+      const from = pr.place_from || pr.place;
+      const to = pr.place_to || pr.place;
+      const label = (from===to) ? (ordinal(from)+' Place') : ('Places '+from+'–'+to+' (each)');
+      html += '<div class="list-item"><div class="li-info"><div class="li-title">'+label+'</div><div class="li-sub">'+escapeHtml(fmtAmount(pr.amount))+'</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deletePrize(\''+pr.id+'\')">Delete</button></div></div>';
+    }
+    list.innerHTML = html;
   }
-  list.innerHTML = html;
+  renderExtraPrizesList(extraPrizes);
+}
+
+// ==================== EXTRA ROUND PRIZE (admin) ====================
+let prizeChampUpcoming = false;
+function setExtraEditable(editable){
+  const tag = document.getElementById('exLockTag');
+  if(tag) tag.textContent = editable ? '' : '🔒 upcoming only';
+  ['exPrizeFrom','exPrizeTo','exPrizeAmount','exAddBtn'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.disabled = !editable;
+  });
+  const card = document.getElementById('extraPrizeCard');
+  if(card){ card.style.opacity = editable ? '1' : '.82'; }
+}
+function updateExtraPreview(){
+  const from = parseInt(document.getElementById('exPrizeFrom').value);
+  const to = parseInt(document.getElementById('exPrizeTo').value);
+  const amt = (document.getElementById('exPrizeAmount').value||'').trim();
+  const prev = document.getElementById('exPrizePreview');
+  if(isNaN(from) || isNaN(to) || !amt){ prev.textContent = '—'; return; }
+  const fa = fmtAmount(amt);
+  prev.textContent = (from===to) ? (ordinal(from)+' → '+fa)
+    : ('Places '+from+'–'+to+' → '+fa+' each ('+(to-from+1)+' winners)');
+}
+function renderExtraPrizesList(extraPrizes){
+  const el = document.getElementById('extraPrizesList');
+  if(!el) return;
+  if(!extraPrizes || !extraPrizes.length){ el.innerHTML = '<div class="empty">None — Extra Round is off.</div>'; return; }
+  let h = '';
+  for(const pr of extraPrizes){
+    const from = pr.place_from || pr.place, to = pr.place_to || pr.place;
+    const label = (from===to) ? (ordinal(from)+' Place') : ('Places '+from+'–'+to+' (each)');
+    h += '<div class="list-item"><div class="li-info"><div class="li-title" style="color:#3ddc84">'+label+'</div><div class="li-sub">'+escapeHtml(fmtAmount(pr.amount))+'</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deleteExtraPrize(\''+pr.id+'\')"'+(prizeChampUpcoming?'':' disabled')+'>Delete</button></div></div>';
+  }
+  el.innerHTML = h;
+}
+async function addExtraPrize(){
+  if(!prizeChampUpcoming){ showMsg('prizeMsg','Only upcoming championships can be changed.','err'); return; }
+  const from = parseInt(document.getElementById('exPrizeFrom').value);
+  const to = parseInt(document.getElementById('exPrizeTo').value);
+  const amount = (document.getElementById('exPrizeAmount').value||'').trim();
+  if(isNaN(from) || isNaN(to) || !amount){ showMsg('prizeMsg','Fill From, To and Amount for the extra prize.','err'); return; }
+  if(from>to){ showMsg('prizeMsg','"From" must be ≤ "To".','err'); return; }
+  const { error } = await db.rpc('admin_add_extra_prize', { p_champ: prizeChampId, p_from: from, p_to: to, p_amount: amount });
+  if(error){ showMsg('prizeMsg', error.message, 'err'); return; }
+  showMsg('prizeMsg','Extra prize added — Extra Round activated. ✅','ok');
+  document.getElementById('exPrizeFrom').value='';
+  document.getElementById('exPrizeTo').value='';
+  document.getElementById('exPrizeAmount').value='';
+  updateExtraPreview();
+  loadPrizes();
+}
+async function deleteExtraPrize(id){
+  if(!prizeChampUpcoming){ showMsg('prizeMsg','Only upcoming championships can be changed.','err'); return; }
+  if(!confirm('Delete this extra prize? Removing all of them turns the Extra Round off.')) return;
+  const { error } = await db.rpc('admin_remove_extra_prize', { p_prize: id });
+  if(error){ showMsg('prizeMsg', error.message, 'err'); return; }
+  showMsg('prizeMsg','Extra prize removed.','ok');
+  loadPrizes();
 }
 
 function ordinal(n){ const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
@@ -2303,8 +2546,8 @@ function updatePrizePreview(){
   const prev = document.getElementById('prizePreview');
   if(isNaN(from) || isNaN(to) || !amt){ prev.textContent = '—'; return; }
   const fa = fmtAmount(amt);
-  if(from===to){ prev.textContent = '🏅 '+ordinal(from)+' Place → '+fa; }
-  else { prev.textContent = '🏅 Places '+from+'–'+to+' → '+fa+' each ('+(to-from+1)+' winners)'; }
+  if(from===to){ prev.textContent = ordinal(from)+' Place → '+fa; }
+  else { prev.textContent = 'Places '+from+'–'+to+' → '+fa+' each ('+(to-from+1)+' winners)'; }
 }
 
 async function addPrize(){
@@ -2333,72 +2576,191 @@ async function deletePrize(id){
   loadPrizes();
 }
 
-// ==================== NEW POINTS SYSTEM ====================
+// ==================== NEW POINTS SYSTEM (per-championship) ====================
+let npChamps = [];
+let npSelId  = null;
+let npEditable = false;
+
+// ==================== EXTRA GAME ACTIVITY (per-championship) ====================
+let egaChamps = [];
+let egaSelId = null;
+let egaEditable = false;
+async function loadExtraActivity(){
+  const sel = document.getElementById('egaChampSelect');
+  if(!sel) return;
+  const { data: champs } = await db.from('championships')
+    .select('id, number, is_test, status, start_date, extra_activity_required')
+    .in('status', ['active','upcoming'])
+    .order('number', { ascending: true });
+  egaChamps = champs || [];
+  if(egaChamps.length === 0){
+    sel.innerHTML = '<option>No championship yet</option>';
+    egaSelId = null; setEgaEditable(false, true);
+    return;
+  }
+  const wanted = egaChamps.map(c=>c.id+':'+c.status+':'+(c.extra_activity_required||0)).join(',');
+  if(sel._filled !== wanted){
+    sel.innerHTML = egaChamps.map(c =>
+      '<option value="'+c.id+'">🏆 '+champTitle(c)+' — '+c.status+' (🎯 '+(c.extra_activity_required||0)+')</option>'
+    ).join('');
+    sel._filled = wanted;
+    const def = egaChamps.find(c=>c.status==='upcoming') || egaChamps[0];
+    sel.value = def.id;
+  }
+  egaSelId = sel.value;
+  loadEgaForChamp();
+}
+function onEgaChampChange(){ egaSelId = document.getElementById('egaChampSelect').value; loadEgaForChamp(); }
+function loadEgaForChamp(){
+  const c = egaChamps.find(x=>x.id===egaSelId);
+  const editable = !!(c && c.status==='upcoming');
+  const v = document.getElementById('egaValue');
+  if(v) v.value = (c ? (c.extra_activity_required||0) : 0);
+  setEgaEditable(editable, false);
+}
+function setEgaEditable(editable, noChamp){
+  egaEditable = editable;
+  const note = document.getElementById('egaLockNote');
+  if(note) note.style.display = (editable || noChamp) ? 'none' : 'block';
+  const v = document.getElementById('egaValue'), b = document.getElementById('egaSaveBtn');
+  if(v) v.disabled = !editable;
+  if(b) b.disabled = !editable;
+}
+async function saveExtraActivity(){
+  if(!egaEditable){ showMsg('egaMsg','Only upcoming championships can be changed.','err'); return; }
+  if(!egaSelId){ showMsg('egaMsg','Pick a championship first.','err'); return; }
+  const val = Math.max(0, parseInt(document.getElementById('egaValue').value) || 0);
+  const { error } = await db.rpc('admin_set_extra_activity', { p_champ: egaSelId, p_required: val });
+  if(error){ showMsg('egaMsg', error.message, 'err'); return; }
+  const c = egaChamps.find(x=>x.id===egaSelId); if(c) c.extra_activity_required = val;
+  document.getElementById('egaChampSelect')._filled = null;
+  showMsg('egaMsg','Saved — players need 🎯 '+val+' activity to play the Extra Round. ✅','ok');
+}
+
 async function loadNewPoints(){
-  // ჩამრთველის მდგომარეობა (settings.new_points_enabled = 0/1)
-  try{
-    const { data: fRow } = await db.from('settings').select('value').eq('key','new_points_enabled').maybeSingle();
-    const on = !!(fRow && (fRow.value===1 || fRow.value==='1'));
-    const t = document.getElementById('np_enabled');
-    if(t) t.classList.toggle('on', on);
-    const lbl = document.getElementById('np_enabled_lbl');
-    if(lbl) lbl.textContent = on ? 'On — tiered award at box close' : 'Off — classic scoring';
-  }catch(_){}
-  renderTiersFromDb();
+  const sel = document.getElementById('npChampSelect');
+  if(!sel) return;
+  const { data: champs } = await db.from('championships')
+    .select('id, number, is_test, status, start_date, new_points_enabled')
+    .in('status', ['active','upcoming'])
+    .order('number', { ascending: true });
+  npChamps = champs || [];
+
+  if(npChamps.length === 0){
+    sel.innerHTML = '<option>No championship yet</option>';
+    npSelId = null;
+    document.getElementById('tiersList').innerHTML = '<div class="empty">Create a championship first.</div>';
+    setNpEditable(false, true);
+    return;
+  }
+
+  const wanted = npChamps.map(c=>c.id+':'+(c.new_points_enabled?1:0)+':'+c.status).join(',');
+  if(sel._filled !== wanted){
+    sel.innerHTML = npChamps.map(c =>
+      '<option value="'+c.id+'">🏆 '+champTitle(c)+' — '+c.status+(c.new_points_enabled?' (NPS on)':'')+'</option>'
+    ).join('');
+    sel._filled = wanted;
+    // default: first upcoming (editable) if any, else the active one
+    const def = npChamps.find(c=>c.status==='upcoming') || npChamps[0];
+    sel.value = def.id;
+  }
+  npSelId = sel.value;
+  loadNpForChamp();
+}
+
+function onNpChampChange(){
+  npSelId = document.getElementById('npChampSelect').value;
+  loadNpForChamp();
+}
+
+function loadNpForChamp(){
+  const c = npChamps.find(x=>x.id===npSelId);
+  const editable = !!(c && c.status==='upcoming');   // only upcoming can change
+  const on = !!(c && c.new_points_enabled);
+  const t = document.getElementById('np_enabled');
+  if(t) t.classList.toggle('on', on);
+  const lbl = document.getElementById('np_enabled_lbl');
+  if(lbl) lbl.textContent = on ? 'On — tiered award at box close' : 'Off — classic scoring';
+  setNpEditable(editable, false);
+  renderTiers();
+}
+
+function setNpEditable(editable, noChamp){
+  npEditable = editable;
+  const note = document.getElementById('npLockNote');
+  if(note) note.style.display = (editable || noChamp) ? 'none' : 'block';
+  ['np_enabled','npTierArea'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.opacity = editable ? '1' : '.55';
+    el.style.pointerEvents = editable ? '' : 'none';
+  });
+  const ce = document.getElementById('npCorrect'), pe = document.getElementById('npPoints'), ab = document.getElementById('npAddBtn');
+  if(ce) ce.disabled = !editable;
+  if(pe) pe.disabled = !editable;
+  if(ab) ab.disabled = !editable;
 }
 
 async function toggleNewPoints(el){
+  if(!npEditable || !npSelId) return;
   const turnOn = !el.classList.contains('on');
   el.classList.toggle('on', turnOn);
   const lbl = document.getElementById('np_enabled_lbl');
   const setLbl = v => { if(lbl) lbl.textContent = v ? 'On — tiered award at box close' : 'Off — classic scoring'; };
   setLbl(turnOn);
-  const { error } = await db.from('settings').update({ value: turnOn ? 1 : 0 }).eq('key','new_points_enabled');
+  const { error } = await db.from('championships').update({ new_points_enabled: turnOn }).eq('id', npSelId);
   if(error){ el.classList.toggle('on', !turnOn); setLbl(!turnOn); showMsg('npMsg', error.message, 'err'); return; }
-  showMsg('npMsg', turnOn ? 'New Points System is ON ✅' : 'Switched back to classic scoring ✅', 'ok');
+  const c = npChamps.find(x=>x.id===npSelId); if(c) c.new_points_enabled = turnOn;
+  document.getElementById('npChampSelect')._filled = null;   // refresh the "(NPS on)" option label next load
+  showMsg('npMsg', turnOn ? 'New Points System ON for this championship ✅' : 'Switched back to classic scoring ✅', 'ok');
 }
 
 function updateTierPreview(){
-  const c = parseInt(document.getElementById('npCorrect').value);
-  const p = parseInt(document.getElementById('npPoints').value);
+  const cc = parseInt(document.getElementById('npCorrect').value);
+  const pp = parseInt(document.getElementById('npPoints').value);
   const prev = document.getElementById('npPreview');
-  if(isNaN(c) || isNaN(p)){ prev.textContent = '—'; return; }
-  prev.textContent = '✅ ' + c + ' correct answer' + (c===1?'':'s') + '  →  ' + p + ' point' + (p===1?'':'s');
+  if(isNaN(cc) || isNaN(pp)){ prev.textContent = '—'; return; }
+  prev.textContent = '✅ ' + cc + ' correct answer' + (cc===1?'':'s') + '  →  ' + pp + ' point' + (pp===1?'':'s');
 }
 
 async function addTier(){
-  const c = parseInt(document.getElementById('npCorrect').value);
-  const p = parseInt(document.getElementById('npPoints').value);
-  if(isNaN(c) || isNaN(p)){ showMsg('npMsg','Fill both "Correct answers" and "Points".','err'); return; }
-  if(c < 1){ showMsg('npMsg','"Correct answers" must be at least 1.','err'); return; }
-  if(p < 0){ showMsg('npMsg','"Points" cannot be negative.','err'); return; }
-  // ერთი საფეხური თითო ზღვარზე — თუ იგივე correct_count უკვე არსებობს, ქულა განახლდება
-  const { error } = await db.from('points_tiers').upsert({ correct_count: c, points: p }, { onConflict: 'correct_count' });
+  if(!npEditable){ showMsg('npMsg','Only upcoming championships can be changed.','err'); return; }
+  if(!npSelId){ showMsg('npMsg','Pick a championship first.','err'); return; }
+  const cc = parseInt(document.getElementById('npCorrect').value);
+  const pp = parseInt(document.getElementById('npPoints').value);
+  if(isNaN(cc) || isNaN(pp)){ showMsg('npMsg','Fill both "Correct answers" and "Points".','err'); return; }
+  if(cc < 1){ showMsg('npMsg','"Correct answers" must be at least 1.','err'); return; }
+  if(pp < 0){ showMsg('npMsg','"Points" cannot be negative.','err'); return; }
+  const { error } = await db.from('points_tiers').upsert(
+    { championship_id: npSelId, correct_count: cc, points: pp },
+    { onConflict: 'championship_id,correct_count' });
   if(error){ showMsg('npMsg', error.message, 'err'); return; }
   showMsg('npMsg','Tier saved! ✅','ok');
   document.getElementById('npCorrect').value = '';
   document.getElementById('npPoints').value = '';
   updateTierPreview();
-  renderTiersFromDb();
+  renderTiers();
 }
 
 async function deleteTier(id){
+  if(!npEditable) return;
   if(!confirm('Delete this tier?')) return;
   await db.from('points_tiers').delete().eq('id', id);
-  renderTiersFromDb();
+  renderTiers();
 }
 
-async function renderTiersFromDb(){
+async function renderTiers(){
   const list = document.getElementById('tiersList');
   if(!list) return;
-  const { data: tiers, error } = await db.from('points_tiers').select('*').order('correct_count');
+  if(!npSelId){ list.innerHTML = '<div class="empty">Pick a championship.</div>'; return; }
+  const { data: tiers, error } = await db.from('points_tiers').select('*').eq('championship_id', npSelId).order('correct_count');
   if(error){ list.innerHTML = '<div class="empty">'+escapeHtml(error.message)+'</div>'; return; }
-  if(!tiers || tiers.length===0){ list.innerHTML = '<div class="empty">No tiers yet. Add one above.</div>'; return; }
+  if(!tiers || tiers.length===0){ list.innerHTML = '<div class="empty">No tiers yet'+(npEditable?'. Add one above.':' for this championship.')+'</div>'; return; }
   let html = '';
   for(const t of tiers){
-    const sub = (t.correct_count===1) ? 'at least 1 correct answer in a box'
-                                       : 'at least '+t.correct_count+' correct answers in a box';
-    html += '<div class="list-item"><div class="li-info"><div class="li-title">✅ '+t.correct_count+' correct  →  '+t.points+' pt'+(t.points===1?'':'s')+'</div><div class="li-sub">'+sub+'</div></div><div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deleteTier(\''+t.id+'\')">Delete</button></div></div>';
+    const sub = (t.correct_count===1) ? 'at least 1 correct answer in a box' : 'at least '+t.correct_count+' correct answers in a box';
+    const del = npEditable ? '<div class="li-actions"><button class="btn btn-danger btn-sm" onclick="deleteTier(\''+t.id+'\')">Delete</button></div>' : '';
+    html += '<div class="list-item"><div class="li-info"><div class="li-title">✅ '+t.correct_count+' correct  →  '+t.points+' pt'+(t.points===1?'':'s')+'</div><div class="li-sub">'+sub+'</div></div>'+del+'</div>';
   }
   list.innerHTML = html;
 }
@@ -3599,6 +3961,12 @@ async function deleteTask(id){
 // display-only championship label: number -> "ID: 00174" (base untouched; 173 + number, 5 digits)
 function champIdLabel(number){ return 'ID: ' + String((parseInt(number,10)||0) + 173).padStart(5,'0'); }
 function champTitle(c){ return (c && c.is_test) ? 'Test Championship' : 'Championship ' + champIdLabel(c ? c.number : null); }
+// ქულების ახალ სისტემაზე მიმდინარე ჩემპიონატს ემატება (NPS) წარწერა
+function npsTag(c){ return (c && c.new_points_enabled) ? ' <span style="color:var(--teal);font-weight:700">(NPS)</span>' : ''; }
+// Extra Round adds a real +1 round and +1 day to the championship display
+function extraTag(c){ return (c && c.extra_round_enabled) ? ' <span style="color:#3ddc84;font-weight:700">· +Extra Round</span>' : ''; }
+function roundsDisp(c){ return (c && c.total_rounds ? c.total_rounds : 0) + ((c && c.extra_round_enabled) ? 1 : 0); }
+function plusExtraDay(dateStr, c){ if(!c || !c.extra_round_enabled || !dateStr) return dateStr; const d=new Date(dateStr+'T00:00:00Z'); return new Date(d.getTime()+86400000).toISOString().split('T')[0]; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // country code (e.g. "GE") -> full English name (e.g. "Georgia"), using the browser's built-in list
