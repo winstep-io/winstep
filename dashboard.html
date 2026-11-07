@@ -238,9 +238,8 @@ header{display:flex;align-items:center;justify-content:space-between;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .unlock-hint b{color:var(--gold);font-family:var(--disp);font-weight:700}
 .unlock-hint .uh-line{line-height:1.3}
-/* ახალი ქულათა სისტემა — საფეხურების რიგი ბოქსის ქვედა ხაზზე */
-.uh-ladder{display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center;
-  margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.14)}
+/* ახალი ქულათა სისტემა — ტექსტი და საფეხურები ერთ, გაშუალებულ ხაზზე */
+.unlock-hint .uh-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px}
 .uh-tier{display:inline-flex;align-items:center;gap:5px;font-size:.82rem;font-weight:600;
   background:rgba(46,196,122,.1);border:1px solid rgba(46,196,122,.3);
   color:var(--soft);border-radius:999px;padding:3px 10px}
@@ -986,12 +985,7 @@ async function init(){
       const _po = document.getElementById('pauseOverlay');
       if(_po) _po.classList.remove('on');
       revealDashboard();
-      const _b = document.createElement('div');
-      _b.textContent = '⏸ Site is paused for visitors — you see it as admin';
-      _b.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483646;'
-        + 'background:#f5c842;color:#1a1400;font:700 .8rem/1 sans-serif;padding:9px 16px;border-radius:999px;'
-        + 'box-shadow:0 6px 20px rgba(0,0,0,.4);pointer-events:none';
-      document.body.appendChild(_b);
+      // (ყვითელი „Site is paused" შეტყობინება ამოღებულია)
     } else {
       // ადმინი არ არის — overlay რჩება, dashboard დამალული. აქ ვჩერდებით.
       return;
@@ -2023,15 +2017,14 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
   // მინიშნება მხოლოდ აქტიურ ბოქსში — დასრულებულში აზრი აღარ აქვს
   if(state === 'active'){
     const need = (box.unlock_correct != null ? box.unlock_correct : pointSettings.bridge_unlock_correct);
-    let hint = '<div class="unlock-hint"><div class="uh-line">🎮 <b>'+need+'</b> correct answer'+(need===1?'':'s')+' unlock'+(need===1?'s':'')+' the bonus game</div>';
-    // ახალი ქულათა სისტემა ჩართულია → ქვედა ხაზზე ვაჩვენებთ საფეხურებს (✅ სწორი → ქულა)
+    // ტექსტი + საფეხურები ერთ, გაშუალებულ ხაზზე (✅ სწორი → ქულა მარჯვნივ)
+    let hint = '<div class="unlock-hint"><div class="uh-row"><span class="uh-line">🎮 <b>'+need+'</b> correct answer'+(need===1?'':'s')+' unlock'+(need===1?'s':'')+' the bonus game</span>';
     if(newPoints.enabled && newPoints.tiers && newPoints.tiers.length){
-      const ladder = newPoints.tiers
+      hint += newPoints.tiers
         .map(t => '<span class="uh-tier">✅ '+t.correct_count+' → <b>'+t.points+'</b> pts</span>')
         .join('');
-      hint += '<div class="uh-ladder">'+ladder+'</div>';
     }
-    hint += '</div>';
+    hint += '</div></div>';
     html += hint;
   }
   html += '</div></div>';
