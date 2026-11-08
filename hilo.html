@@ -7,8 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/fredoka-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/nunito-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<!-- self-hosted @font-face (inlined: removes the last render-blocking
-       request; the .woff2 files are still fetched & cached normally) -->
+<!-- self-hosted @font-face (inlined) -->
   <style>@font-face{font-family:'Fredoka';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2');}@font-face{font-family:'Fredoka';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/fredoka-latin-700-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/nunito-latin-400-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/nunito-latin-700-normal.woff2') format('woff2');}</style>
 <style>
 :root{
@@ -17,7 +16,6 @@
   --gold:#f5c842; --green:#2ec47a; --red:#e63946;
   --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
   --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
-  --card-red:#d6334a; --card-black:#1a2422;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{background:radial-gradient(120% 90% at 50% -10%, #0f1a18 0%, var(--bg) 55%);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;display:flex;flex-direction:column}
@@ -35,22 +33,32 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .title{font-family:'Fredoka',sans-serif;font-size:2rem;font-weight:700;letter-spacing:-.01em}
 .subtitle{font-size:.9rem;color:var(--muted);margin-bottom:14px;text-align:center;max-width:340px}
 
-.scoreboard{display:flex;gap:10px;margin-bottom:20px}
+.scoreboard{display:flex;gap:10px;margin-bottom:16px}
 .score-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 22px;text-align:center;min-width:96px}
 .score-box .k{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
 .score-box .v{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;line-height:1}
 .score-box.current .v{color:var(--teal)}
+#curVal{color:var(--gold)}
 
-.card-stage{position:relative;width:170px;height:240px;margin-bottom:6px;perspective:1000px}
-.playing-card{position:absolute;inset:0;border-radius:16px;background:#f4f6f5;box-shadow:0 14px 40px rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:space-between;padding:14px 16px;transition:transform .35s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
-.playing-card.flip{transform:rotateY(90deg)}
-.pc-corner{font-family:'Fredoka',sans-serif;font-weight:700;line-height:.9;display:flex;flex-direction:column;align-items:center;width:fit-content}
-.pc-corner.bottom{align-self:flex-end;transform:rotate(180deg)}
-.pc-rank{font-size:1.7rem}
-.pc-suit-sm{font-size:1.3rem;margin-top:-2px}
-.pc-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:4.4rem;line-height:1}
-.red{color:var(--card-red)}
-.black{color:var(--card-black)}
+/* ── ball board ──────────────────────────────────────────── */
+.board{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;width:min(382px,92vw);
+  background:var(--bg3);border-radius:16px;padding:10px 8px;box-shadow:inset 0 2px 8px rgba(0,0,0,.4);margin:4px 0 2px}
+.board .cell{position:relative;flex:0 0 calc((100% - 35px)/8);aspect-ratio:1}
+.board .b{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka',sans-serif;font-weight:700;line-height:1;font-size:1.2rem;color:#042a24;transition:box-shadow .12s}
+.board .b.two{font-size:1rem;letter-spacing:-.02em}
+.board .b.sphere{background:radial-gradient(circle at 36% 30%,#5fe6d9,#1b8f84);
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.35),inset 0 -3px 5px rgba(0,0,0,.3),0 2px 4px -2px rgba(0,0,0,.5)}
+.board .b.q{color:rgba(4,34,28,.45)}
+.board.live .b.dn{cursor:pointer}
+.board.live .b.dn:active{transform:scale(.92)}
+.board .b.us{background:var(--bg4);box-shadow:inset 0 2px 4px rgba(0,0,0,.45)}
+.board .b.current{background:radial-gradient(circle at 36% 30%,#ffe59a,var(--gold));color:#241a08;
+  box-shadow:0 0 0 2.5px #fff,0 0 12px rgba(245,200,66,.6),inset 0 -2px 4px rgba(0,0,0,.25);transform:scale(1.08);z-index:3}
+.board .b.draw{animation:bpulse .45s ease;z-index:4}
+@keyframes bpulse{0%{transform:scale(1)}45%{transform:scale(1.32)}100%{transform:scale(1.08)}}
+.board .b.good{background:radial-gradient(circle at 36% 30%,#8ff3bb,#1f9a5a);color:#04140a}
+.board .b.bad{background:radial-gradient(circle at 36% 30%,#ffb0b8,#c23a47);color:#2a0508}
 
 .feedback{min-height:26px;font-size:.95rem;font-weight:600;margin:10px 0 4px;text-align:center;transition:all .2s}
 .feedback.ok{color:var(--green)}
@@ -63,16 +71,17 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .guess-btn.high:hover:not(:disabled){background:#44ffe8;transform:translateY(-2px)}
 .guess-btn.low{background:var(--bg3);color:var(--text);border:1.5px solid var(--border2)}
 .guess-btn.low:hover:not(:disabled){border-color:var(--teal);color:var(--teal);transform:translateY(-2px)}
+.guess-btn.sel{outline:3px solid #fff;outline-offset:2px}
 .guess-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
 .arrow{font-size:1.1rem}
 
-.turn-timer{width:200px;max-width:78vw;margin:2px 0 2px}
+.turn-timer{width:220px;max-width:78vw;margin:2px 0 2px}
 .tt-track{width:100%;height:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;overflow:hidden}
 .tt-fill{height:100%;width:100%;background:var(--teal);border-radius:4px;transition:width 1s linear,background .3s}
 .tt-fill.low{background:var(--red)}
 .tt-val{text-align:center;font-size:.72rem;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.05em}
 
-.hint{font-size:.74rem;color:var(--muted);margin-top:16px;text-align:center;max-width:330px}
+.hint{font-size:.74rem;color:var(--muted);margin-top:16px;text-align:center;max-width:340px;line-height:1.5}
 
 .overlay{position:fixed;inset:0;background:rgba(8,12,11,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 .overlay.show{display:flex}
@@ -84,17 +93,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .over-btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--teal);color:#04100e;font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s}
 .over-btn:hover{background:#44ffe8}
 
-@media (max-width:420px){ .title{font-size:1.6rem} .card-stage{width:150px;height:212px} }
+@media (max-width:420px){ .title{font-size:1.6rem} }
 </style>
-  <!-- cookie-consent (inlined: removes a render-blocking request; must still
-       run BEFORE the GA4 block below so Consent Mode v2 defaults apply first) -->
+  <!-- cookie-consent (inlined; runs BEFORE any GA/AdSense) -->
   <script>
 (function () {
   'use strict';
 
   var KEY = 'winstep_cookie_consent'; // 'accepted' | 'rejected'
 
-  // ---- Google Consent Mode v2 plumbing (ready for GA / AdSense) ----
   window.dataLayer = window.dataLayer || [];
   function gtag() { window.dataLayer.push(arguments); }
   window.gtag = window.gtag || gtag;
@@ -102,8 +109,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   var stored = null;
   try { stored = localStorage.getItem(KEY); } catch (e) {}
 
-  // Default = everything denied (must run before GA/AdSense load).
-  // With ad_storage denied, AdSense auto-serves NON-personalized ads (variant B).
   window.gtag('consent', 'default', {
     analytics_storage: 'denied',
     ad_storage: 'denied',
@@ -120,18 +125,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       ad_user_data:      granted ? 'granted' : 'denied',
       ad_personalization:granted ? 'granted' : 'denied'
     });
-    // Simple flag any ad-loading code can read: true = personalized, false = contextual
     window.winstepAds = { personalized: granted };
   }
 
-  // Re-apply a previously saved choice on every page load (no banner re-show)
   if (stored === 'accepted' || stored === 'rejected') {
     applyConsent(stored);
   } else {
-    window.winstepAds = { personalized: false }; // safe default until they choose
+    window.winstepAds = { personalized: false };
   }
 
-  // ---- Banner UI ----
   function buildBanner() {
     if (document.getElementById('ws-cookie-banner')) return;
     var b = document.createElement('div');
@@ -147,8 +149,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
       '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
       'gap:18px;flex-wrap:wrap;justify-content:center">' +
         '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
-          '\uD83C\uDF6A Winstep is completely free for everyone, and ads are our only source of income. ' +
-          'Accepting cookies helps us keep it that way \u2014 but the choice is yours. Thank you for understanding! ' +
+          '🍪 Winstep is completely free for everyone, and ads are our only source of income. ' +
+          'Accepting cookies helps us keep it that way — but the choice is yours. Thank you for understanding! ' +
           '<a href="/privacy.html" target="_blank" rel="noopener" ' +
           'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
         '</div>' +
@@ -177,7 +179,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     try { localStorage.setItem(KEY, state); } catch (e) {}
     applyConsent(state);
     removeBanner();
-    // let other on-page scripts know the cookie question is now resolved
     try { window.dispatchEvent(new CustomEvent('winstep:consent', { detail: { state: state } })); } catch (e) {}
   }
 
@@ -185,10 +186,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     if (stored !== 'accepted' && stored !== 'rejected') buildBanner();
   }
 
-  // ---- Public API (for the "Cookie Settings" footer link) ----
   window.winstepConsent = {
     get: function () { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
-    open: function () { buildBanner(); }  // re-open to change choice anytime
+    open: function () { buildBanner(); }
   };
 
   if (document.readyState === 'loading') {
@@ -201,9 +201,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <style>
 /* ============================================================
    winstep — "crate" skin, shared override layer
-   Appended AFTER each page's own stylesheet, so it only reshapes
-   what it names. Anything not covered keeps its original rule
-   (in the new colours, because the tokens below are overridden).
    ============================================================ */
 :root{
   --bg:#0a0f0e; --bg2:#111a18; --bg3:#182421; --bg4:#20302c;
@@ -223,17 +220,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   --body:'Nunito',system-ui,sans-serif;
 }
 
-/* ── ground ─────────────────────────────────────────────── */
 body{background:var(--bg);font-family:var(--body)}
 body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
     radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),
     radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)}
 
-/* ── header + logo ──────────────────────────────────────── */
-/* მხოლოდ ნამდვილი <header> — .topbar სამართლებრივ გვერდებზე უბრალო
-   რიგია ლოგოთი და Back-ით, არა ზოლი. მისთვის ფონის მიცემა ზედა
-   კიდეზე შავ ლენტს ქმნიდა. */
 header{background-color:rgba(10,15,14,.9)!important;
   background-image:radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)!important;
   background-size:100% 100vh!important;background-repeat:no-repeat!important;
@@ -243,7 +235,6 @@ header{background-color:rgba(10,15,14,.9)!important;
   box-shadow:0 4px 12px -7px rgba(46,196,182,.55),inset 0 1px 0 rgba(255,255,255,.28)!important}
 .logo-name{font-family:var(--disp)!important;font-weight:700!important;letter-spacing:-.01em!important}
 
-/* ── chunky plastic keys (pressable, with a lip) ────────── */
 .back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.next-btn,.continue-btn,
 .btn,.btn-lg,.btn-solid,.btn-ghost,.btn-hero,.submit-btn,.verify-btn,
 .guess-btn,.h-btn,.over-btn,.spin-btn,.task-b,.bridge-b,.verify-resend,.btns .btn{
@@ -266,9 +257,7 @@ header{background-color:rgba(10,15,14,.9)!important;
 .submit-btn:active,.next-btn:active,.continue-btn:active,.guess-btn:active,
 .h-btn:active,.over-btn:active,.spin-btn:active{transform:translateY(2px)!important;
   box-shadow:0 0 0 currentColor!important}
-/* .google-btn is intentionally NOT restyled here — see crate-index.css */
 
-/* ── surfaces ───────────────────────────────────────────── */
 .card,.stat-card,.standing-card,.auth-card,.quiz-card,.result-card,.over-card,
 .modal-card,.boxc,.c,.frame,.callout,.current-box,.score-box,.hud,.scoreboard,
 .msg-box,.settings-row,.history-row,.verify-card,.task,.champ,.faq{
@@ -280,114 +269,11 @@ header{background-color:rgba(10,15,14,.9)!important;
 .card,.stat-card,.standing-card,.auth-card,.quiz-card,.over-card,.modal-card,
 .boxc,.verify-card{background:var(--bg2)!important}
 
-/* ── form fields ────────────────────────────────────────── */
-.input-field,.acc-input,input[type=text],input[type=email],input[type=password]{
-  background:var(--bg3)!important;border:0!important;border-radius:14px!important;
-  font-family:var(--body)!important;font-weight:600!important;color:var(--text)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
-.input-field:focus,.acc-input:focus,input:focus{outline:0!important;
-  box-shadow:0 0 0 2px var(--teal)!important}
-.input-label,.field-label,.s-label,.sp-label,.stat-lbl,.sr-label,.timer-label{
-  font-family:var(--body)!important;font-weight:700!important;color:var(--muted)!important}
-
-/* ── headings + section titles ──────────────────────────── */
 .section-title,.sec-h,.title,.hud-title,.modal-title,.q-text,.result-title,
 .over-title,.next-title,.rh-title,.profile-name,.quiz-tag,.hero{
   font-family:var(--disp)!important;letter-spacing:-.015em!important}
-.section-title{font-size:1.2rem!important;letter-spacing:-.01em!important;
-  text-transform:none!important;color:var(--text)!important;font-weight:600!important}
-.section-title::after{content:none!important}
 
-/* ── pills, badges, tags ────────────────────────────────── */
-.profile-rank-pill,.rh-tag,.quiz-tag,.rs-live-badge,.pts,.champ-badge{
-  border:0!important;border-radius:999px!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
-
-/* ── numbers that used to be Bebas (condensed) ──────────── */
-/* Fredoka is wider, so the sizes tuned for Bebas are stepped down */
-.stat-val{font-family:var(--disp)!important;font-weight:700!important;font-size:1.75rem!important;
-  letter-spacing:-.02em!important}
-.standing-rank{font-family:var(--disp)!important;font-weight:700!important;font-size:2rem!important}
-.profile-avatar{font-family:var(--disp)!important;font-weight:700!important;font-size:1.9rem!important;
-  color:var(--on-accent)!important;
-  background:linear-gradient(150deg,var(--teal-hi),var(--teal))!important;
-  box-shadow:0 6px 18px -10px rgba(46,196,182,.6)!important}
-.rh-title{font-family:var(--disp)!important;font-weight:700!important;font-size:2.1rem!important;
-  letter-spacing:-.025em!important}
-.podium-avatar{font-family:var(--disp)!important;font-weight:700!important;color:var(--on-accent)!important}
-.p1 .podium-avatar{font-size:1.9rem!important}
-.p2 .podium-avatar,.p3 .podium-avatar{font-size:1.5rem!important}
-.podium-pts{font-family:var(--disp)!important;font-weight:700!important;font-size:1rem!important}
-.podium-bar{font-family:var(--disp)!important;font-weight:700!important;font-size:1.1rem!important;
-  border-radius:14px 14px 0 0!important}
-.podium-name,.podium-prize,.lb-pts,.lb-rank,.s-pts,.sp-val,.rs-round,.rs-pts,
-.history-pts,.result-pts,.q-pts,.over-score,.result-num,.st-val,.tt-val,.timer-value{
-  font-family:var(--disp)!important;font-weight:700!important}
-.lb-avatar,.lb-avatar-initial{font-family:var(--disp)!important;font-weight:700!important}
-.lb-avatar-initial{background:linear-gradient(150deg,var(--teal-hi),var(--teal))!important;
-  color:var(--on-accent)!important}
-.next-title{font-family:var(--disp)!important;font-weight:600!important;font-size:1.3rem!important;
-  letter-spacing:-.02em!important}
-
-/* ── tables + rows ──────────────────────────────────────── */
-.rs-table th{font-family:var(--body)!important;font-weight:700!important;
-  font-size:.7rem!important;color:var(--muted)!important;border-bottom:1px solid var(--border)!important}
-.rs-table td{font-size:.92rem!important;font-weight:600!important;border-bottom:1px solid var(--border)!important}
-.lb-row,.history-row,.settings-row{border-bottom:0!important;border-radius:16px!important}
-.lb-row.me{background:rgba(46,196,182,.13)!important}
-
-/* ── footers ────────────────────────────────────────────── */
-.ws-mini-foot,.footer,.foot-links,.legal,.foot-disclaimer{border-top:0!important;
-  font-family:var(--body)!important;font-weight:600!important;color:var(--muted)!important}
-.ws-mini-foot a,.ws-mini-foot button.ws-link,.footer a,.foot-links a{
-  color:var(--muted)!important;padding:6px 2px!important;display:inline-block!important}
-.ws-mini-foot a:hover,.footer a:hover,.foot-links a:hover{color:var(--teal)!important}
-
-/* ── small fixes found by measuring, not by eye ─────────── */
-/* results.html: the decorative hero glow is a fixed 400px pseudo-element and
-   pushed 5px past the viewport on a 390px phone (pre-existing, fixed here) */
-.results-hero::after{width:min(400px,100%)!important}
-/* nothing below 11px — these three were 10.2–10.9px */
-.rh-tag{font-size:.74rem!important}
-.prize-note .disclaimer,.prize-note a{font-size:.78rem!important}
-.sr-desc,.acc-note,div[style*="font-size:.68rem"],
-div[style*="font-size:.66rem"]{font-size:.78rem!important}
-
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
-/* ── games: page-specific ────────────────────────────────── */
-
-/* quiz — answers keep their green/red semantics, only the shape changes */
-.answer{border:0!important;border-radius:16px!important;background:var(--bg3)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;
-  font-family:var(--body)!important;font-weight:600!important}
-.answer:hover:not(.disabled){background:var(--bg4)!important;transform:translateX(3px)!important}
-.answer-letter{border:0!important;border-radius:11px!important;font-family:var(--disp)!important;
-  font-weight:700!important;background:var(--teal3)!important;color:var(--teal)!important}
-.answer-text{font-weight:600!important;font-size:1rem!important}
-.answer.correct{background:var(--green2)!important;
-  box-shadow:0 0 0 1.5px var(--green),inset 0 1px 0 rgba(255,255,255,.06)!important}
-.answer.correct .answer-letter{background:var(--green)!important;color:#04140a!important}
-.answer.correct .answer-text{color:var(--green)!important}
-.answer.wrong{background:var(--red2)!important;
-  box-shadow:0 0 0 1.5px var(--red),inset 0 1px 0 rgba(255,255,255,.06)!important}
-.answer.wrong .answer-letter{background:var(--red)!important;color:#2a0508!important}
-.answer.wrong .answer-text{color:var(--red)!important}
-.timer-section{border-bottom:0!important;background:transparent!important}
-.timer-track,.st-track,.tt-track{border-radius:99px!important;background:rgba(255,255,255,.07)!important}
-.timer-fill,.st-fill,.tt-fill{border-radius:99px!important}
-.q-text{font-size:1.3rem!important;font-weight:600!important;line-height:1.3!important}
-.quiz-tag{background:var(--teal3)!important;color:var(--teal)!important;
-  font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
-
-/* hilo — the playing card must stay a real white card, untouched by the
-   card/shadow rules above; only its corner type is restyled */
-.playing-card{border-radius:20px!important;background:#f6f4ef!important;
-  box-shadow:0 12px 30px -12px rgba(0,0,0,.75)!important;
-  /* the card ships without .red/.black until JS deals — without this the
-     placeholder pips inherit the light page text colour on a white card */
-  color:var(--card-black,#1a2422)!important}
-.pc-corner,.pc-rank,.pc-center{font-family:var(--disp)!important;font-weight:700!important}
+/* hilo — buttons, scoreboard, feedback, over-card, timer */
 .guess-btn.low{background:var(--bg3)!important;color:var(--text)!important;
   box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
 .guess-btn.low:hover:not(:disabled){background:var(--bg4)!important;color:var(--text)!important}
@@ -403,36 +289,12 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 .over-card{border-radius:24px!important}
 .over-title{font-family:var(--disp)!important;font-weight:600!important}
 .over-score{font-size:2rem!important}
+.tt-track{border-radius:99px!important;background:rgba(255,255,255,.07)!important}
+.tt-fill{border-radius:99px!important}
+.ws-mini-foot,.footer,.foot-links,.legal,.foot-disclaimer{border-top:0!important;
+  font-family:var(--body)!important;font-weight:600!important;color:var(--muted)!important}
 
-/* spin wheel — the wheel itself is canvas/SVG, only its frame is restyled */
-.wheel-ring{box-shadow:0 0 0 4px var(--bg3),0 0 0 6px rgba(46,196,182,.3),
-  0 12px 34px -14px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.55)!important}
-.wheel-ring.spinning{box-shadow:0 0 0 4px var(--bg3),0 0 0 6px var(--teal),
-  0 0 30px var(--teal3),0 12px 34px -14px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.55)!important}
-.hub{border:0!important;background:var(--bg3)!important;
-  box-shadow:0 3px 10px -4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07)!important}
-.result-num{font-family:var(--disp)!important;font-weight:700!important;font-size:2.1rem!important}
-.result-label{font-weight:600!important;color:var(--soft)!important}
-
-/* bridge — HUD, pips and the two pick buttons */
-.demo-note{font-size:.78rem!important;font-weight:600!important}
-.hud{background:var(--bg2)!important}
-.hud-title{font-family:var(--disp)!important;font-weight:700!important;
-  font-size:1.15rem!important;letter-spacing:0!important}
-.hs .l{font-family:var(--body)!important;font-weight:700!important;font-size:.74rem!important;
-  color:var(--muted)!important}
-.hs .v{font-family:var(--disp)!important;font-weight:700!important;font-size:1.05rem!important;
-  letter-spacing:0!important}
-#cw{border:0!important;border-radius:20px!important;
-  box-shadow:0 8px 22px -14px rgba(0,0,0,.8)!important}
-.pip{border-radius:99px!important;background:rgba(255,255,255,.08)!important}
-.pip.done{background:var(--teal)!important}
-.pip.cur{background:rgba(46,196,182,.5)!important}
-.step-timer{background:var(--bg2)!important;border:0!important;border-radius:18px!important;
-  box-shadow:var(--lift)!important}
-.st-label{font-family:var(--body)!important;font-weight:700!important;font-size:.7rem!important}
-.btns .btn{font-size:.95rem!important;letter-spacing:0!important;padding:15px!important}
-.btns .btn:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
   <script src="/sounds.js" defer></script>
 </head>
@@ -455,33 +317,28 @@ div[style*="font-size:.66rem"]{font-size:.78rem!important}
 <div class="wrap" id="wrap">
   <div class="eyebrow">Bonus Game</div>
   <div class="title">Hi-Lo</div>
-  <div class="subtitle">Will the next card be higher or lower? Guess right to earn points.</div>
+  <div class="subtitle">Will the next ball be higher or lower? Guess right to earn points.</div>
 
   <div class="scoreboard">
     <div class="score-box current"><div class="k">Points</div><div class="v" id="scoreVal">0</div></div>
+    <div class="score-box"><div class="k">Current</div><div class="v" id="curVal">—</div></div>
   </div>
 
-  <div class="card-stage">
-    <div class="playing-card" id="card">
-      <div class="pc-corner top"><span class="pc-rank" id="rankTop">A</span><span class="pc-suit-sm" id="suitTop">♠</span></div>
-      <div class="pc-center" id="suitCenter">♠</div>
-      <div class="pc-corner bottom"><span class="pc-rank" id="rankBot">A</span><span class="pc-suit-sm" id="suitBot">♠</span></div>
-    </div>
-  </div>
+  <div class="board" id="board"></div>
 
   <div class="turn-timer" id="turnTimer">
     <div class="tt-track"><div class="tt-fill" id="ttFill"></div></div>
     <div class="tt-val" id="ttVal">10s</div>
   </div>
 
-  <div class="feedback" id="feedback">Make your guess</div>
+  <div class="feedback" id="feedback">Loading…</div>
 
   <div class="guess-row">
-    <button class="guess-btn high" id="btnHigh" onclick="guess('higher')"><span class="arrow">▲</span> Higher</button>
-    <button class="guess-btn low" id="btnLow" onclick="guess('lower')"><span class="arrow">▼</span> Lower</button>
+    <button class="guess-btn high" id="btnHigh" onclick="chooseDir('higher')" disabled><span class="arrow">▲</span> Higher</button>
+    <button class="guess-btn low" id="btnLow" onclick="chooseDir('lower')" disabled><span class="arrow">▼</span> Lower</button>
   </div>
 
-  <div class="hint">Ace is highest. Same number (a tie) = no points, but you continue.</div>
+  <div class="hint">Pick any ball to start. Then choose Higher or Lower and pick the next ball. One wrong guess ends the run — all values 1–48 are in play, no repeats.</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -502,83 +359,103 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let hiloUser = null;
 let myProgressId = null;
-let hiloSaved = false;
-let currentSession = null;     // ავტ. ტოკენი pagehide-ის sync XHR-ისთვის
-let gameActive = false;        // თამაში დაიწყო (hilo_start გავიდა)
-let gameEnded  = false;        // თამაში ბუნებრივად დასრულდა (wrong/timeout) ან დაიბლოკა
-let forfeited  = false;        // forfeit უკვე გაიგზავნა (ერთხელ)
-let PER_STEP = 5;          // points per correct guess (from admin)
-let TURN_TIME = 10;        // seconds per turn (Bridge-ის იგივე პრინციპი)
+let currentSession = null;
+let gameActive = false;        // hilo_start passed → leaving = forfeit
+let gameEnded  = false;        // natural end (wrong/timeout/perfect) or blocked
+let forfeited  = false;
+let PER_STEP = 5;
+let TURN_TIME = 10;            // seconds per GUESS turn (first pick is untimed)
 let turnTimer = null, turnLeft = 10;
 
-const SUITS = [{sym:'♠',red:false},{sym:'♥',red:true},{sym:'♦',red:true},{sym:'♣',red:false}];
-const RANKS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
-function rankLabel(r){ return r===14?'A':r===13?'K':r===12?'Q':r===11?'J':String(r); }
+const SIZE = 48;
+let balls = [];                // {pos, st:'down'|'current'|'used', val}
+let currentVal = null, selectedDir = null, score = 0, busy = false, phase = 'loading';
+const boardEl = document.getElementById('board');
 
-let deck=[], current=null, score=0, correctCount=0, busy=false;
-
-function buildDeck(){
-  deck=[];
-  for(const s of SUITS) for(const r of RANKS) deck.push({rank:r,suit:s.sym,red:s.red});
-  for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+/* ---- board ---- */
+function buildBoard(){
+  balls = [];
+  for(let i=1;i<=SIZE;i++) balls.push({pos:i, st:'down', val:null});
+  renderBoard();
 }
-function drawCard(){ if(deck.length===0) buildDeck(); return deck.pop(); }
-
-function renderCard(card, animate){
-  const el=document.getElementById('card');
-  const apply=()=>{
-    document.getElementById('rankTop').textContent=rankLabel(card.rank);
-    document.getElementById('rankBot').textContent=rankLabel(card.rank);
-    document.getElementById('suitTop').textContent=card.suit;
-    document.getElementById('suitBot').textContent=card.suit;
-    document.getElementById('suitCenter').textContent=card.suit;
-    const cls=card.red?'red':'black';
-    document.getElementById('rankTop').className='pc-rank '+cls;
-    document.getElementById('rankBot').className='pc-rank '+cls;
-    document.getElementById('suitTop').className='pc-suit-sm '+cls;
-    document.getElementById('suitBot').className='pc-suit-sm '+cls;
-    document.getElementById('suitCenter').className='pc-center '+cls;
-  };
-  if(animate){ el.classList.add('flip'); setTimeout(()=>{ apply(); el.classList.remove('flip'); },180); }
-  else apply();
+function renderBoard(flash){
+  const live = (phase==='first' || phase==='picking');
+  boardEl.className = 'board' + (live ? ' live' : '');
+  let h='';
+  for(const b of balls){
+    const isFlash = flash && flash.pos===b.pos;
+    let cls, inner;
+    if(b.st==='used' && !isFlash){ cls='b us'; inner=''; }
+    else{
+      cls='b sphere';
+      if(b.st==='current') cls+=' current'; else if(b.st==='down') cls+=' dn';
+      if(isFlash) cls+=' '+flash.cls;
+      let label;
+      if(b.st==='current') label=b.val;
+      else if(isFlash && flash.val!=null) label=flash.val;
+      else label='?';
+      const ls=String(label);
+      if(ls.length>1) cls+=' two';
+      if(ls==='?') cls+=' q';
+      inner=label;
+    }
+    h+='<div class="cell"><div class="'+cls+'" data-pos="'+b.pos+'">'+inner+'</div></div>';
+  }
+  boardEl.innerHTML=h;
 }
+
+/* ---- ui helpers ---- */
 function setFeedback(t,type){ const f=document.getElementById('feedback'); f.textContent=t; f.className='feedback'+(type?' '+type:''); }
 function setButtons(en){ document.getElementById('btnHigh').disabled=!en; document.getElementById('btnLow').disabled=!en; }
+function updateCurrent(v){ document.getElementById('curVal').textContent=(v==null?'—':v); }
+function clearDirBtns(){ document.getElementById('btnHigh').classList.remove('sel'); document.getElementById('btnLow').classList.remove('sel'); }
 
-// ---- 10-წამიანი ტაიმერი თითო სვლაზე (Bridge-ის იგივე პრინციპი) ----
-// დრო რომ ამოიწურება → თამაში სრულდება. დაგროვილი ქულა რჩება
-// (სერვერი ისედაც წერს ქულას ყოველ სწორ გამოცნობაზე hilo_guess-ში).
+function chooseDir(dir){
+  if(busy || phase!=='picking') return;
+  selectedDir = dir;
+  document.getElementById('btnHigh').classList.toggle('sel', dir==='higher');
+  document.getElementById('btnLow').classList.toggle('sel', dir==='lower');
+  setFeedback('Now pick a ball','');
+}
+
+boardEl.addEventListener('click', function(e){
+  if(busy) return;
+  const el=e.target.closest('.b'); if(!el) return;
+  const pos=+el.dataset.pos; const b=balls[pos-1];
+  if(!b || b.st==='used' || b.st==='current') return;
+  if(phase==='first'){ pickBall(pos, null); }
+  else if(phase==='picking'){
+    if(!selectedDir){ setFeedback('Choose Higher or Lower first',''); return; }
+    pickBall(pos, selectedDir);
+  }
+});
+
+/* ---- 10s per-guess timer (first pick is untimed) ---- */
 function startTurnTimer(){
   clearInterval(turnTimer);
-  turnLeft = TURN_TIME;
-  drawTimer();
-  turnTimer = setInterval(()=>{
-    turnLeft--;
-    drawTimer();
-    if(turnLeft <= 0){ clearInterval(turnTimer); onTurnTimeout(); }
-  }, 1000);
+  turnLeft = TURN_TIME; drawTimer();
+  turnTimer = setInterval(function(){
+    turnLeft--; drawTimer();
+    if(turnLeft<=0){ clearInterval(turnTimer); onTurnTimeout(); }
+  },1000);
 }
 function stopTurnTimer(){ clearInterval(turnTimer); }
 function drawTimer(){
-  const fill = document.getElementById('ttFill');
-  const val  = document.getElementById('ttVal');
-  if(!fill || !val) return;
-  fill.style.width = Math.max(0, (turnLeft / TURN_TIME) * 100) + '%';
-  val.textContent  = Math.max(0, turnLeft) + 's';
-  fill.classList.toggle('low', turnLeft <= 3);
+  const fill=document.getElementById('ttFill'), val=document.getElementById('ttVal');
+  if(!fill||!val) return;
+  fill.style.width = Math.max(0,(turnLeft/TURN_TIME)*100)+'%';
+  val.textContent  = Math.max(0,turnLeft)+'s';
+  fill.classList.toggle('low', turnLeft<=3);
 }
 async function onTurnTimeout(){
   if(busy) return;
-  busy = true; setButtons(false);
-  setFeedback("Time's up! Game over.", 'bad');
-  // გზა B — სერვერი ნიშნავს მცდელობას დასრულებულად (replay-ის თავიდან აცილება)
+  busy=true; setButtons(false);
+  setFeedback("Time's up! Game over.",'bad');
   try { await db.rpc('hilo_end'); } catch(e){}
-  setTimeout(gameOver, 700);
+  setTimeout(gameOver,700);
 }
 
-// ---- გამოსვლა თამაშის პროცესში = მიტოვება (Back ღილაკი / Back to Dashboard / დახურვა) ----
-// თამაში იხურება ქულის გარეშე (0), მცდელობა იხარჯება — დაბრუნება შეუძლებელია.
-// pagehide-ში sync XHR გამოიყენება, რადგან გვერდის დატოვებისას async ვერ მოასწრებს.
+/* ---- leaving mid-game = forfeit (0 points, attempt spent) ---- */
 function forfeitGame(){
   if(!gameActive || gameEnded || forfeited) return;
   forfeited = true;
@@ -594,59 +471,77 @@ function forfeitGame(){
 }
 window.addEventListener('pagehide', forfeitGame);
 
-async function guess(direction){
+/* ---- a pick: first ball (dir=null) or a guess (dir set) ---- */
+async function pickBall(pos, dir){
   if(busy) return;
-  busy=true; setButtons(false);
+  busy=true; setButtons(false); stopTurnTimer();
   if(window.winstepSound) winstepSound.play('doubleFlip');
-  stopTurnTimer();
-  // გზა B — სერვერი ხსნის შემდეგ კარტას და ამოწმებს
-  const { data: res } = await db.rpc('hilo_guess', { p_dir: direction });
-  if(!res || !res.ok){ busy=false; setButtons(true); return; }
-  const next = res.card;
-  renderCard(next,true);
-  setTimeout(()=>{
-    current = next;
-    if(res.result === 'push'){
-      setFeedback('Tie — no points. Keep going!','push');
-      finishTurn(true);
-    } else if(res.result === 'correct'){
-      score = res.score;
-      document.getElementById('scoreVal').textContent=score;
+
+  let res=null;
+  try{ const r=await db.rpc('hilo_guess',{ p_pos:pos, p_dir:dir }); res=r.data; }catch(e){ res=null; }
+  if(!res || !res.ok){
+    busy=false;
+    if(phase==='picking'){ setButtons(true); startTurnTimer(); }
+    return;
+  }
+  const val=res.value;
+
+  // FIRST ball → becomes current, no points
+  if(res.result==='first'){
+    renderBoard({pos, cls:'draw', val});
+    setTimeout(function(){
+      balls[pos-1].st='current'; balls[pos-1].val=val; currentVal=val; updateCurrent(val);
+      renderBoard();
+      phase='picking'; selectedDir=null; clearDirBtns(); setButtons(true);
+      setFeedback('Higher or lower than '+val+'?','');
+      busy=false; startTurnTimer();
+    },220);
+    return;
+  }
+
+  // a guess resolved
+  renderBoard({pos, cls:'draw', val});
+  setTimeout(function(){
+    balls.forEach(function(b){ if(b.st==='current') b.st='used'; });   // old current → used
+    if(res.result==='correct'){
+      score=res.score; document.getElementById('scoreVal').textContent=score;
+      balls[pos-1].st='current'; balls[pos-1].val=val; currentVal=val; updateCurrent(val);
+      renderBoard({pos, cls:'good', val});
+      if(res.continues===false){            // perfect run — board cleared
+        setFeedback('Perfect run! +'+PER_STEP+' — board cleared','ok');
+        busy=true; setButtons(false); setTimeout(gameOver,900); return;
+      }
       setFeedback('Correct! +'+PER_STEP+' points','ok');
-      finishTurn(true);
-    } else {
-      score = res.score;
-      document.getElementById('scoreVal').textContent=score;
-      setFeedback('Wrong! It was '+(res.was_higher?'higher':'lower')+'.','bad');
-      finishTurn(false);
+      setTimeout(function(){
+        renderBoard();
+        phase='picking'; selectedDir=null; clearDirBtns(); setButtons(true);
+        busy=false; startTurnTimer();
+      },700);
+    } else {                                 // wrong → game over
+      score=res.score; document.getElementById('scoreVal').textContent=score;
+      balls[pos-1].st='used'; balls[pos-1].val=val;
+      renderBoard({pos, cls:'bad', val});
+      setFeedback('Wrong! It was '+val+'.','bad');
+      setButtons(false);
+      setTimeout(gameOver,850);
     }
   },220);
 }
 
-function finishTurn(continues){
-  if(continues){ setTimeout(()=>{ busy=false; setButtons(true); startTurnTimer(); },350); }
-  else { setTimeout(gameOver,700); }
-}
-
 function gameOver(){
-  gameEnded = true;          // ბუნებრივი დასასრული — forfeit აღარ საჭიროა (ქულა უკვე ჩაირიცხა)
+  gameEnded = true;
   stopTurnTimer();
   document.getElementById('finalScore').textContent=score;
-  document.getElementById('finalSub').textContent = score===1?'point earned':'points earned';
+  document.getElementById('finalSub').textContent = (score===1?'point earned':'points earned');
   document.getElementById('overlay').classList.add('show');
 }
 
-// გზა B: ქულის დარიცხვა და hilo_played ახლა სერვერზე ხდება (hilo_guess).
-
 function blockGame(){
-  gameEnded = true;          // თამაში არ დაწყებულა — forfeit არ გავუშვათ
-  document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🃏</div><div style="font-family:Fredoka,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Hi-Lo not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Nunito,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
+  gameEnded = true;
+  document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🎱</div><div style="font-family:Fredoka,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Hi-Lo not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Nunito,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
 }
 
 async function init(){
-  const { data: setRows } = await db.from('settings').select('*').in('key',['hilo_per_step']);
-  if(setRows){ for(const r of setRows){ if(r.key==='hilo_per_step') PER_STEP=r.value; } }
-
   const { data: { session } } = await db.auth.getSession();
   if(!session){ window.location.href='/index.html'; return; }
   hiloUser = session.user;
@@ -665,15 +560,18 @@ async function init(){
   if(!live){ blockGame(); return; }
   myProgressId = live.id;
 
-  // server starts the game (დასტა სერვერზე იმალება)
+  // server sets up the hidden 48-ball board
   const { data: res } = await db.rpc('hilo_start');
   if(!res || !res.ok){ blockGame(); return; }
-  gameActive = true;         // აქედან გამოსვლა = მიტოვება
-  if(window.winstepSound) winstepSound.play('click');   // Start (Hi-Lo ავტომატურად იწყება)
+  gameActive = true;
+  if(window.winstepSound) winstepSound.play('click');
   PER_STEP = res.per_step;
-  current = res.card;
-  renderCard(current,false);
-  startTurnTimer();
+
+  buildBoard();
+  phase='first'; currentVal=null; selectedDir=null; score=0;
+  document.getElementById('scoreVal').textContent='0'; updateCurrent(null);
+  setButtons(false);
+  setFeedback('Pick any ball to start','');
 }
 
 init();
