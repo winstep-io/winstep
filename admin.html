@@ -349,7 +349,12 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
     </div>
     <div class="field">
       <label class="field-label">Password</label>
-      <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" name="ws-noauto-pass">
+      <div style="position:relative">
+        <input class="field-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" name="ws-noauto-pass" style="padding-right:46px">
+        <button type="button" id="pwToggle" onclick="togglePw()" aria-label="Show password" title="Show / hide password" style="position:absolute;top:0;right:0;height:100%;width:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;color:var(--muted);padding:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
     </div>
     <div style="display:flex;justify-content:center;margin:0 0 14px"><div class="cf-turnstile" data-sitekey="0x4AAAAAADuaBdw260z6JkeC" data-theme="dark" data-callback="onCaptcha" data-expired-callback="onCaptchaExpired" data-error-callback="onCaptchaExpired"></div></div>
     <button class="btn btn-primary" onclick="adminLogin()" style="width:100%;margin-top:6px" id="loginBtn">Admin Login</button>
@@ -400,17 +405,6 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       <div class="msg" id="boxMsg"></div>
 
       <div class="card">
-        <div class="card-title">➕ Create New Box</div>
-        <div class="field">
-          <label class="field-label">Date</label>
-          <input class="field-input" type="date" lang="en" id="boxDate">
-          <div style="font-size:.66rem;color:var(--muted);margin-top:4px">Boxes open one-by-one as users complete them. Name & order are automatic.</div>
-        </div>
-        <div id="boxPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">📅 —</div>
-        <button class="btn btn-primary" onclick="createBox()">Create Box</button>
-      </div>
-
-      <div class="card">
         <div class="card-title">📥 Bulk Create from Excel</div>
         <div style="font-size:.7rem;color:var(--muted);margin-bottom:12px">Excel-ის სვეტები: <b>question, answer_a, answer_b, answer_c, answer_d, correct</b> (correct = A/B/C/D). ავტომატურად შექმნის ბოქსებს + ქუიზებს, ხელით შექმნილის იდენტურად. კონფიგი (დრო, ბონუსის ზღვარი) — მიმდინარე Points Settings-იდან.</div>
         <div class="field-row">
@@ -450,6 +444,17 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
           <div style="height:8px;background:var(--bg3);border-radius:6px;overflow:hidden"><div id="bgBar" style="height:100%;width:0;background:var(--teal);transition:width .2s"></div></div>
           <div id="bgProgTxt" style="font-size:.72rem;color:var(--muted);margin-top:6px"></div>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">➕ Create New Box</div>
+        <div class="field">
+          <label class="field-label">Date</label>
+          <input class="field-input" type="date" lang="en" id="boxDate">
+          <div style="font-size:.66rem;color:var(--muted);margin-top:4px">Boxes open one-by-one as users complete them. Name & order are automatic.</div>
+        </div>
+        <div id="boxPreview" style="font-size:.78rem;color:var(--teal);background:var(--teal4);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;margin-bottom:12px">📅 —</div>
+        <button class="btn btn-primary" onclick="createBox()">Create Box</button>
       </div>
 
       <div class="card-title" style="margin-top:8px">📦 Boxes</div>
@@ -1254,6 +1259,15 @@ async function updateBoxPreview(){
   const { data: sameDay } = await db.from('boxes').select('id').eq('date', date);
   const nextOrder = (sameDay ? sameDay.length : 0) + 1;
   prev.textContent = '📅 ' + nice + '  ·  will create "Box ' + nextOrder + '"';
+}
+
+function togglePw(){
+  var inp=document.getElementById('loginPassword'); if(!inp) return;
+  var btn=document.getElementById('pwToggle');
+  var EYE='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var OFF='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  if(inp.type==='password'){ inp.type='text'; if(btn){ btn.innerHTML=EYE; btn.setAttribute('aria-label','Hide password'); } }
+  else { inp.type='password'; if(btn){ btn.innerHTML=OFF; btn.setAttribute('aria-label','Show password'); } }
 }
 
 async function adminLogin(){
