@@ -1625,8 +1625,11 @@ async function loadPrizes(){
   }
   if(!prizes || prizes.length===0) return;
 
+  // ძირითადი ჩემპიონატის პრიზები მხოლოდ — ექსტრა რაუნდის პრიზებს (is_extra)
+  // თავისი ცალკე სექცია აქვს ქვემოთ, ამიტომ აქ არ ვხაზავთ (თორემ დუბლირდება).
+  const mainPrizes = prizes.filter(p => !p.is_extra);
   let html = '';
-  for(const pr of prizes){
+  for(const pr of mainPrizes){
     const from = pr.place_from || pr.place;
     const to = pr.place_to || pr.place;
     // ერთი ადგილი → "1st Place"; დიაპაზონი → "1st – 3rd Places" (მრავლობითში)
