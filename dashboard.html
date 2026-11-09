@@ -2084,7 +2084,7 @@ function renderBox(box, taskList, doneTaskIds, state, prog){
 const GAME_INFO = {
   bridge:    { icon:'🌉', name:'Bridge',     url:'/bridge.html',     fn:'playGame(\'bridge\')' },
   spin:      { icon:'🎡', name:'Spin Wheel', url:'/spin-wheel.html', fn:'playGame(\'spin\')' },
-  hilo:      { icon:'🎱', name:'Hi-Lo',      url:'/hilo.html',       fn:'playGame(\'hilo\')' },
+  hilo:      { icon:'🎱', name:'More or Less', url:'/hilo.html',     fn:'playGame(\'hilo\')' },
   minefield: { icon:'💣', name:'Minefield',  url:'/minefield.html',  fn:'playGame(\'minefield\')' },
   twentyone: { icon:'🃏', name:'21',         url:'/twentyone.html',  fn:'playGame(\'twentyone\')' }
 };
@@ -2317,7 +2317,7 @@ if(document.readyState === 'loading'){
       <button class="modal-close" onclick="closeRoundInfo()">✕</button>
     </div>
     <div class="modal-text">
-      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, Hi-Lo, Minefield, 21). At the end of each round, the <b>top 10</b> players earn championship points:
+      Earn <b>round points</b> from quizzes and bonus games (Bridge, Spin Wheel, More or Less, Minefield, 21). At the end of each round, the <b>top 10</b> players earn championship points:
     </div>
     <div class="pts-grid" id="ptsGrid">
       <div class="loading" style="padding:10px">Loading...</div>

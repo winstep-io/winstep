@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>winstep — Hi-Lo</title>
+<title>winstep — More or Less</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/fredoka-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/nunito-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -310,8 +310,8 @@ header{background-color:rgba(10,15,14,.9)!important;
 
 <div class="wrap" id="wrap">
   <div class="eyebrow">Bonus Game</div>
-  <div class="title">Hi-Lo</div>
-  <div class="subtitle">Will the next ball be higher or lower? Guess right to earn points.</div>
+  <div class="title">More or Less</div>
+  <div class="subtitle">Will the next ball be more or less than the last? Guess right to earn points.</div>
 
   <div class="scoreboard">
     <div class="score-box current"><div class="k">Points</div><div class="v" id="scoreVal">0</div></div>
@@ -323,11 +323,11 @@ header{background-color:rgba(10,15,14,.9)!important;
   <div class="feedback" id="feedback">Loading…</div>
 
   <div class="guess-row">
-    <button class="guess-btn high" id="btnHigh" onclick="chooseDir('higher')" disabled><span class="arrow">▲</span> Higher</button>
-    <button class="guess-btn low" id="btnLow" onclick="chooseDir('lower')" disabled><span class="arrow">▼</span> Lower</button>
+    <button class="guess-btn high" id="btnHigh" onclick="chooseDir('higher')" disabled><span class="arrow">▲</span> More</button>
+    <button class="guess-btn low" id="btnLow" onclick="chooseDir('lower')" disabled><span class="arrow">▼</span> Less</button>
   </div>
 
-  <div class="hint">Pick any ball to start. Then choose Higher or Lower and pick the next ball. One wrong guess ends the run — all values 1–48 are in play, no repeats.</div>
+  <div class="hint">Pick any ball to start. Then choose More or Less and pick the next ball. One wrong guess ends the run — all values 1–48 are in play, no repeats.</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -412,7 +412,7 @@ boardEl.addEventListener('click', function(e){
   if(!b || b.st==='used' || b.st==='current') return;
   if(phase==='first'){ pickBall(pos, null); }
   else if(phase==='picking'){
-    if(!selectedDir){ setFeedback('Choose Higher or Lower first',''); return; }
+    if(!selectedDir){ setFeedback('Choose More or Less first',''); return; }
     pickBall(pos, selectedDir);
   }
 });
@@ -455,7 +455,7 @@ async function pickBall(pos, dir){
       balls[pos-1].st='current'; balls[pos-1].val=val; currentVal=val; updateCurrent(val);
       renderBoard();
       phase='picking'; selectedDir=null; clearDirBtns(); setButtons(true);
-      setFeedback('Higher or lower than '+val+'?','');
+      setFeedback('More or less than '+val+'?','');
       busy=false;
     },220);
     return;
@@ -499,7 +499,7 @@ function gameOver(){
 
 function blockGame(){
   gameEnded = true;
-  document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🎱</div><div style="font-family:Fredoka,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Hi-Lo not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Nunito,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
+  document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">🎱</div><div style="font-family:Fredoka,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">More or Less not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Nunito,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
 }
 
 async function init(){
