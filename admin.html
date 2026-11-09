@@ -785,12 +785,11 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       </div>
 
       <div class="card">
-        <div class="card-title">🎡 Spin Wheel Game</div>
+        <div class="card-title">⚖️ Outweigh Game</div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Start Number</label><input class="field-input" type="number" id="set_spinwheel_start"></div>
-          <div class="field"><label class="field-label">Step</label><input class="field-input" type="number" id="set_spinwheel_step"></div>
+          <div class="field"><label class="field-label">Points per correct guess</label><input class="field-input" type="number" id="set_outweigh_per_correct"></div>
         </div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">21 segments. Start=0, Step=1 → 0,1,2…20. Start=1, Step=2 → 1,3,5…41.</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Balance game. Each correct "heavier side" guess adds this many points; the run continues until a wrong guess. A tie adds 0 but keeps the run going.</div>
       </div>
 
       <div class="card">
@@ -1229,7 +1228,7 @@ async function checkAdmin(user){
 }
 
 // ---- SETTINGS ----
-const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','spinwheel_start','spinwheel_step','hilo_per_step','minefield_bonus','blackjack_win_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','outweigh_per_correct','hilo_per_step','minefield_bonus','blackjack_win_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
 async function loadSettings(){
   const { data: rows } = await db.from('settings').select('*');
   if(!rows) return;

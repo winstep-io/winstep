@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>winstep — Outweigh</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preload" href="/fonts/fredoka-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/nunito-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<!-- self-hosted @font-face (inlined) -->
+  <style>@font-face{font-family:'Fredoka';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2');}@font-face{font-family:'Fredoka';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/fredoka-latin-700-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/nunito-latin-400-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/nunito-latin-700-normal.woff2') format('woff2');}</style>
+<style>
+:root{
+  --bg:#080c0b; --bg2:#0d1412; --bg3:#111a18; --bg4:#162220;
+  --teal:#2ec4b6; --teal2:#1a9e90; --teal3:rgba(46,196,182,.12); --teal4:rgba(46,196,182,.06);
+  --gold:#f5c842; --green:#2ec47a; --red:#e63946; --blue:#6aa6ff;
+  --red2:rgba(255,107,120,.16); --blue2:rgba(106,166,255,.16);
+  --text:#e8f0ee; --muted:#4a6660; --soft:#9fb5b0;
+  --border:rgba(46,196,182,.1); --border2:rgba(46,196,182,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% -10%, #0f1a18 0%, var(--bg) 55%);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;display:flex;flex-direction:column;user-select:none}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo-badge{width:36px;height:36px;background:var(--teal);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.logo-name{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.1rem}
+.logo-name span{color:var(--teal)}
+.h-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--soft);font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;text-decoration:none;transition:all .2s}
+.h-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 16px 40px;gap:4px}
+.eyebrow{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:600}
+.title{font-family:'Fredoka',sans-serif;font-size:2rem;font-weight:700;letter-spacing:-.01em}
+.subtitle{font-size:.9rem;color:var(--muted);margin-bottom:12px;text-align:center;max-width:360px}
+
+.scoreboard{display:flex;gap:10px;margin-bottom:12px}
+.score-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 22px;text-align:center;min-width:96px}
+.score-box .k{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.score-box .v{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;line-height:1}
+.score-box.current .v{color:var(--teal)}
+#roundVal{color:var(--gold)}
+
+/* ── stage: scale + pans ─────────────────────────────────── */
+.stage{width:min(440px,94vw)}
+.scale{position:relative;height:84px;margin:2px 0 6px}
+.pivot{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-bottom:34px solid var(--bg4)}
+.pivot::after{content:'';position:absolute;left:-16px;top:34px;width:32px;height:5px;border-radius:3px;background:var(--bg4)}
+.beam{position:absolute;left:50%;top:14px;width:260px;height:9px;border-radius:6px;background:linear-gradient(90deg,var(--red),var(--blue));
+  transform:translateX(-50%) rotate(0deg);transform-origin:center;transition:transform .7s cubic-bezier(.34,1.3,.5,1);box-shadow:0 2px 6px -2px #000}
+.pan{position:absolute;top:18px;width:46px;height:30px;border-radius:0 0 40px 40px;transition:top .7s cubic-bezier(.34,1.3,.5,1)}
+.pan.l{left:calc(50% - 142px);background:var(--red2);box-shadow:inset 0 0 0 2px var(--red)}
+.pan.r{left:calc(50% + 96px);background:var(--blue2);box-shadow:inset 0 0 0 2px var(--blue)}
+.pan .ln{position:absolute;top:-16px;left:50%;width:1.5px;height:16px;background:var(--soft);transform:translateX(-50%)}
+
+.pans{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+.side{background:var(--bg3);border-radius:16px;padding:12px 10px;box-shadow:inset 0 2px 8px rgba(0,0,0,.35)}
+.side.R{outline:1.5px solid rgba(255,107,120,.25)}
+.side.B{outline:1.5px solid rgba(106,166,255,.25)}
+.side h3{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.9rem;text-align:center;margin-bottom:8px}
+.side.R h3{color:var(--red)} .side.B h3{color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.ball{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:transform .1s;
+  background:var(--bg4);color:var(--muted);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.pans.live .ball:not(.open):active{transform:scale(.9)}
+.side.R .ball.open{background:var(--red);color:#2a0508}
+.side.B .ball.open{background:var(--blue);color:#061330}
+.ball.open{cursor:default;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 8px -4px rgba(0,0,0,.6)}
+.pans:not(.live) .ball{cursor:default}
+
+.reveal{text-align:center;font-size:.8rem;color:var(--soft);font-weight:700;margin:12px 0 2px}
+.reveal b{color:var(--gold)}
+
+.decide{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px;width:100%}
+.db{padding:15px 8px;border:0;border-radius:13px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;color:#2a0508;transition:transform .08s}
+.db.r{background:var(--red)} .db.b{background:var(--blue);color:#061330}
+.db:active:not(:disabled){transform:translateY(2px)} .db:disabled{opacity:.4;cursor:not-allowed}
+
+.feedback{min-height:26px;font-size:.95rem;font-weight:600;margin:12px 0 2px;text-align:center;transition:all .2s}
+.feedback.ok{color:var(--green)}
+.feedback.push{color:var(--gold)}
+.feedback.bad{color:#ff6b78}
+
+.hint{font-size:.74rem;color:var(--muted);margin-top:14px;text-align:center;max-width:360px;line-height:1.5}
+
+.overlay{position:fixed;inset:0;background:rgba(8,12,11,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.show{display:flex}
+.over-card{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:32px 34px;text-align:center;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.over-emoji{font-size:2.6rem;margin-bottom:6px}
+.over-title{font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:6px}
+.over-score{font-family:'Fredoka',sans-serif;font-size:3rem;font-weight:700;color:var(--gold);line-height:1;margin:8px 0}
+.over-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px}
+.over-btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--teal);color:#04100e;font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s}
+.over-btn:hover{background:#44ffe8}
+
+@media (max-width:420px){ .title{font-size:1.6rem} .db{font-size:.86rem} }
+</style>
+  <!-- cookie-consent (inlined; runs BEFORE any GA/AdSense) -->
+  <script>
+(function () {
+  'use strict';
+
+  var KEY = 'winstep_cookie_consent'; // 'accepted' | 'rejected'
+
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { window.dataLayer.push(arguments); }
+  window.gtag = window.gtag || gtag;
+
+  var stored = null;
+  try { stored = localStorage.getItem(KEY); } catch (e) {}
+
+  window.gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    wait_for_update: 500
+  });
+
+  function applyConsent(state) {
+    var granted = (state === 'accepted');
+    window.gtag('consent', 'update', {
+      analytics_storage: granted ? 'granted' : 'denied',
+      ad_storage:        granted ? 'granted' : 'denied',
+      ad_user_data:      granted ? 'granted' : 'denied',
+      ad_personalization:granted ? 'granted' : 'denied'
+    });
+    window.winstepAds = { personalized: granted };
+  }
+
+  if (stored === 'accepted' || stored === 'rejected') {
+    applyConsent(stored);
+  } else {
+    window.winstepAds = { personalized: false };
+  }
+
+  function buildBanner() {
+    if (document.getElementById('ws-cookie-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'ws-cookie-banner';
+    b.setAttribute('role', 'dialog');
+    b.setAttribute('aria-label', 'Cookie consent');
+    b.style.cssText =
+      'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+      'background:#0e1614;border-top:1px solid rgba(46,196,182,.25);' +
+      'box-shadow:0 -8px 30px rgba(0,0,0,.45);padding:16px 20px;' +
+      "font-family:Nunito,'Segoe UI',sans-serif;color:#c9d4d1";
+    b.innerHTML =
+      '<div style="max-width:1000px;margin:0 auto;display:flex;align-items:center;' +
+      'gap:18px;flex-wrap:wrap;justify-content:center">' +
+        '<div style="flex:1;min-width:240px;font-size:.92rem;line-height:1.5">' +
+          '🍪 Winstep is completely free for everyone, and ads are our only source of income. ' +
+          'Accepting cookies helps us keep it that way — but the choice is yours. Thank you for understanding! ' +
+          '<a href="/privacy.html" target="_blank" rel="noopener" ' +
+          'style="color:#2ec4b6;text-decoration:underline">Privacy Policy</a>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:center">' +
+          '<button id="ws-cookie-reject" type="button" ' +
+          'style="padding:11px 22px;background:transparent;border:1.5px solid rgba(159,181,176,.55);' +
+          "color:#c9d4d1;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer\">" +
+          'Reject All</button>' +
+          '<button id="ws-cookie-accept" type="button" ' +
+          'style="padding:11px 26px;background:#2ec4b6;border:1.5px solid #2ec4b6;' +
+          "color:#0a1413;border-radius:10px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer\">" +
+          'Accept All</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(b);
+    document.getElementById('ws-cookie-accept').onclick = function () { choose('accepted'); };
+    document.getElementById('ws-cookie-reject').onclick = function () { choose('rejected'); };
+  }
+
+  function removeBanner() {
+    var el = document.getElementById('ws-cookie-banner');
+    if (el) el.remove();
+  }
+
+  function choose(state) {
+    try { localStorage.setItem(KEY, state); } catch (e) {}
+    applyConsent(state);
+    removeBanner();
+    try { window.dispatchEvent(new CustomEvent('winstep:consent', { detail: { state: state } })); } catch (e) {}
+  }
+
+  function showBannerIfNeeded() {
+    if (stored !== 'accepted' && stored !== 'rejected') buildBanner();
+  }
+
+  window.winstepConsent = {
+    get: function () { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
+    open: function () { buildBanner(); }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showBannerIfNeeded);
+  } else {
+    showBannerIfNeeded();
+  }
+})();
+  </script>
+<style>
+/* ============================================================
+   winstep — "crate" skin, shared override layer
+   ============================================================ */
+:root{
+  --bg:#0a0f0e; --bg2:#111a18; --bg3:#182421; --bg4:#20302c;
+  --teal:#2ec4b6; --teal2:#6fd8cc;
+  --teal-btn:#2ec4b6; --teal-lip:#15756c; --teal-hi:#48ded0;
+  --teal3:rgba(46,196,182,.15); --teal4:rgba(46,196,182,.07);
+  --gold:#f5c842; --gold2:rgba(245,200,66,.13); --gold-lip:#a8831c;
+  --green:#3ddc84; --green2:rgba(61,220,132,.16);
+  --silver:#c9d2d0; --bronze:#d69a5c;
+  --red:#ff6b78; --red2:rgba(255,107,120,.16);
+  --blue:#6aa6ff; --blue2:rgba(106,166,255,.16);
+  --on-accent:#04100e;
+  --text:#e8f0ee; --text2:#c9d4d1; --muted:#7e9a94; --soft:#9fb5b0;
+  --paper:#f6ecd9; --paper-ink:#241a08;
+  --border:rgba(255,255,255,.06); --border2:rgba(46,196,182,.34);
+  --lift:inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px -14px rgba(0,0,0,.75);
+  --disp:'Fredoka',system-ui,sans-serif;
+  --body:'Nunito',system-ui,sans-serif;
+}
+
+body{background:var(--bg);font-family:var(--body)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),
+    radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)}
+
+header{background-color:rgba(10,15,14,.9)!important;
+  background-image:radial-gradient(ellipse 900px 460px at 50% -12%,rgba(46,196,182,.18),transparent 66%),radial-gradient(ellipse 700px 420px at 88% 30%,rgba(245,200,66,.05),transparent 62%)!important;
+  background-size:100% 100vh!important;background-repeat:no-repeat!important;
+  background-position:top center!important;
+  border-bottom:1px solid var(--border)!important}
+.logo-badge{border-radius:13px!important;
+  box-shadow:0 4px 12px -7px rgba(46,196,182,.55),inset 0 1px 0 rgba(255,255,255,.28)!important}
+.logo-name{font-family:var(--disp)!important;font-weight:700!important;letter-spacing:-.01em!important}
+
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.next-btn,.continue-btn,
+.btn,.btn-lg,.btn-solid,.btn-ghost,.btn-hero,.submit-btn,.verify-btn,
+.guess-btn,.h-btn,.over-btn,.task-b,.bridge-b,.verify-resend,.btns .btn,.db{
+  font-family:var(--disp)!important;font-weight:600!important;letter-spacing:0!important;
+  border-radius:13px!important;transition:transform .08s,box-shadow .08s,background .15s!important}
+.back-btn,.back-link,.back,.logout-btn,.logout-btn2,.acc-btn,.btn-ghost,.h-btn{
+  background:var(--bg3)!important;border:0!important;color:var(--text2)!important;
+  box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important}
+.back-btn:hover,.back-link:hover,.back:hover,.logout-btn:hover,.logout-btn2:hover,
+.acc-btn:hover,.btn-ghost:hover,.h-btn:hover{background:var(--bg4)!important;color:var(--text)!important}
+.over-btn{background:var(--teal-btn)!important;border:0!important;color:var(--on-accent)!important;
+  box-shadow:0 2px 0 var(--teal-lip),0 5px 12px -9px rgba(46,196,182,.45)!important}
+.over-btn:hover{background:var(--teal-hi)!important}
+
+.card,.over-card,.score-box,.scoreboard,.side{
+  border:0!important;box-shadow:var(--lift)!important}
+.over-card{border-radius:24px!important;background:var(--bg2)!important}
+.score-box{border-radius:18px!important;background:var(--bg2)!important}
+
+.section-title,.title,.over-title{
+  font-family:var(--disp)!important;letter-spacing:-.015em!important}
+
+/* outweigh — scoreboard, feedback, over-card, decide keys */
+.db.r{background:var(--red)!important;color:#2a0508!important;box-shadow:0 2px 0 #a23640!important}
+.db.b{background:var(--blue)!important;color:#061330!important;box-shadow:0 2px 0 #3a63a8!important}
+.db:disabled{opacity:.35!important;box-shadow:none!important;transform:none!important}
+.score-box .k{font-family:var(--body)!important;font-weight:700!important;
+  font-size:.7rem!important;color:var(--muted)!important}
+.score-box .v{font-family:var(--disp)!important;font-weight:700!important;font-size:1.5rem!important}
+.eyebrow{font-family:var(--body)!important;font-weight:700!important;color:var(--teal)!important;
+  font-size:.74rem!important}
+.title{font-size:1.9rem!important;font-weight:600!important}
+.subtitle{font-size:.95rem!important;color:var(--muted)!important;font-weight:600!important}
+.feedback{font-family:var(--disp)!important;font-weight:600!important;font-size:1rem!important}
+.over-card{border-radius:24px!important}
+.over-title{font-family:var(--disp)!important;font-weight:600!important}
+.over-score{font-size:2rem!important}
+.side h3{font-family:var(--disp)!important}
+.ws-mini-foot,.footer,.foot-links,.legal,.foot-disclaimer{border-top:0!important;
+  font-family:var(--body)!important;font-weight:600!important;color:var(--muted)!important}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+  <script src="/sounds.js" defer></script>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="window.location.href='/dashboard.html'">
+    <div class="logo-badge">
+      <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="27" width="7" height="8" rx="1.5" fill="#000" opacity="0.35"/>
+        <rect x="15" y="19" width="7" height="16" rx="1.5" fill="#000" opacity="0.6"/>
+        <rect x="24" y="9" width="7" height="26" rx="1.5" fill="#000" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-name">win<span>step</span></div>
+  </div>
+  <a class="h-btn" href="/dashboard.html" onclick="if(window.winstepSound)winstepSound.play('click')">← Back to Dashboard</a>
+</header>
+
+<div class="wrap" id="wrap">
+  <div class="eyebrow">Bonus Game</div>
+  <div class="title">Outweigh</div>
+  <div class="subtitle">Open up to 8 balls, then guess which side weighs more. Keep going — one wrong guess ends your run.</div>
+
+  <div class="scoreboard">
+    <div class="score-box current"><div class="k">Points</div><div class="v" id="scoreVal">0</div></div>
+    <div class="score-box"><div class="k">Round</div><div class="v" id="roundVal">1</div></div>
+  </div>
+
+  <div class="stage">
+    <div class="scale">
+      <div class="pivot"></div>
+      <div class="beam" id="beam"></div>
+      <div class="pan l" id="panL"><span class="ln"></span></div>
+      <div class="pan r" id="panR"><span class="ln"></span></div>
+    </div>
+
+    <div class="pans" id="pans">
+      <div class="side R"><h3>🔴 Red</h3><div class="grid" id="gridR"></div></div>
+      <div class="side B"><h3>🔵 Blue</h3><div class="grid" id="gridB"></div></div>
+    </div>
+
+    <div class="reveal" id="reveal">Opened <b>0</b> / 8</div>
+
+    <div class="decide">
+      <button class="db r" id="pickR" disabled>🔴 Red heavier</button>
+      <button class="db b" id="pickB" disabled>🔵 Blue heavier</button>
+    </div>
+  </div>
+
+  <div class="feedback" id="feedback">Loading…</div>
+  <div class="hint">Open a few balls to get a hint, then pick the heavier side. A tie earns no points but your run continues — only a wrong guess ends it.</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="over-card">
+    <div class="over-emoji">🏁</div>
+    <div class="over-title">Run Over</div>
+    <div class="over-score" id="finalScore">0</div>
+    <div class="over-sub" id="finalSub">points earned</div>
+    <button class="over-btn" onclick="if(window.winstepSound)winstepSound.play('click');window.location.href='/dashboard.html'">← Back to Dashboard</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://eybpnmplndedpnhuasyd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4EkeI2UOnaZQ28A7d8Ckw_q1sM5yQY';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let owUser = null;
+let currentSession = null;
+let gameActive = false;        // play passed → leaving = forfeit
+let gameEnded  = false;        // natural end (wrong/max) or blocked
+let forfeited  = false;
+let PER = 10;
+
+let balls = [];                // 50 × {pos, side:'R'|'B', val:null, open:false}
+let revealsCount = 0;
+let score = 0, roundNum = 1, busy = false, phase = 'loading';
+
+const pansEl = document.getElementById('pans');
+
+/* ---- board ---- */
+function loadBoard(board, round){
+  balls = board.map(function(b){ return { pos:b.pos, side:b.side, val:null, open:false }; });
+  revealsCount = 0;
+  roundNum = round;
+  document.getElementById('roundVal').textContent = round;
+  renderGrids();
+  updateReveal();
+  setBeam(0);
+  setDecide(false);
+  phase = 'revealing';
+  setFeedback('Open a ball to begin','');
+}
+function renderGrids(){
+  pansEl.className = 'pans' + (phase==='revealing' ? ' live' : '');
+  ['R','B'].forEach(function(side){
+    const g = document.getElementById('grid'+side);
+    let h='';
+    balls.forEach(function(b){
+      if(b.side!==side) return;
+      const cls = 'ball' + (b.open?' open':'');
+      h += '<div class="'+cls+'" data-pos="'+b.pos+'">'+(b.open?b.val:'?')+'</div>';
+    });
+    g.innerHTML = h;
+  });
+}
+
+/* ---- ui helpers ---- */
+function setFeedback(t,type){ const f=document.getElementById('feedback'); f.textContent=t; f.className='feedback'+(type?' '+type:''); }
+function updateReveal(){ document.getElementById('reveal').innerHTML = 'Opened <b>'+revealsCount+'</b> / 8'; }
+function updateScore(){ document.getElementById('scoreVal').textContent = score; }
+function setDecide(en){ document.getElementById('pickR').disabled=!en; document.getElementById('pickB').disabled=!en; }
+function setBeam(dir){ // -1 red down (red heavier), +1 blue down, 0 level
+  const ang = dir*8;
+  document.getElementById('beam').style.transform = 'translateX(-50%) rotate('+ang+'deg)';
+  document.getElementById('panL').style.top = (18 + (dir<0?20:dir>0?-6:0))+'px';
+  document.getElementById('panR').style.top = (18 + (dir>0?20:dir<0?-6:0))+'px';
+}
+
+/* ---- reveal a ball (server returns its value) ---- */
+pansEl.addEventListener('click', function(e){
+  const el = e.target.closest('.ball'); if(!el) return;
+  const pos = +el.dataset.pos;
+  revealBall(pos);
+});
+async function revealBall(pos){
+  if(busy || phase!=='revealing') return;
+  const b = balls[pos-1];
+  if(!b || b.open) return;
+  if(revealsCount>=8){ setFeedback('That’s 8 — pick the heavier side','push'); return; }
+  busy = true;
+  if(window.winstepSound) winstepSound.play('doubleFlip');
+  let res=null;
+  try{ const r=await db.rpc('outweigh_reveal',{ p_pos:pos }); res=r.data; }catch(e){ res=null; }
+  if(!res || !res.ok){ busy=false; return; }
+  b.open = true; b.val = res.value; revealsCount = res.revealed;
+  renderGrids(); updateReveal();
+  setDecide(true);
+  if(revealsCount>=8) setFeedback('Pick the heavier side','push');
+  else setFeedback('Open more, or pick the heavier side','');
+  busy = false;
+}
+
+/* ---- decide ---- */
+document.getElementById('pickR').onclick = function(){ decide('R'); };
+document.getElementById('pickB').onclick = function(){ decide('B'); };
+
+async function decide(side){
+  if(busy || phase!=='revealing' || revealsCount<1) return;
+  busy = true; phase='resolving'; setDecide(false);
+  pansEl.className = 'pans';
+  let res=null;
+  try{ const r=await db.rpc('outweigh_guess',{ p_side:side }); res=r.data; }catch(e){ res=null; }
+  if(!res || !res.ok){ busy=false; phase='revealing'; setDecide(true); pansEl.className='pans live'; return; }
+
+  // reveal every ball
+  if(res.vals){ balls.forEach(function(b){ b.val=res.vals[b.pos-1]; b.open=true; }); renderGrids(); }
+  setBeam(res.heavier==='R' ? -1 : res.heavier==='B' ? 1 : 0);
+  score = res.score; updateScore();
+
+  if(res.result==='correct'){
+    setFeedback('Correct! +'+res.points+' points   (🔴 '+res.red_sum+' · 🔵 '+res.blue_sum+')','ok');
+    if(window.winstepSound) winstepSound.play('correct');
+  } else if(res.result==='tie'){
+    setFeedback('Even weight — no points, keep going   (🔴 '+res.red_sum+' · 🔵 '+res.blue_sum+')','push');
+  } else {
+    setFeedback('Wrong!   🔴 '+res.red_sum+' · 🔵 '+res.blue_sum,'bad');
+    if(window.winstepSound) winstepSound.play('wrong');
+  }
+
+  if(res.continues){
+    setTimeout(function(){ loadBoard(res.board, res.round); busy=false; }, 1250);
+  } else {
+    setTimeout(gameOver, 1350);
+  }
+}
+
+function gameOver(){
+  gameEnded = true;
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalSub').textContent = (score===1?'point earned':'points earned');
+  document.getElementById('overlay').classList.add('show');
+}
+
+/* ---- leaving mid-game = forfeit (0 points, attempt spent) ---- */
+function forfeitGame(){
+  if(!gameActive || gameEnded || forfeited) return;
+  forfeited = true;
+  try{
+    const token = (currentSession && currentSession.access_token) || SUPABASE_KEY;
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', SUPABASE_URL + '/rest/v1/rpc/outweigh_forfeit', false); // sync
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send('{}');
+  }catch(e){}
+}
+window.addEventListener('pagehide', forfeitGame);
+
+function blockGame(){
+  gameEnded = true;
+  document.getElementById('wrap').innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:2.4rem;margin-bottom:14px">⚖️</div><div style="font-family:Fredoka,sans-serif;font-weight:600;font-size:1.1rem;color:var(--text);margin-bottom:8px">Outweigh not available</div><div style="font-size:.85rem;max-width:320px;margin:0 auto;line-height:1.5">This game unlocks during the break after a box — but only if you answered enough quiz questions correctly. Keep playing to earn your next attempt!</div><button onclick="window.location.href=\'/dashboard.html\'" style="margin-top:20px;padding:11px 22px;background:var(--bg3);border:1px solid var(--border2);color:var(--teal);border-radius:9px;font-family:Nunito,sans-serif;font-weight:600;cursor:pointer">← Back to Dashboard</button></div>';
+}
+
+async function init(){
+  const { data: { session } } = await db.auth.getSession();
+  if(!session){ window.location.href='/index.html'; return; }
+  owUser = session.user;
+  currentSession = session;
+
+  const today = new Date().toISOString().split('T')[0];
+  const { data: prog } = await db.from('user_box_progress')
+    .select('*')
+    .eq('user_id', owUser.id)
+    .eq('day', today)
+    .eq('game_type', 'spin')
+    .eq('bridge_unlocked', true)
+    .eq('spin_played', false);
+
+  const live = (prog||[]).find(p => p.interval_ends_at && new Date(p.interval_ends_at) > new Date());
+  if(!live){ blockGame(); return; }
+
+  // server sets up the hidden 50-ball deal
+  const { data: res } = await db.rpc('outweigh_play');
+  if(!res || !res.ok){ blockGame(); return; }
+  gameActive = true;
+  if(window.winstepSound) winstepSound.play('click');
+  PER = res.per_correct;
+  score = res.score || 0; updateScore();
+  loadBoard(res.board, res.round || 1);
+}
+
+init();
+</script>
+</body>
+</html>
