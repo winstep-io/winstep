@@ -265,7 +265,7 @@ header{display:flex;align-items:center;justify-content:space-between;
 .btier-num{font-family:var(--disp);font-weight:600;font-size:1.02rem;color:var(--text);line-height:1}
 .btier-txt{font-family:var(--disp);font-weight:600;font-size:1.02rem;color:var(--text);letter-spacing:.01em}
 .btier-txt .arr{color:var(--muted);margin:0 3px;font-weight:500}
-.btier-txt b{color:var(--teal2);font-weight:700}
+.btier-txt b{color:var(--gold);font-weight:700}
 .btier-txt .u{font-family:var(--body);font-weight:700;font-size:.8rem;color:var(--soft);margin-left:4px}
 
 /* ── interval + countdown ───────────────────────────────── */
@@ -2027,7 +2027,7 @@ function renderBonusCard(boxes, states){
   const tiersHtml = newPoints.tiers.map(t =>
     '<div class="btier"><span class="btier-num">' + t.correct_count + '</span>'
     + '<span class="btier-ck">'+CK+'</span>'
-    + '<span class="btier-txt"><span class="arr">→</span><b>' + t.points + '</b><span class="u">points</span></span></div>'
+    + '<span class="btier-txt"><span class="arr">→</span><b>' + t.points + '</b><span class="u">pts</span></span></div>'
   ).join('');
   card.innerHTML = '<div class="bonus-head"><div class="bonus-ic">🎮</div><div>'
     + '<div class="bonus-title">Bonus Game</div>'
