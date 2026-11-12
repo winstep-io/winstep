@@ -823,11 +823,13 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
       </div>
 
       <div class="card">
-        <div class="card-title">🃏 21 Game</div>
+        <div class="card-title">✊ Rock, Scissor, Paper</div>
         <div class="field-row">
-          <div class="field"><label class="field-label">Win Points (per hand)</label><input class="field-input" type="number" id="set_blackjack_win_points"></div>
+          <div class="field"><label class="field-label">Win Points</label><input class="field-input" type="number" id="set_rps_win_points"></div>
+          <div class="field"><label class="field-label">Draw Points</label><input class="field-input" type="number" id="set_rps_draw_points"></div>
+          <div class="field"><label class="field-label">Loss Points</label><input class="field-input" type="number" id="set_rps_loss_points"></div>
         </div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Points for each hand won (4 hands per game). Push or loss scores 0.</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Card-battle game — 15 cards each side. Every clash adds points by its result (win / draw / loss); the total across all 15 clashes is the player's score.</div>
       </div>
 
       <div class="card">
@@ -1229,7 +1231,7 @@ async function checkAdmin(user){
 }
 
 // ---- SETTINGS ----
-const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','outweigh_per_correct','outweigh_open_budget','hilo_per_step','minefield_bonus','blackjack_win_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','outweigh_per_correct','outweigh_open_budget','hilo_per_step','minefield_bonus','rps_win_points','rps_draw_points','rps_loss_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
 async function loadSettings(){
   const { data: rows } = await db.from('settings').select('*');
   if(!rows) return;
