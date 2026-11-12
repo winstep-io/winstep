@@ -788,8 +788,9 @@ body.qgen-clean .qgen-hint{display:block;animation:qgFade 3s forwards}
         <div class="card-title">⚖️ Outweigh Game</div>
         <div class="field-row">
           <div class="field"><label class="field-label">Points per correct guess</label><input class="field-input" type="number" id="set_outweigh_per_correct"></div>
+          <div class="field"><label class="field-label">Open balls per run</label><input class="field-input" type="number" id="set_outweigh_open_budget"></div>
         </div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Balance game. Each correct "heavier side" guess adds this many points; the run continues until a wrong guess. A tie adds 0 but keeps the run going.</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Balance game. Each correct "heavier side" guess adds the points above; the run continues until a wrong guess (a tie adds 0 but keeps it going). "Open balls per run" is the total ball-opens a player gets for the whole run to spend across rounds.</div>
       </div>
 
       <div class="card">
@@ -1228,7 +1229,7 @@ async function checkAdmin(user){
 }
 
 // ---- SETTINGS ----
-const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','outweigh_per_correct','hilo_per_step','minefield_bonus','blackjack_win_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
+const SETTING_KEYS = ['quiz_correct','quiz_wrong','quiz_timeout','quiz_time_seconds','bridge_step','bridge_finish','video_points','website_points','app_install_points','survey_points','signup_points','trial_points','social_points','custom_points','box_interval_minutes','bridge_unlock_correct','outweigh_per_correct','outweigh_open_budget','hilo_per_step','minefield_bonus','blackjack_win_points','minefield_step_1','minefield_step_2','minefield_step_3','minefield_step_4','minefield_step_5','minefield_step_6','minefield_step_7','minefield_step_8','minefield_step_9','minefield_step_10'];
 async function loadSettings(){
   const { data: rows } = await db.from('settings').select('*');
   if(!rows) return;
