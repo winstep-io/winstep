@@ -197,7 +197,6 @@ body{background:#1a0e06;font-family:'Oswald',sans-serif;color:var(--cream);min-h
   <div class="over show" id="intro">
     <h2>ROCK · SCISSOR · PAPER</h2>
     <div class="intro-rule">Pick one of your cards, then flip one of the opponent's hidden cards to clash. Rock beats Scissor, Scissor beats Paper, Paper beats Rock. Play all 15 cards.</div>
-    <div class="intro-leg" id="introLeg">WIN <b>2 PTS</b> · DRAW <b>1 PT</b> · LOSS <b>0 PTS</b></div>
     <div class="ovbtns"><div class="ovbtn primary" id="startBtn">START GAME</div></div>
   </div>
 
@@ -397,7 +396,6 @@ async function init(){
     const { data:srv }=await db.rpc('rps_points');
     if(srv&&srv.ok){ POINTS={win:srv.win_points,draw:srv.draw_points,loss:srv.loss_points}; }
   }catch(e){}
-  document.getElementById('introLeg').innerHTML=legendText();
   document.getElementById('legend').innerHTML=legendText();
 }
 
