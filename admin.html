@@ -1992,32 +1992,27 @@ async function savePauseText(){
   const msg  = (document.getElementById('pauseMsgInput')||{}).value || '';
   const icon = (document.getElementById('pauseIconSel')||{}).value || 'wrench';
   const font = (document.getElementById('pauseFontSel')||{}).value || 'normal';
-  const u1 = await db.from('site_state').update({ value: msg.trim() }).eq('key','pause_message');
-  const u2 = await db.from('site_state').update({ value: icon }).eq('key','pause_icon');
-  const u3 = await db.from('site_state').update({ value: font }).eq('key','pause_font');
-  const err = (u1&&u1.error) || (u2&&u2.error) || (u3&&u3.error);
-  if(err){ showMsg('champMsg', err.message, 'err'); return; }
+  const { error } = await db.rpc('admin_set_pause_text', { p_msg: msg.trim(), p_icon: icon, p_font: font });
+  if(error){ showMsg('champMsg', error.message, 'err'); return; }
   showMsg('champMsg','Pause message & style saved. ✅','ok');
 }
 
 async function togglePause(){
+  // read current flag only to decide the new one (reads always work)
   const { data: s } = await db.from('settings').select('value').eq('key','site_paused').maybeSingle();
   const nowPaused = !(s && s.value === 1);
 
-  const msg = document.getElementById('pauseMsgInput').value.trim();
-  if(msg){
-    await db.from('site_state').update({ value: msg }).eq('key','pause_message');
-  }
-  // იკონი/ფონტიც შევინახოთ, რომ პაუზისას მიმდინარე არჩევანი აისახოს
+  // save message/icon/font through the admin RPC
+  const msg = (document.getElementById('pauseMsgInput')||{}).value;
   const _ic = (document.getElementById('pauseIconSel')||{}).value;
   const _ft = (document.getElementById('pauseFontSel')||{}).value;
-  if(_ic) await db.from('site_state').update({ value: _ic }).eq('key','pause_icon');
-  if(_ft) await db.from('site_state').update({ value: _ft }).eq('key','pause_font');
+  try{ await db.rpc('admin_set_pause_text', { p_msg:(msg&&msg.trim())||null, p_icon:_ic||null, p_font:_ft||null }); }catch(e){}
 
-  const { error } = await db.from('settings').update({ value: nowPaused ? 1 : 0 }).eq('key','site_paused');
+  // flip the flag server-side; the RPC returns the authoritative new value
+  const { data: newVal, error } = await db.rpc('admin_set_pause', { p_paused: nowPaused });
   if(error){ showMsg('champMsg', error.message, 'err'); return; }
 
-  showMsg('champMsg', nowPaused ? 'Site paused. Visitors now see the overlay.' : 'Site is live again.', 'ok');
+  showMsg('champMsg', (newVal === 1) ? 'Site paused. Visitors now see the overlay.' : 'Site is live again.', 'ok');
   loadPauseState();
 }
 
@@ -2056,17 +2051,9 @@ async function loadChampionship(){
   }
   document.getElementById('champPointsInputs').innerHTML = ptsHtml;
 
-  // default start date for new championship
+  // default start date for new championship — always today (user can change it)
   const sd = document.getElementById('champStart');
-  if(sd && !sd.value){
-    // suggest: day after the latest championship's end, or today
-    let suggest = new Date();
-    if(champs && champs.length>0){
-      const latest = champs.reduce((a,b)=>a.number>b.number?a:b);
-      if(latest.end_date) suggest = new Date(new Date(latest.end_date+'T00:00:00Z').getTime()+86400000);
-    }
-    sd.value = suggest.toISOString().split('T')[0];
-  }
+  if(sd) sd.value = todayUTC();
 
   // all championships list
   const list = document.getElementById('champsList');
@@ -2162,9 +2149,12 @@ async function createChampionship(){
   const { data: champs } = await db.from('championships').select('number').eq('is_test', false).order('number',{ascending:false}).limit(1);
   const nextNum = (champs && champs.length>0 && champs[0].number!=null) ? champs[0].number+1 : 1;
 
-  // first championship is active, the rest are upcoming
+  // a future-dated championship is ALWAYS 'upcoming'; only a today-or-earlier
+  // start, with nothing else running, becomes 'active'.
   const { data: activeC } = await db.from('championships').select('id').eq('status','active');
-  const status = (activeC && activeC.length>0) ? 'upcoming' : 'active';
+  const { data: xRound } = await db.from('rounds').select('id').eq('is_extra', true).eq('status','active');
+  const somethingRunning = (activeC && activeC.length>0) || (xRound && xRound.length>0);
+  const status = (start > todayUTC() || somethingRunning) ? 'upcoming' : 'active';
 
   const { data: newChamp, error } = await db.from('championships').insert({
     number: isTest ? null : nextNum, start_date: start, status, total_rounds: rounds, round_duration_days: duration, is_test: isTest
