@@ -3,6 +3,8 @@
 <title>winstep — Rock, Scissor, Paper</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>@font-face{font-family:'Fredoka';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/fredoka-latin-600-normal.woff2') format('woff2');}@font-face{font-family:'Fredoka';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/fredoka-latin-700-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/nunito-latin-400-normal.woff2') format('woff2');}@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/nunito-latin-700-normal.woff2') format('woff2');}</style>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--gold:#f5c842;--gold2:#ffe08a;--cream:#e8f0ee;--ink:#04120f;
@@ -144,6 +146,26 @@ body{background:#0a0f0e;font-family:'Oswald',sans-serif;color:var(--cream);min-h
   .score hr{display:block;border:0;border-top:1px solid rgba(255,255,255,.18);margin:7px 0 7px}
   .score .l{margin:4px 0}
 }
+
+/* ===== platform-style START window (fonts + framed, like the Bridge game) ===== */
+.bb-name{font-family:'Fredoka',sans-serif!important;-webkit-text-stroke:0!important;font-weight:700!important;letter-spacing:-.01em}
+.bb-back{border:0!important;background:rgba(255,255,255,.07)!important}
+.bb-back:hover{border:0!important;color:var(--teal-hi)!important}
+#intro{background:rgba(6,10,9,.88);backdrop-filter:blur(7px)}
+.intro-card{background:linear-gradient(180deg,#141f1c,#0e1613);
+  border:1.5px solid rgba(46,196,182,.28);border-radius:22px;
+  box-shadow:0 24px 60px -24px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);
+  padding:clamp(26px,5vw,40px) clamp(22px,4.5vw,36px);
+  max-width:440px;width:calc(100% - 44px);
+  display:flex;flex-direction:column;align-items:center;gap:15px;text-align:center}
+#intro h2{font-family:'Fredoka',sans-serif;color:#2ec4b6;font-weight:700;
+  font-size:clamp(1.4rem,4.4vw,1.9rem);letter-spacing:.06em;-webkit-text-stroke:0;line-height:1.2}
+#intro .intro-rule{font-family:'Nunito',sans-serif;color:#9fb5b0;font-weight:400;
+  -webkit-text-stroke:0;font-size:clamp(.82rem,2vw,.94rem);letter-spacing:.02em;line-height:1.6}
+#intro .ovbtn.primary{font-family:'Nunito',sans-serif;font-weight:700;letter-spacing:.05em;
+  -webkit-text-stroke:0;color:#000;background:#2ec4b6;border-radius:10px;
+  font-size:clamp(.88rem,2.1vw,.95rem);padding:12px 32px;margin-top:4px}
+#intro .ovbtn.primary:hover{background:#44ffe8;box-shadow:0 4px 16px rgba(46,196,182,.3)}
 </style></head>
 <body>
 <div class="backbar">
@@ -198,9 +220,11 @@ body{background:#0a0f0e;font-family:'Oswald',sans-serif;color:var(--cream);min-h
 
   <!-- intro / start -->
   <div class="over show" id="intro">
-    <h2>ROCK · SCISSOR · PAPER</h2>
-    <div class="intro-rule">Pick one of your cards, then flip one of the opponent's hidden cards to clash. Rock beats Scissor, Scissor beats Paper, Paper beats Rock. Play all 15 cards.</div>
-    <div class="ovbtns"><div class="ovbtn primary" id="startBtn">START GAME</div></div>
+    <div class="intro-card">
+      <h2>ROCK · SCISSOR · PAPER</h2>
+      <div class="intro-rule">Pick one of your cards, then flip one of the opponent's hidden cards to clash. Rock beats Scissor, Scissor beats Paper, Paper beats Rock. Play all 15 cards.</div>
+      <div class="ovbtns"><div class="ovbtn primary" id="startBtn">START GAME</div></div>
+    </div>
   </div>
 
   <!-- game over -->
